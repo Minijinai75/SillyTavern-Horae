@@ -1304,12 +1304,12 @@ class HoraeManager {
         firstMsg.horae_meta.relationships = relationships;
     }
 
-    /** 获取双方都在场的关系（避免 USER 在场时全量发送） */
+    /** 获取指定角色相关的关系（无在场角色时返回空数组） */
     getRelationshipsForCharacters(charNames) {
         if (!charNames?.length) return [];
         const rels = this.getRelationships();
         const nameSet = new Set(charNames);
-        return rels.filter(r => nameSet.has(r.from) && nameSet.has(r.to));
+        return rels.filter(r => nameSet.has(r.from) || nameSet.has(r.to));
     }
 
     /** 全局删除已完成的待办事项 */
