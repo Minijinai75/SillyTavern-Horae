@@ -656,9 +656,9 @@ class HoraeManager {
             }
         }
         
-        // RPG 状态（仅启用时注入）
+        // RPG 状态（仅启用时注入，按位置快照）
         if (this.settings?.rpgMode) {
-            const rpg = this.getRpgData();
+            const rpg = this.getRpgStateAt(skipLast);
             const sendBars = this.settings?.sendRpgBars !== false;
             const sendSkills = this.settings?.sendRpgSkills !== false;
 
@@ -705,6 +705,18 @@ class HoraeManager {
                             lines.push(`  ${sk.name}${lv}${desc}`);
                         }
                     }
+                }
+            }
+
+            const sendAttrs = this.settings?.sendRpgAttributes !== false;
+            const attrCfg = this.settings?.rpgAttributeConfig || [];
+            if (sendAttrs && attrCfg.length > 0 && Object.keys(rpg.attributes || {}).length > 0) {
+                lines.push('\n[多维属性]');
+                for (const [name, vals] of Object.entries(rpg.attributes)) {
+                    const npc = state.npcs[name];
+                    const pre = npc?._id ? `N${npc._id} ` : '';
+                    const parts = attrCfg.map(a => `${a.name}${vals[a.key] ?? '?'}`);
+                    lines.push(`${pre}${name}: ${parts.join(' | ')}`);
                 }
             }
         }
@@ -1200,7 +1212,7 @@ class HoraeManager {
 
         // 解析 RPG 数据
         if (rpgMatches.length > 0) {
-            result.rpg = { bars: {}, status: {}, skills: [], removedSkills: [] };
+            result.rpg = { bars: {}, status: {}, skills: [], removedSkills: [], attributes: {} };
             for (const rm of rpgMatches) {
                 const rpgContent = rm[1].trim();
                 for (const rpgLine of rpgContent.split('\n')) {
@@ -1345,6 +1357,23 @@ class HoraeManager {
             if (parts.length >= 2) {
                 rpg.removedSkills.push({ owner: parts[0], name: parts[1] });
             }
+            return;
+        }
+        // attr:N01 Name|key=val|key=val...
+        if (line.startsWith('attr:')) {
+            const parts = line.substring(5).trim().split('|').map(s => s.trim());
+            if (parts.length >= 2) {
+                const owner = parts[0];
+                const vals = {};
+                for (let i = 1; i < parts.length; i++) {
+                    const kv = parts[i].match(/^(\w+)=(\d+)$/);
+                    if (kv) vals[kv[1].toLowerCase()] = parseInt(kv[2]);
+                }
+                if (Object.keys(vals).length) {
+                    if (!rpg.attributes) rpg.attributes = {};
+                    rpg.attributes[owner] = vals;
+                }
+            }
         }
     }
 
@@ -1403,24 +1432,141 @@ class HoraeManager {
                 rpg.skills[owner] = rpg.skills[owner].filter(s => s.name !== sk.name);
             }
         }
+        // 多维属性
+        for (const [raw, vals] of Object.entries(changes.attributes || {})) {
+            const owner = this._resolveRpgOwner(raw);
+            if (!rpg.attributes) rpg.attributes = {};
+            rpg.attributes[owner] = { ...(rpg.attributes[owner] || {}), ...vals };
+        }
     }
 
-    /** 从所有消息重建 RPG 全局数据 */
+    /** 从所有消息重建 RPG 全局数据（保留用户手动编辑） */
     rebuildRpgData() {
         const chat = this.getChat();
         if (!chat?.length) return;
         const first = chat[0];
         if (!first.horae_meta) first.horae_meta = createEmptyMeta();
-        first.horae_meta.rpg = { bars: {}, status: {}, skills: {} };
+        const old = first.horae_meta.rpg || {};
+        // 保留用户手动添加的技能
+        const userSkills = {};
+        for (const [owner, arr] of Object.entries(old.skills || {})) {
+            const ua = (arr || []).filter(s => s._userAdded);
+            if (ua.length) userSkills[owner] = ua;
+        }
+        // 保留用户手动删除记录和手动填写的属性
+        const deletedSkills = old._deletedSkills || [];
+        const userAttrs = old.attributes || {};
+
+        first.horae_meta.rpg = { bars: {}, status: {}, skills: {}, attributes: { ...userAttrs }, _deletedSkills: deletedSkills };
         for (let i = 1; i < chat.length; i++) {
             const changes = chat[i]?.horae_meta?._rpgChanges;
             if (changes) this._mergeRpgData(changes);
         }
+        // 回填用户手动添加的技能
+        const rpg = first.horae_meta.rpg;
+        for (const [owner, arr] of Object.entries(userSkills)) {
+            if (!rpg.skills[owner]) rpg.skills[owner] = [];
+            for (const sk of arr) {
+                if (!rpg.skills[owner].some(s => s.name === sk.name)) rpg.skills[owner].push(sk);
+            }
+        }
+        // 过滤用户手动删除的技能
+        for (const del of deletedSkills) {
+            if (rpg.skills[del.owner]) {
+                rpg.skills[del.owner] = rpg.skills[del.owner].filter(s => s.name !== del.name);
+                if (!rpg.skills[del.owner].length) delete rpg.skills[del.owner];
+            }
+        }
     }
 
-    /** 获取 RPG 全局数据 */
+    /** 获取 RPG 全局数据（chat[0] 累积） */
     getRpgData() {
-        return this.getChat()?.[0]?.horae_meta?.rpg || { bars: {}, status: {}, skills: {} };
+        return this.getChat()?.[0]?.horae_meta?.rpg || { bars: {}, status: {}, skills: {}, attributes: {} };
+    }
+
+    /**
+     * 构建到指定消息位置的 RPG 快照（不修改 chat[0]）
+     * @param {number} skipLast - 跳过末尾N条消息（swipe时=1）
+     */
+    getRpgStateAt(skipLast = 0) {
+        const chat = this.getChat();
+        if (!chat?.length) return { bars: {}, status: {}, skills: {}, attributes: {} };
+        const end = Math.max(1, chat.length - skipLast);
+        const snapshot = { bars: {}, status: {}, skills: {}, attributes: {} };
+        const first = chat[0];
+        const rpgMeta = first?.horae_meta?.rpg || {};
+
+        // 用户手动编辑的数据
+        const userSkills = {};
+        for (const [owner, arr] of Object.entries(rpgMeta.skills || {})) {
+            const ua = (arr || []).filter(s => s._userAdded);
+            if (ua.length) userSkills[owner] = ua;
+        }
+        const deletedSkills = rpgMeta._deletedSkills || [];
+        const userAttrs = {};
+        for (const [owner, vals] of Object.entries(rpgMeta.attributes || {})) {
+            userAttrs[owner] = { ...vals };
+        }
+
+        // 从消息中累积属性（snapshot 是独立对象，不污染 chat[0]）
+        const _resolve = (raw) => this._resolveRpgOwner(raw);
+        for (let i = 1; i < end; i++) {
+            const changes = chat[i]?.horae_meta?._rpgChanges;
+            if (!changes) continue;
+            for (const [raw, barData] of Object.entries(changes.bars || {})) {
+                const owner = _resolve(raw);
+                if (!snapshot.bars[owner]) snapshot.bars[owner] = {};
+                Object.assign(snapshot.bars[owner], barData);
+            }
+            for (const [raw, effects] of Object.entries(changes.status || {})) {
+                const owner = _resolve(raw);
+                snapshot.status[owner] = effects;
+            }
+            for (const sk of (changes.skills || [])) {
+                const owner = _resolve(sk.owner);
+                if (!snapshot.skills[owner]) snapshot.skills[owner] = [];
+                const idx = snapshot.skills[owner].findIndex(s => s.name === sk.name);
+                if (idx >= 0) {
+                    if (sk.level) snapshot.skills[owner][idx].level = sk.level;
+                    if (sk.desc) snapshot.skills[owner][idx].desc = sk.desc;
+                } else {
+                    snapshot.skills[owner].push({ name: sk.name, level: sk.level, desc: sk.desc });
+                }
+            }
+            for (const sk of (changes.removedSkills || [])) {
+                const owner = _resolve(sk.owner);
+                if (snapshot.skills[owner]) {
+                    snapshot.skills[owner] = snapshot.skills[owner].filter(s => s.name !== sk.name);
+                }
+            }
+            for (const [raw, vals] of Object.entries(changes.attributes || {})) {
+                const owner = _resolve(raw);
+                snapshot.attributes[owner] = { ...(snapshot.attributes[owner] || {}), ...vals };
+            }
+        }
+
+        // 合入用户手动属性（AI数据优先覆盖）
+        for (const [owner, vals] of Object.entries(userAttrs)) {
+            if (!snapshot.attributes[owner]) snapshot.attributes[owner] = {};
+            for (const [k, v] of Object.entries(vals)) {
+                if (snapshot.attributes[owner][k] === undefined) snapshot.attributes[owner][k] = v;
+            }
+        }
+        // 回填用户手动技能
+        for (const [owner, arr] of Object.entries(userSkills)) {
+            if (!snapshot.skills[owner]) snapshot.skills[owner] = [];
+            for (const sk of arr) {
+                if (!snapshot.skills[owner].some(s => s.name === sk.name)) snapshot.skills[owner].push(sk);
+            }
+        }
+        // 过滤用户手动删除
+        for (const del of deletedSkills) {
+            if (snapshot.skills[del.owner]) {
+                snapshot.skills[del.owner] = snapshot.skills[del.owner].filter(s => s.name !== del.name);
+                if (!snapshot.skills[del.owner].length) delete snapshot.skills[del.owner];
+            }
+        }
+        return snapshot;
     }
 
     /** 合并关系数据到 chat[0].horae_meta */
@@ -2607,14 +2753,27 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
     /** RPG 提示词（rpgMode 开启才注入） */
     generateRpgPrompt() {
         if (!this.settings?.rpgMode) return '';
+        // 自定义提示词优先
+        if (this.settings.customRpgPrompt) {
+            return '\n' + this.settings.customRpgPrompt
+                .replace(/\{\{user\}\}/gi, this.context?.name1 || '主角')
+                .replace(/\{\{char\}\}/gi, this.context?.name2 || 'AI');
+        }
+        return '\n' + this.getDefaultRpgPrompt();
+    }
+
+    /** RPG 默认提示词 */
+    getDefaultRpgPrompt() {
         const sendBars = this.settings?.sendRpgBars !== false;
         const sendSkills = this.settings?.sendRpgSkills !== false;
-        if (!sendBars && !sendSkills) return '';
+        const sendAttrs = this.settings?.sendRpgAttributes !== false;
+        if (!sendBars && !sendSkills && !sendAttrs) return '';
         const userName = this.context?.name1 || '主角';
         const barCfg = this.settings?.rpgBarConfig || [
             { key: 'hp', name: 'HP' }, { key: 'mp', name: 'MP' }, { key: 'sp', name: 'SP' }
         ];
-        let p = `\n═══ 【RPG】 ═══\n你的回复末尾必须包含<horaerpg>标签。归属格式同NPC编号：N编号 全名，${userName}直接写名字不加N。\n`;
+        const attrCfg = this.settings?.rpgAttributeConfig || [];
+        let p = `═══ 【RPG】 ═══\n你的回复末尾必须包含<horaerpg>标签。归属格式同NPC编号：N编号 全名，${userName}直接写名字不加N。\n`;
         if (sendBars) {
             p += `\n【属性条——每回合必写，缺少=不合格！】\n`;
             p += `必须为 characters: 中每个在场角色输出全部属性条和状态：\n`;
@@ -2630,6 +2789,11 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
             p += `  - 战斗/受伤/施法/消耗 → 合理扣减；恢复/休息 → 合理回增\n`;
             p += `  - 每个在场角色的每个属性条都必须写，漏写任何一人=不合格\n`;
             p += `  - 即使本回合数值无变化，也必须写出当前值\n`;
+        }
+        if (sendAttrs && attrCfg.length > 0) {
+            p += `\n【多维属性】仅首次登场或属性变化时写，无变化可省略\n`;
+            p += `  attr:归属|${attrCfg.map(a => `${a.key}=数值`).join('|')}\n`;
+            p += `  数值范围0-100。属性含义：${attrCfg.map(a => `${a.key}(${a.name})`).join('、')}\n`;
         }
         if (sendSkills) {
             p += `\n【技能】仅习得/升级/失去时写，无变化可省略\n`;

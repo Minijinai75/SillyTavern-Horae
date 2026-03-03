@@ -3,7 +3,7 @@
  * 基于时间锚点的AI记忆增强系统
  * 
  * 作者: SenriYuki
- * 版本: 1.8.0
+ * 版本: 1.8.1
  */
 
 import { renderExtensionTemplateAsync, getContext, extension_settings } from '/scripts/extensions.js';
@@ -20,7 +20,7 @@ import { calculateRelativeTime, calculateDetailedRelativeTime, formatRelativeTim
 const EXTENSION_NAME = 'horae';
 const EXTENSION_FOLDER = `third-party/SillyTavern-Horae`;
 const TEMPLATE_PATH = `${EXTENSION_FOLDER}/assets/templates`;
-const VERSION = '1.8.0';
+const VERSION = '1.8.1';
 
 // 配套正则规则（自动注入ST原生正则系统）
 const HORAE_REGEX_RULES = [
@@ -149,11 +149,22 @@ const DEFAULT_SETTINGS = {
     rpgMode: false,                 // RPG 模式总开关
     sendRpgBars: true,              // 发送属性条（HP/MP/SP/状态）
     sendRpgSkills: true,            // 发送技能列表
+    sendRpgAttributes: true,        // 发送多维属性面板
     rpgBarConfig: [
         { key: 'hp', name: 'HP', color: '#22c55e' },
         { key: 'mp', name: 'MP', color: '#6366f1' },
         { key: 'sp', name: 'SP', color: '#f59e0b' },
     ],
+    rpgAttributeConfig: [
+        { key: 'str', name: '力量', desc: '物理攻击、负重与近战伤害' },
+        { key: 'dex', name: '敏捷', desc: '反射、闪避与远程精准' },
+        { key: 'con', name: '体质', desc: '生命力、耐久与抗毒' },
+        { key: 'int', name: '智力', desc: '学识、魔法与推理能力' },
+        { key: 'wis', name: '感知', desc: '洞察、直觉与意志力' },
+        { key: 'cha', name: '魅力', desc: '说服、领导与人格魅力' },
+    ],
+    rpgAttrViewMode: 'radar',       // 'radar' 或 'text'
+    customRpgPrompt: '',            // 自定义RPG提示词（空=默认）
     // 教学
     tutorialCompleted: false,       // 新用户导航教学是否已完成
     // 向量记忆
@@ -261,6 +272,19 @@ function loadSettings() {
         _isFirstTimeUser = true;
         extension_settings[EXTENSION_NAME] = { ...DEFAULT_SETTINGS };
         settings = { ...DEFAULT_SETTINGS };
+    }
+}
+
+/** 迁移旧版属性配置到 DND 六维 */
+function _migrateAttrConfig() {
+    const cfg = settings.rpgAttributeConfig;
+    if (!cfg || !Array.isArray(cfg)) return;
+    const oldKeys = cfg.map(a => a.key).sort().join(',');
+    // 旧版默认值（4维: con,int,spr,str）
+    if (oldKeys === 'con,int,spr,str' && cfg.length === 4) {
+        settings.rpgAttributeConfig = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.rpgAttributeConfig));
+        saveSettings();
+        console.log('[Horae] 已自动迁移属性面板配置到 DND 六维');
     }
 }
 
@@ -4355,66 +4379,288 @@ function buildCharacterOptions() {
     return html;
 }
 
-/** 更新 RPG 分页 */
+/** 在 Canvas 上绘制雷达图（自适应 DPI） */
+function drawRadarChart(canvas, values, config, maxVal = 100) {
+    const n = config.length;
+    if (n < 3) return;
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = 260, cssH = 260;
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    canvas.width = cssW * dpr;
+    canvas.height = cssH * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const cx = cssW / 2, cy = cssH / 2;
+    const pad = 38;
+    const r = Math.min(cx, cy) - pad;
+    ctx.clearRect(0, 0, cssW, cssH);
+
+    const angle = i => -Math.PI / 2 + (2 * Math.PI * i) / n;
+
+    // 底层网格
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    for (let lv = 1; lv <= 4; lv++) {
+        ctx.beginPath();
+        const lr = (r * lv) / 4;
+        for (let i = 0; i <= n; i++) {
+            const a = angle(i % n);
+            const x = cx + lr * Math.cos(a), y = cy + lr * Math.sin(a);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+    }
+    // 辐射线
+    for (let i = 0; i < n; i++) {
+        const a = angle(i);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+        ctx.stroke();
+    }
+    // 数据区
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+        const a = angle(i % n);
+        const v = Math.min(maxVal, values[config[i % n].key] || 0);
+        const dr = (v / maxVal) * r;
+        const x = cx + dr * Math.cos(a), y = cy + dr * Math.sin(a);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.fillStyle = 'rgba(124, 58, 237, 0.25)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(124, 58, 237, 0.8)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // 顶点圆点 + 标签
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    for (let i = 0; i < n; i++) {
+        const a = angle(i);
+        const v = Math.min(maxVal, values[config[i].key] || 0);
+        const dr = (v / maxVal) * r;
+        ctx.beginPath();
+        ctx.arc(cx + dr * Math.cos(a), cy + dr * Math.sin(a), 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(124, 58, 237, 1)';
+        ctx.fill();
+        // 标签偏移量随维度自适应
+        const labelR = r + 22;
+        const lx = cx + labelR * Math.cos(a);
+        const ly = cy + labelR * Math.sin(a);
+        ctx.fillStyle = '#e2e8f0';
+        const cosA = Math.cos(a);
+        ctx.textAlign = cosA < -0.1 ? 'right' : cosA > 0.1 ? 'left' : 'center';
+        ctx.textBaseline = ly < cy - 5 ? 'bottom' : ly > cy + 5 ? 'top' : 'middle';
+        ctx.fillText(`${config[i].name} ${v}`, lx, ly);
+    }
+}
+
+/** 更新 RPG 分页（角色卡模式，按当前消息位置快照） */
 function updateRpgDisplay() {
     if (!settings.rpgMode) return;
-    const rpg = horaeManager.getRpgData();
+    const rpg = horaeManager.getRpgStateAt(0);
     const state = horaeManager.getLatestState();
-    const barsSection = document.getElementById('horae-rpg-bars-section');
-    const skillsSection = document.getElementById('horae-rpg-skills-section');
-    if (!barsSection || !skillsSection) return;
+    const container = document.getElementById('horae-tab-rpg');
+    if (!container) return;
 
+    const sendBars = settings.sendRpgBars !== false;
+    const sendAttrs = settings.sendRpgAttributes !== false;
+    const sendSkills = settings.sendRpgSkills !== false;
+    const attrCfg = settings.rpgAttributeConfig || [];
+    const moduleCount = [sendBars, sendAttrs && attrCfg.length > 0, sendSkills].filter(Boolean).length;
+    const useCardLayout = moduleCount >= 2;
+
+    // 配置区始终渲染
     renderBarConfig();
+    renderAttrConfig();
 
-    // 属性卡片
-    let barsHtml = '';
-    const allNames = new Set([...Object.keys(rpg.bars), ...Object.keys(rpg.status || {})]);
-    for (const name of allNames) {
-        const bars = rpg.bars[name] || {};
-        const npc = state.npcs[name];
-        const effects = rpg.status?.[name] || [];
-        let cardHtml = `<div class="horae-rpg-char-card"><div class="horae-rpg-char-name">${escapeHtml(name)}</div>`;
-        for (const [type, val] of Object.entries(bars)) {
-            const label = getRpgBarName(type, val[2]);
-            const cur = val[0], max = val[1];
-            const pct = max > 0 ? Math.min(100, Math.round(cur / max * 100)) : 0;
-            const color = getRpgBarColor(type);
-            cardHtml += `<div class="horae-rpg-bar"><span class="horae-rpg-bar-label">${escapeHtml(label)}</span><div class="horae-rpg-bar-track"><div class="horae-rpg-bar-fill" style="width:${pct}%;background:${color};"></div></div><span class="horae-rpg-bar-val">${cur}/${max}</span></div>`;
-        }
-        if (effects.length > 0) {
-            cardHtml += '<div class="horae-rpg-status-label">状态列表</div>';
-            cardHtml += '<div class="horae-rpg-status-detail">';
-            for (const e of effects) {
-                cardHtml += `<div class="horae-rpg-status-item"><i class="fa-solid ${getStatusIcon(e)} horae-rpg-status-icon"></i><span>${escapeHtml(e)}</span></div>`;
-            }
-            cardHtml += '</div>';
-        }
-        cardHtml += '</div>';
-        barsHtml += cardHtml;
-    }
-    barsSection.innerHTML = barsHtml;
+    const barsSection = document.getElementById('horae-rpg-bars-section');
+    const charCardsSection = document.getElementById('horae-rpg-char-cards');
+    if (!barsSection || !charCardsSection) return;
 
-    // 技能列表（始终显示）
-    const hasSkills = Object.values(rpg.skills).some(arr => arr?.length > 0);
-    let skillsHtml = '';
-    if (hasSkills) {
-        for (const [name, skills] of Object.entries(rpg.skills)) {
-            if (!skills?.length) continue;
-            skillsHtml += `<div class="horae-rpg-skill-group"><div class="horae-rpg-char-name">${escapeHtml(name)}</div>`;
-            for (const sk of skills) {
-                const lv = sk.level ? `<span class="horae-rpg-skill-lv">${escapeHtml(sk.level)}</span>` : '';
-                const desc = sk.desc ? `<div class="horae-rpg-skill-desc">${escapeHtml(sk.desc)}</div>` : '';
-                skillsHtml += `<div class="horae-rpg-skill-card"><div class="horae-rpg-skill-header"><span class="horae-rpg-skill-name">${escapeHtml(sk.name)}</span>${lv}<button class="horae-rpg-skill-del" data-owner="${escapeHtml(name)}" data-skill="${escapeHtml(sk.name)}" title="删除"><i class="fa-solid fa-xmark"></i></button></div>${desc}</div>`;
-            }
-            skillsHtml += '</div>';
+    // 收集所有角色
+    const allNames = new Set([
+        ...Object.keys(rpg.bars || {}),
+        ...Object.keys(rpg.status || {}),
+        ...Object.keys(rpg.skills || {}),
+        ...Object.keys(rpg.attributes || {}),
+    ]);
+
+    if (useCardLayout) {
+        // 角色卡模式：属性条+折叠卡在同一区块，在场角色优先
+        barsSection.style.display = '';
+
+        // 分类：在场（有 bars 或 status）vs 不在场
+        const inScene = [], offScene = [];
+        for (const name of allNames) {
+            const hasBars = rpg.bars[name] && Object.keys(rpg.bars[name]).length > 0;
+            const hasStatus = (rpg.status?.[name] || []).length > 0;
+            (hasBars || hasStatus ? inScene : offScene).push(name);
         }
+        const sortedNames = [...inScene, ...offScene];
+
+        let barsHtml = '';
+        for (const name of sortedNames) {
+            const bars = rpg.bars[name];
+            const effects = rpg.status?.[name] || [];
+            const npc = state.npcs[name];
+            const profession = npc?.personality?.split(/[,，]/)?.[0]?.trim() || '';
+            const attrs = rpg.attributes?.[name] || {};
+            const skills = rpg.skills?.[name] || [];
+            const isPresent = inScene.includes(name);
+
+            // 角色容器
+            barsHtml += `<div class="horae-rpg-char-block${isPresent ? '' : ' horae-rpg-offscene'}">`;
+
+            // 属性条（仅在场角色）
+            if (isPresent && sendBars) {
+                barsHtml += `<div class="horae-rpg-char-card horae-rpg-bar-card"><div class="horae-rpg-char-name">${escapeHtml(name)}`;
+                for (const e of effects) {
+                    barsHtml += ` <i class="fa-solid ${getStatusIcon(e)} horae-rpg-hud-effect" title="${escapeHtml(e)}"></i>`;
+                }
+                barsHtml += '</div>';
+                if (bars) {
+                    for (const [type, val] of Object.entries(bars)) {
+                        const label = getRpgBarName(type, val[2]);
+                        const cur = val[0], max = val[1];
+                        const pct = max > 0 ? Math.min(100, Math.round(cur / max * 100)) : 0;
+                        const color = getRpgBarColor(type);
+                        barsHtml += `<div class="horae-rpg-bar"><span class="horae-rpg-bar-label">${escapeHtml(label)}</span><div class="horae-rpg-bar-track"><div class="horae-rpg-bar-fill" style="width:${pct}%;background:${color};"></div></div><span class="horae-rpg-bar-val">${cur}/${max}</span></div>`;
+                    }
+                }
+                if (effects.length > 0) {
+                    barsHtml += '<div class="horae-rpg-status-label">状态列表</div><div class="horae-rpg-status-detail">';
+                    for (const e of effects) barsHtml += `<div class="horae-rpg-status-item"><i class="fa-solid ${getStatusIcon(e)} horae-rpg-status-icon"></i><span>${escapeHtml(e)}</span></div>`;
+                    barsHtml += '</div>';
+                }
+                barsHtml += '</div>';
+            }
+
+            // 角色折叠卡（属性 + 技能）紧贴在属性条下方
+            const hasDetailContent = (sendAttrs && attrCfg.length > 0) || (sendSkills && skills.length > 0);
+            if (hasDetailContent) {
+                barsHtml += `<details class="horae-rpg-char-detail"><summary class="horae-rpg-char-summary"><span class="horae-rpg-char-detail-name">${escapeHtml(name)}</span>`;
+                if (profession) barsHtml += `<span class="horae-rpg-char-prof">${escapeHtml(profession)}</span>`;
+                barsHtml += '</summary><div class="horae-rpg-char-detail-body">';
+
+                if (sendAttrs && attrCfg.length >= 3) {
+                    const hasAttrs = Object.keys(attrs).length > 0;
+                    const viewMode = settings.rpgAttrViewMode || 'radar';
+                    barsHtml += '<div class="horae-rpg-attr-section">';
+                    barsHtml += `<div class="horae-rpg-attr-header"><span>属性</span><button class="horae-rpg-charattr-edit" data-char="${escapeHtml(name)}" title="编辑属性"><i class="fa-solid fa-pen-to-square"></i></button></div>`;
+                    if (hasAttrs) {
+                        if (viewMode === 'radar') {
+                            barsHtml += `<canvas class="horae-rpg-radar" data-char="${escapeHtml(name)}" width="260" height="260"></canvas>`;
+                        } else {
+                            barsHtml += '<div class="horae-rpg-attr-text">';
+                            for (const a of attrCfg) {
+                                barsHtml += `<div class="horae-rpg-attr-row"><span>${escapeHtml(a.name)}</span><span>${attrs[a.key] ?? '?'}</span></div>`;
+                            }
+                            barsHtml += '</div>';
+                        }
+                    } else {
+                        barsHtml += '<div class="horae-rpg-skills-empty">暂无属性数据，点击 ✎ 手动填写</div>';
+                    }
+                    barsHtml += '</div>';
+                }
+
+                if (sendSkills && skills.length > 0) {
+                    barsHtml += '<div class="horae-rpg-card-skills">';
+                    for (const sk of skills) {
+                        barsHtml += `<details class="horae-rpg-skill-detail"><summary class="horae-rpg-skill-summary">${escapeHtml(sk.name)}`;
+                        if (sk.level) barsHtml += ` <span class="horae-rpg-skill-lv">${escapeHtml(sk.level)}</span>`;
+                        barsHtml += `<button class="horae-rpg-skill-del" data-owner="${escapeHtml(name)}" data-skill="${escapeHtml(sk.name)}" title="删除"><i class="fa-solid fa-xmark"></i></button></summary>`;
+                        if (sk.desc) barsHtml += `<div class="horae-rpg-skill-desc">${escapeHtml(sk.desc)}</div>`;
+                        barsHtml += '</details>';
+                    }
+                    barsHtml += '</div>';
+                }
+                barsHtml += '</div></details>';
+            }
+            barsHtml += '</div>';
+        }
+        barsSection.innerHTML = barsHtml;
+        charCardsSection.innerHTML = '';
+        charCardsSection.style.display = 'none';
     } else {
-        skillsHtml = '<div class="horae-rpg-skills-empty">暂无技能，点击 + 手动添加</div>';
+        // 平铺模式（仅开一个功能）
+        charCardsSection.innerHTML = '';
+        charCardsSection.style.display = 'none';
+        let barsHtml = '';
+        for (const name of allNames) {
+            const bars = rpg.bars[name] || {};
+            const effects = rpg.status?.[name] || [];
+            if (!Object.keys(bars).length && !effects.length) continue;
+            let h = `<div class="horae-rpg-char-card"><div class="horae-rpg-char-name">${escapeHtml(name)}</div>`;
+            for (const [type, val] of Object.entries(bars)) {
+                const label = getRpgBarName(type, val[2]);
+                const cur = val[0], max = val[1];
+                const pct = max > 0 ? Math.min(100, Math.round(cur / max * 100)) : 0;
+                const color = getRpgBarColor(type);
+                h += `<div class="horae-rpg-bar"><span class="horae-rpg-bar-label">${escapeHtml(label)}</span><div class="horae-rpg-bar-track"><div class="horae-rpg-bar-fill" style="width:${pct}%;background:${color};"></div></div><span class="horae-rpg-bar-val">${cur}/${max}</span></div>`;
+            }
+            if (effects.length > 0) {
+                h += '<div class="horae-rpg-status-label">状态列表</div><div class="horae-rpg-status-detail">';
+                for (const e of effects) h += `<div class="horae-rpg-status-item"><i class="fa-solid ${getStatusIcon(e)} horae-rpg-status-icon"></i><span>${escapeHtml(e)}</span></div>`;
+                h += '</div>';
+            }
+            h += '</div>';
+            barsHtml += h;
+        }
+        barsSection.innerHTML = barsHtml;
     }
-    skillsSection.innerHTML = skillsHtml;
 
-    // 刷新底部面板 HUD
+    // 技能平铺列表：角色卡模式下隐藏（技能已在角色卡内折叠显示）
+    const skillsSection = document.getElementById('horae-rpg-skills-section');
+    if (skillsSection) {
+        if (useCardLayout && sendSkills) {
+            skillsSection.innerHTML = '<div class="horae-rpg-skills-empty">技能已在上方角色卡中折叠显示，点击 + 可手动添加</div>';
+        } else {
+            const hasSkills = Object.values(rpg.skills).some(arr => arr?.length > 0);
+            let skillsHtml = '';
+            if (hasSkills) {
+                for (const [name, skills] of Object.entries(rpg.skills)) {
+                    if (!skills?.length) continue;
+                    skillsHtml += `<div class="horae-rpg-skill-group"><div class="horae-rpg-char-name">${escapeHtml(name)}</div>`;
+                    for (const sk of skills) {
+                        const lv = sk.level ? `<span class="horae-rpg-skill-lv">${escapeHtml(sk.level)}</span>` : '';
+                        const desc = sk.desc ? `<div class="horae-rpg-skill-desc">${escapeHtml(sk.desc)}</div>` : '';
+                        skillsHtml += `<div class="horae-rpg-skill-card"><div class="horae-rpg-skill-header"><span class="horae-rpg-skill-name">${escapeHtml(sk.name)}</span>${lv}<button class="horae-rpg-skill-del" data-owner="${escapeHtml(name)}" data-skill="${escapeHtml(sk.name)}" title="删除"><i class="fa-solid fa-xmark"></i></button></div>${desc}</div>`;
+                    }
+                    skillsHtml += '</div>';
+                }
+            } else {
+                skillsHtml = '<div class="horae-rpg-skills-empty">暂无技能，点击 + 手动添加</div>';
+            }
+            skillsSection.innerHTML = skillsHtml;
+        }
+    }
+
+    // 绘制雷达图
+    document.querySelectorAll('.horae-rpg-radar').forEach(canvas => {
+        const charName = canvas.dataset.char;
+        const vals = rpg.attributes?.[charName] || {};
+        drawRadarChart(canvas, vals, attrCfg);
+    });
+
     updateAllRpgHuds();
+}
+
+/** 渲染属性面板配置列表 */
+function renderAttrConfig() {
+    const list = document.getElementById('horae-rpg-attr-config-list');
+    if (!list) return;
+    const attrs = settings.rpgAttributeConfig || [];
+    list.innerHTML = attrs.map((a, i) => `
+        <div class="horae-rpg-config-row" data-idx="${i}">
+            <input class="horae-rpg-config-key" value="${escapeHtml(a.key)}" maxlength="10" data-idx="${i}" data-type="attr" />
+            <input class="horae-rpg-config-name" value="${escapeHtml(a.name)}" maxlength="8" data-idx="${i}" data-type="attr" />
+            <input class="horae-rpg-attr-desc" value="${escapeHtml(a.desc || '')}" placeholder="描述" data-idx="${i}" />
+            <button class="horae-rpg-attr-del" data-idx="${i}" title="删除"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    `).join('');
 }
 
 /** 为单个消息面板渲染 RPG HUD（简易状态条） */
@@ -4423,7 +4669,10 @@ function renderRpgHud(messageEl, messageIndex) {
     if (old) old.remove();
     if (!settings.rpgMode || settings.sendRpgBars === false) return;
 
-    const rpg = horaeManager.getRpgData();
+    // 按该消息位置构建 RPG 快照（跳过之后的消息）
+    const chatLen = horaeManager.getChat()?.length || 0;
+    const skip = Math.max(0, chatLen - messageIndex - 1);
+    const rpg = horaeManager.getRpgStateAt(skip);
     if (Object.keys(rpg.bars).length === 0 && Object.keys(rpg.status || {}).length === 0) return;
 
     const meta = horaeManager.getMessageMeta(messageIndex);
@@ -4490,10 +4739,115 @@ function renderRpgHud(messageEl, messageIndex) {
 
 /** 刷新所有可见面板的 RPG HUD */
 function updateAllRpgHuds() {
+    if (!settings.rpgMode || settings.sendRpgBars === false) return;
+    // 单次前向遍历构建每条消息的 RPG 累积快照
+    const chat = horaeManager.getChat();
+    if (!chat?.length) return;
+    const snapMap = _buildRpgSnapshotMap(chat);
     document.querySelectorAll('.mes').forEach(mesEl => {
         const id = parseInt(mesEl.getAttribute('mesid'));
-        if (!isNaN(id)) renderRpgHud(mesEl, id);
+        if (!isNaN(id)) _renderRpgHudFromSnapshot(mesEl, id, snapMap.get(id));
     });
+}
+
+/** 单次遍历构建消息→RPG快照的映射 */
+function _buildRpgSnapshotMap(chat) {
+    const map = new Map();
+    const acc = { bars: {}, status: {}, skills: {}, attributes: {} };
+    const resolve = (raw) => horaeManager._resolveRpgOwner(raw);
+    for (let i = 0; i < chat.length; i++) {
+        const changes = chat[i]?.horae_meta?._rpgChanges;
+        if (changes && i > 0) {
+            for (const [raw, bd] of Object.entries(changes.bars || {})) {
+                const o = resolve(raw);
+                if (!acc.bars[o]) acc.bars[o] = {};
+                Object.assign(acc.bars[o], bd);
+            }
+            for (const [raw, ef] of Object.entries(changes.status || {})) {
+                acc.status[resolve(raw)] = ef;
+            }
+            for (const sk of (changes.skills || [])) {
+                const o = resolve(sk.owner);
+                if (!acc.skills[o]) acc.skills[o] = [];
+                const idx = acc.skills[o].findIndex(s => s.name === sk.name);
+                if (idx >= 0) { if (sk.level) acc.skills[o][idx].level = sk.level; if (sk.desc) acc.skills[o][idx].desc = sk.desc; }
+                else acc.skills[o].push({ name: sk.name, level: sk.level, desc: sk.desc });
+            }
+            for (const sk of (changes.removedSkills || [])) {
+                const o = resolve(sk.owner);
+                if (acc.skills[o]) acc.skills[o] = acc.skills[o].filter(s => s.name !== sk.name);
+            }
+            for (const [raw, vals] of Object.entries(changes.attributes || {})) {
+                const o = resolve(raw);
+                acc.attributes[o] = { ...(acc.attributes[o] || {}), ...vals };
+            }
+        }
+        // 深拷贝当前累积状态作为快照
+        map.set(i, JSON.parse(JSON.stringify(acc)));
+    }
+    return map;
+}
+
+/** 用预构建的快照渲染单条消息的 RPG HUD */
+function _renderRpgHudFromSnapshot(messageEl, messageIndex, rpg) {
+    const old = messageEl.querySelector('.horae-rpg-hud');
+    if (old) old.remove();
+    if (!rpg || (Object.keys(rpg.bars).length === 0 && Object.keys(rpg.status || {}).length === 0)) return;
+
+    const meta = horaeManager.getMessageMeta(messageIndex);
+    const present = meta?.scene?.characters_present || [];
+    if (present.length === 0) return;
+
+    const state = horaeManager.getLatestState();
+    const barCfg = settings.rpgBarConfig || [];
+    const userName = getContext().name1 || '';
+    const allRpgNames = new Set([...Object.keys(rpg.bars), ...Object.keys(rpg.status || {})]);
+    const chars = [];
+    for (const p of present) {
+        const n = p.trim();
+        if (!n) continue;
+        let match = null;
+        if (allRpgNames.has(n)) match = n;
+        else if (n === userName && allRpgNames.has(userName)) match = userName;
+        else {
+            for (const rn of allRpgNames) {
+                if (rn.includes(n) || n.includes(rn)) { match = rn; break; }
+            }
+        }
+        if (match) chars.push(match);
+    }
+    if (chars.length === 0) return;
+
+    let html = '<div class="horae-rpg-hud">';
+    for (const name of chars) {
+        const bars = rpg.bars[name] || {};
+        const effects = rpg.status?.[name] || [];
+        const displayName = name;
+        html += `<div class="horae-rpg-hud-name">${escapeHtml(displayName)}`;
+        for (const e of effects) html += ` <i class="fa-solid ${getStatusIcon(e)} horae-rpg-hud-effect" title="${escapeHtml(e)}"></i>`;
+        html += '</div>';
+        for (const [type, val] of Object.entries(bars)) {
+            const label = getRpgBarName(type, val[2]);
+            const cur = val[0], max = val[1];
+            const pct = max > 0 ? Math.min(100, Math.round(cur / max * 100)) : 0;
+            const color = getRpgBarColor(type);
+            html += `<div class="horae-rpg-hud-bar"><span class="horae-rpg-hud-label">${escapeHtml(label)}</span><div class="horae-rpg-hud-track"><div class="horae-rpg-hud-fill" style="width:${pct}%;background:${color};"></div></div><span class="horae-rpg-hud-val">${cur}/${max}</span></div>`;
+        }
+    }
+    html += '</div>';
+
+    const panel = messageEl.querySelector('.horae-message-panel');
+    if (panel) {
+        panel.insertAdjacentHTML('beforebegin', html);
+        const hudEl = messageEl.querySelector('.horae-rpg-hud');
+        if (hudEl) {
+            const w = Math.max(50, Math.min(100, settings.panelWidth || 100));
+            if (w < 100) hudEl.style.maxWidth = `${w}%`;
+            const ofs = Math.max(0, settings.panelOffset || 0);
+            if (ofs > 0) hudEl.style.marginLeft = `${ofs}px`;
+            if (isLightMode()) hudEl.classList.add('horae-light');
+        }
+    }
 }
 
 /**
@@ -7053,6 +7407,73 @@ function initSettingsEvents() {
             updateTokenCounter();
         }
     });
+    // 属性条：恢复默认
+    $('#horae-rpg-bar-reset').on('click', () => {
+        if (!confirm('确定恢复属性条为默认配置（HP/MP/SP）？')) return;
+        settings.rpgBarConfig = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.rpgBarConfig));
+        saveSettings(); renderBarConfig();
+        horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
+        showToast('已恢复默认属性条', 'success');
+    });
+    // 属性条：导出
+    $('#horae-rpg-bar-export').on('click', () => {
+        const blob = new Blob([JSON.stringify(settings.rpgBarConfig, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = 'horae-rpg-bars.json'; a.click(); URL.revokeObjectURL(a.href);
+    });
+    // 属性条：导入
+    $('#horae-rpg-bar-import').on('click', () => document.getElementById('horae-rpg-bar-import-file')?.click());
+    $('#horae-rpg-bar-import-file').on('change', function() {
+        const file = this.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const arr = JSON.parse(reader.result);
+                if (!Array.isArray(arr) || !arr.every(b => b.key && b.name)) throw new Error('格式不正确');
+                settings.rpgBarConfig = arr;
+                saveSettings(); renderBarConfig();
+                horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
+                showToast(`已导入 ${arr.length} 条属性条配置`, 'success');
+            } catch (e) { showToast('导入失败: ' + e.message, 'error'); }
+        };
+        reader.readAsText(file);
+        this.value = '';
+    });
+    // 属性面板：恢复默认
+    $('#horae-rpg-attr-reset').on('click', () => {
+        if (!confirm('确定恢复属性面板为默认配置（DND六维）？')) return;
+        settings.rpgAttributeConfig = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.rpgAttributeConfig));
+        saveSettings(); renderAttrConfig();
+        horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
+        showToast('已恢复默认属性面板', 'success');
+    });
+    // 属性面板：导出
+    $('#horae-rpg-attr-export').on('click', () => {
+        const blob = new Blob([JSON.stringify(settings.rpgAttributeConfig, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = 'horae-rpg-attrs.json'; a.click(); URL.revokeObjectURL(a.href);
+    });
+    // 属性面板：导入
+    $('#horae-rpg-attr-import').on('click', () => document.getElementById('horae-rpg-attr-import-file')?.click());
+    $('#horae-rpg-attr-import-file').on('change', function() {
+        const file = this.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const arr = JSON.parse(reader.result);
+                if (!Array.isArray(arr) || !arr.every(a => a.key && a.name)) throw new Error('格式不正确');
+                settings.rpgAttributeConfig = arr;
+                saveSettings(); renderAttrConfig();
+                horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
+                showToast(`已导入 ${arr.length} 条属性配置`, 'success');
+            } catch (e) { showToast('导入失败: ' + e.message, 'error'); }
+        };
+        reader.readAsText(file);
+        this.value = '';
+    });
+
     $('#horae-rpg-add-bar').on('click', () => {
         if (!settings.rpgBarConfig) settings.rpgBarConfig = [];
         const existing = new Set(settings.rpgBarConfig.map(b => b.key));
@@ -7064,6 +7485,113 @@ function initSettingsEvents() {
         horaeManager.init(getContext(), settings);
         _refreshSystemPromptDisplay();
         updateTokenCounter();
+    });
+
+    // 角色卡内编辑属性按钮
+    $(document).on('click', '.horae-rpg-charattr-edit', function() {
+        const charName = this.dataset.char;
+        if (!charName) return;
+        const form = document.getElementById('horae-rpg-charattr-form');
+        if (!form) return;
+        form.style.display = '';
+        const attrCfg = settings.rpgAttributeConfig || [];
+        const attrInputs = attrCfg.map(a =>
+            `<div class="horae-rpg-charattr-row"><label>${escapeHtml(a.name)}(${escapeHtml(a.key)})</label><input type="number" class="horae-rpg-charattr-val" data-key="${escapeHtml(a.key)}" min="0" max="100" placeholder="0-100" /></div>`
+        ).join('');
+        form.innerHTML = `
+            <div class="horae-rpg-form-title">编辑: ${escapeHtml(charName)}</div>
+            ${attrInputs}
+            <div class="horae-rpg-form-actions">
+                <button id="horae-rpg-charattr-save-inline" class="horae-rpg-btn-sm" data-char="${escapeHtml(charName)}">保存</button>
+                <button id="horae-rpg-charattr-cancel-inline" class="horae-rpg-btn-sm horae-rpg-btn-muted">取消</button>
+            </div>`;
+        // 填入现有值
+        const rpg = getContext().chat?.[0]?.horae_meta?.rpg;
+        const existing = rpg?.attributes?.[charName] || {};
+        form.querySelectorAll('.horae-rpg-charattr-val').forEach(inp => {
+            const k = inp.dataset.key;
+            if (existing[k] !== undefined) inp.value = existing[k];
+        });
+        form.querySelector('#horae-rpg-charattr-save-inline').addEventListener('click', function() {
+            const name = this.dataset.char;
+            const vals = {};
+            let hasVal = false;
+            form.querySelectorAll('.horae-rpg-charattr-val').forEach(inp => {
+                const k = inp.dataset.key;
+                const v = parseInt(inp.value);
+                if (!isNaN(v)) { vals[k] = Math.max(0, Math.min(100, v)); hasVal = true; }
+            });
+            if (!hasVal) { showToast('请至少填写一个属性值', 'warning'); return; }
+            const chat = getContext().chat;
+            if (!chat?.[0]?.horae_meta) return;
+            if (!chat[0].horae_meta.rpg) chat[0].horae_meta.rpg = { bars: {}, status: {}, skills: {}, attributes: {} };
+            if (!chat[0].horae_meta.rpg.attributes) chat[0].horae_meta.rpg.attributes = {};
+            chat[0].horae_meta.rpg.attributes[name] = { ...(chat[0].horae_meta.rpg.attributes[name] || {}), ...vals };
+            getContext().saveChat();
+            form.style.display = 'none';
+            updateRpgDisplay();
+            showToast('已保存角色属性', 'success');
+        });
+        form.querySelector('#horae-rpg-charattr-cancel-inline').addEventListener('click', () => {
+            form.style.display = 'none';
+        });
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    // RPG 角色属性手动添加/编辑
+    $('#horae-rpg-add-charattr').on('click', () => {
+        const form = document.getElementById('horae-rpg-charattr-form');
+        if (!form) return;
+        if (form.style.display !== 'none') { form.style.display = 'none'; return; }
+        const attrCfg = settings.rpgAttributeConfig || [];
+        if (!attrCfg.length) { showToast('请先在属性面板配置中添加属性', 'warning'); return; }
+        const attrInputs = attrCfg.map(a =>
+            `<div class="horae-rpg-charattr-row"><label>${escapeHtml(a.name)}(${escapeHtml(a.key)})</label><input type="number" class="horae-rpg-charattr-val" data-key="${escapeHtml(a.key)}" min="0" max="100" placeholder="0-100" /></div>`
+        ).join('');
+        form.innerHTML = `
+            <select id="horae-rpg-charattr-owner">${buildCharacterOptions()}</select>
+            ${attrInputs}
+            <div class="horae-rpg-form-actions">
+                <button id="horae-rpg-charattr-load" class="horae-rpg-btn-sm horae-rpg-btn-muted">加载现有</button>
+                <button id="horae-rpg-charattr-save" class="horae-rpg-btn-sm">保存</button>
+                <button id="horae-rpg-charattr-cancel" class="horae-rpg-btn-sm horae-rpg-btn-muted">取消</button>
+            </div>`;
+        form.style.display = '';
+        // 加载已有数据
+        form.querySelector('#horae-rpg-charattr-load').addEventListener('click', () => {
+            const ownerVal = form.querySelector('#horae-rpg-charattr-owner').value;
+            const owner = ownerVal === '__user__' ? (getContext().name1 || '{{user}}') : ownerVal;
+            const rpg = getContext().chat?.[0]?.horae_meta?.rpg;
+            const existing = rpg?.attributes?.[owner] || {};
+            form.querySelectorAll('.horae-rpg-charattr-val').forEach(inp => {
+                const k = inp.dataset.key;
+                if (existing[k] !== undefined) inp.value = existing[k];
+            });
+        });
+        form.querySelector('#horae-rpg-charattr-save').addEventListener('click', () => {
+            const ownerVal = form.querySelector('#horae-rpg-charattr-owner').value;
+            const owner = ownerVal === '__user__' ? (getContext().name1 || '{{user}}') : ownerVal;
+            const vals = {};
+            let hasVal = false;
+            form.querySelectorAll('.horae-rpg-charattr-val').forEach(inp => {
+                const k = inp.dataset.key;
+                const v = parseInt(inp.value);
+                if (!isNaN(v)) { vals[k] = Math.max(0, Math.min(100, v)); hasVal = true; }
+            });
+            if (!hasVal) { showToast('请至少填写一个属性值', 'warning'); return; }
+            const chat = getContext().chat;
+            if (!chat?.[0]?.horae_meta) return;
+            if (!chat[0].horae_meta.rpg) chat[0].horae_meta.rpg = { bars: {}, status: {}, skills: {}, attributes: {} };
+            if (!chat[0].horae_meta.rpg.attributes) chat[0].horae_meta.rpg.attributes = {};
+            chat[0].horae_meta.rpg.attributes[owner] = { ...(chat[0].horae_meta.rpg.attributes[owner] || {}), ...vals };
+            getContext().saveChat();
+            form.style.display = 'none';
+            updateRpgDisplay();
+            showToast('已保存角色属性', 'success');
+        });
+        form.querySelector('#horae-rpg-charattr-cancel').addEventListener('click', () => {
+            form.style.display = 'none';
+        });
     });
 
     // RPG 技能增删
@@ -7094,6 +7622,7 @@ function initSettingsEvents() {
                 name: skillName,
                 level: form.querySelector('#horae-rpg-skill-level').value.trim(),
                 desc: form.querySelector('#horae-rpg-skill-desc').value.trim(),
+                _userAdded: true,
             });
             getContext().saveChat();
             form.style.display = 'none';
@@ -7108,15 +7637,89 @@ function initSettingsEvents() {
         const owner = this.dataset.owner;
         const skillName = this.dataset.skill;
         const chat = getContext().chat;
-        const skills = chat?.[0]?.horae_meta?.rpg?.skills;
-        if (skills?.[owner]) {
-            skills[owner] = skills[owner].filter(s => s.name !== skillName);
-            if (skills[owner].length === 0) delete skills[owner];
+        const rpg = chat?.[0]?.horae_meta?.rpg;
+        if (rpg?.skills?.[owner]) {
+            rpg.skills[owner] = rpg.skills[owner].filter(s => s.name !== skillName);
+            if (rpg.skills[owner].length === 0) delete rpg.skills[owner];
+            if (!rpg._deletedSkills) rpg._deletedSkills = [];
+            if (!rpg._deletedSkills.some(d => d.owner === owner && d.name === skillName)) {
+                rpg._deletedSkills.push({ owner, name: skillName });
+            }
             getContext().saveChat();
             updateRpgDisplay();
         }
     });
-    
+
+    // 属性面板配置
+    $(document).on('input', '.horae-rpg-config-key[data-type="attr"]', function() {
+        const i = parseInt(this.dataset.idx);
+        if (settings.rpgAttributeConfig?.[i]) {
+            const val = this.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+            if (val) settings.rpgAttributeConfig[i].key = val;
+            saveSettings(); horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
+        }
+    });
+    $(document).on('input', '.horae-rpg-config-name[data-type="attr"]', function() {
+        const i = parseInt(this.dataset.idx);
+        if (settings.rpgAttributeConfig?.[i]) {
+            settings.rpgAttributeConfig[i].name = this.value.trim() || settings.rpgAttributeConfig[i].key.toUpperCase();
+            saveSettings(); horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
+        }
+    });
+    $(document).on('input', '.horae-rpg-attr-desc', function() {
+        const i = parseInt(this.dataset.idx);
+        if (settings.rpgAttributeConfig?.[i]) {
+            settings.rpgAttributeConfig[i].desc = this.value.trim();
+            saveSettings();
+        }
+    });
+    $(document).on('click', '.horae-rpg-attr-del', function() {
+        const i = parseInt(this.dataset.idx);
+        if (settings.rpgAttributeConfig?.[i]) {
+            settings.rpgAttributeConfig.splice(i, 1);
+            saveSettings(); renderAttrConfig();
+            horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
+        }
+    });
+    $('#horae-rpg-add-attr').on('click', () => {
+        if (!settings.rpgAttributeConfig) settings.rpgAttributeConfig = [];
+        const existing = new Set(settings.rpgAttributeConfig.map(a => a.key));
+        let nk = 'attr1';
+        for (let n = 1; existing.has(nk); n++) nk = `attr${n}`;
+        settings.rpgAttributeConfig.push({ key: nk, name: nk.toUpperCase(), desc: '' });
+        saveSettings(); renderAttrConfig();
+        horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
+    });
+    $('#horae-rpg-attr-view-toggle').on('click', () => {
+        settings.rpgAttrViewMode = settings.rpgAttrViewMode === 'radar' ? 'text' : 'radar';
+        saveSettings(); updateRpgDisplay();
+    });
+    // 属性面板开关
+    $('#horae-setting-rpg-attrs').on('change', function() {
+        settings.sendRpgAttributes = this.checked;
+        saveSettings();
+        $('#horae-rpg-attr-config-area').toggle(this.checked);
+        horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
+        updateRpgDisplay();
+    });
+    // RPG 自定义提示词
+    $('#horae-custom-rpg-prompt').on('input', function() {
+        const val = this.value;
+        settings.customRpgPrompt = (val.trim() === horaeManager.getDefaultRpgPrompt().trim()) ? '' : val;
+        $('#horae-rpg-prompt-count').text(val.length);
+        saveSettings(); horaeManager.init(getContext(), settings);
+        _refreshSystemPromptDisplay(); updateTokenCounter();
+    });
+    $('#horae-btn-reset-rpg-prompt').on('click', () => {
+        if (!confirm('确定恢复 RPG 提示词为默认值？')) return;
+        settings.customRpgPrompt = '';
+        saveSettings();
+        const def = horaeManager.getDefaultRpgPrompt();
+        $('#horae-custom-rpg-prompt').val(def);
+        $('#horae-rpg-prompt-count').text(def.length);
+        horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
+    });
+
     $('#horae-btn-agenda-select-all').on('click', selectAllAgenda);
     $('#horae-btn-agenda-delete').on('click', deleteSelectedAgenda);
     $('#horae-btn-agenda-cancel-select').on('click', exitAgendaMultiSelect);
@@ -7220,6 +7823,7 @@ function initSettingsEvents() {
         saveSettings();
         $('#horae-rpg-sub-options').toggle(this.checked);
         $('#horae-tab-btn-rpg').toggle(this.checked);
+        $('#horae-rpg-prompt-group').toggle(this.checked);
         horaeManager.init(getContext(), settings);
         _refreshSystemPromptDisplay();
         updateTokenCounter();
@@ -7760,7 +8364,10 @@ function syncSettingsToUI() {
     $('#horae-rpg-sub-options').toggle(!!settings.rpgMode);
     $('#horae-tab-btn-rpg').toggle(!!settings.rpgMode);
     $('#horae-setting-rpg-bars').prop('checked', settings.sendRpgBars !== false);
+    $('#horae-setting-rpg-attrs').prop('checked', settings.sendRpgAttributes !== false);
     $('#horae-setting-rpg-skills').prop('checked', settings.sendRpgSkills !== false);
+    $('#horae-rpg-prompt-group').toggle(!!settings.rpgMode);
+    $('#horae-rpg-attr-config-area').toggle(settings.sendRpgAttributes !== false);
 
     // 自动摘要
     $('#horae-setting-auto-summary').prop('checked', !!settings.autoSummaryEnabled);
@@ -7786,6 +8393,7 @@ function syncSettingsToUI() {
     const locationPromptVal = settings.customLocationPrompt || horaeManager.getDefaultLocationPrompt();
     const relPromptVal = settings.customRelationshipPrompt || horaeManager.getDefaultRelationshipPrompt();
     const moodPromptVal = settings.customMoodPrompt || horaeManager.getDefaultMoodPrompt();
+    const rpgPromptVal = settings.customRpgPrompt || horaeManager.getDefaultRpgPrompt();
     $('#horae-custom-system-prompt').val(sysPrompt);
     $('#horae-custom-batch-prompt').val(batchPromptVal);
     $('#horae-custom-analysis-prompt').val(analysisPromptVal);
@@ -7795,6 +8403,7 @@ function syncSettingsToUI() {
     $('#horae-custom-location-prompt').val(locationPromptVal);
     $('#horae-custom-relationship-prompt').val(relPromptVal);
     $('#horae-custom-mood-prompt').val(moodPromptVal);
+    $('#horae-custom-rpg-prompt').val(rpgPromptVal);
     $('#horae-system-prompt-count').text(sysPrompt.length);
     $('#horae-batch-prompt-count').text(batchPromptVal.length);
     $('#horae-analysis-prompt-count').text(analysisPromptVal.length);
@@ -7804,6 +8413,7 @@ function syncSettingsToUI() {
     $('#horae-location-prompt-count').text(locationPromptVal.length);
     $('#horae-relationship-prompt-count').text(relPromptVal.length);
     $('#horae-mood-prompt-count').text(moodPromptVal.length);
+    $('#horae-rpg-prompt-count').text(rpgPromptVal.length);
     
     // 面板宽度和偏移
     $('#horae-setting-panel-width').val(settings.panelWidth || 100);

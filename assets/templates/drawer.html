@@ -10,7 +10,7 @@
                 <i class="fa-regular fa-clock"></i>
                 Horae 时光记忆
             </div>
-            <span class="horae-version">v1.8.0</span>
+            <span class="horae-version">v1.8.1</span>
         </div>
         
         <!-- 标签页导航 -->
@@ -301,12 +301,39 @@
                 <div class="horae-rpg-config-section">
                     <div class="horae-rpg-section-head">
                         <span>属性条配置</span>
+                        <button id="horae-rpg-bar-reset" class="horae-rpg-btn-sm" title="恢复默认"><i class="fa-solid fa-rotate-left"></i></button>
+                        <button id="horae-rpg-bar-export" class="horae-rpg-btn-sm" title="导出配置"><i class="fa-solid fa-download"></i></button>
+                        <button id="horae-rpg-bar-import" class="horae-rpg-btn-sm" title="导入配置"><i class="fa-solid fa-upload"></i></button>
                         <button id="horae-rpg-add-bar" class="horae-rpg-btn-sm" title="添加属性条"><i class="fa-solid fa-plus"></i></button>
                     </div>
                     <div id="horae-rpg-bar-config-list"></div>
+                    <input type="file" id="horae-rpg-bar-import-file" accept=".json" style="display:none;" />
                 </div>
-                <!-- 角色属性 -->
+                <!-- 属性面板配置 -->
+                <div class="horae-rpg-config-section" id="horae-rpg-attr-config-area">
+                    <div class="horae-rpg-section-head">
+                        <span>属性面板配置</span>
+                        <button id="horae-rpg-attr-reset" class="horae-rpg-btn-sm" title="恢复默认"><i class="fa-solid fa-rotate-left"></i></button>
+                        <button id="horae-rpg-attr-export" class="horae-rpg-btn-sm" title="导出配置"><i class="fa-solid fa-download"></i></button>
+                        <button id="horae-rpg-attr-import" class="horae-rpg-btn-sm" title="导入配置"><i class="fa-solid fa-upload"></i></button>
+                        <button id="horae-rpg-attr-view-toggle" class="horae-rpg-btn-sm" title="切换图形/文字"><i class="fa-solid fa-chart-pie"></i></button>
+                        <button id="horae-rpg-add-attr" class="horae-rpg-btn-sm" title="添加属性"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <div id="horae-rpg-attr-config-list"></div>
+                    <input type="file" id="horae-rpg-attr-import-file" accept=".json" style="display:none;" />
+                </div>
+                <!-- 在场角色属性条 -->
                 <div id="horae-rpg-bars-section"></div>
+                <!-- 角色卡片区（角色卡折叠模式） -->
+                <div id="horae-rpg-char-cards"></div>
+                <!-- 角色属性手动编辑 -->
+                <div class="horae-rpg-manual-section">
+                    <div class="horae-rpg-section-head">
+                        <span>角色属性</span>
+                        <button id="horae-rpg-add-charattr" class="horae-rpg-btn-sm" title="添加/编辑角色属性"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <div id="horae-rpg-charattr-form" style="display:none;"></div>
+                </div>
                 <!-- 技能列表 -->
                 <div class="horae-rpg-skills-area">
                     <div class="horae-rpg-section-head">
@@ -566,6 +593,10 @@
                             <label style="display:block;margin-bottom:4px;">
                                 <input type="checkbox" id="horae-setting-rpg-bars" checked>
                                 发送属性条（HP/MP/SP/状态异常）
+                            </label>
+                            <label style="display:block;margin-bottom:4px;">
+                                <input type="checkbox" id="horae-setting-rpg-attrs" checked>
+                                发送属性面板（多维属性）
                             </label>
                             <label style="display:block;">
                                 <input type="checkbox" id="horae-setting-rpg-skills" checked>
@@ -1011,6 +1042,19 @@
                                 <span id="horae-mood-prompt-count">0</span> 字符
                             </div>
                         </div>
+
+                        <div id="horae-rpg-prompt-group" class="horae-prompt-editor-group" style="margin-top: 12px; display: none;">
+                            <div class="horae-prompt-editor-header">
+                                <span>RPG 模式提示词</span>
+                                <button id="horae-btn-reset-rpg-prompt" class="horae-btn-reset-prompt" title="恢复默认">
+                                    <i class="fa-solid fa-rotate-left"></i> 恢复默认
+                                </button>
+                            </div>
+                            <textarea id="horae-custom-rpg-prompt" class="horae-prompt-textarea" rows="8" placeholder="留空使用默认提示词..."></textarea>
+                            <div class="horae-prompt-char-count">
+                                <span id="horae-rpg-prompt-count">0</span> 字符
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -1054,7 +1098,7 @@
                 </div>
                 
                 <div class="horae-about">
-                    <p>Horae v1.8.0 | 作者: SenriYuki</p>
+                    <p>Horae v1.8.1 | 作者: SenriYuki</p>
                     <p>基于时间锚点的AI记忆增强系统</p>
                 </div>
             </div>
