@@ -196,7 +196,7 @@ export class VectorManager {
                     staleKeys.push(item.messageIndex);
                     continue;
                 }
-                const doc = this._buildDocument(chat[item.messageIndex]?.horae_meta);
+                const doc = this.buildVectorDocument(chat[item.messageIndex]?.horae_meta);
                 if (doc && this._hashString(doc) !== item.hash) {
                     staleKeys.push(item.messageIndex);
                     continue;
@@ -266,6 +266,25 @@ export class VectorManager {
             parts.push(meta.timestamp.story_time
                 ? `${meta.timestamp.story_date} ${meta.timestamp.story_time}`
                 : meta.timestamp.story_date);
+        }
+
+        // RPG milestones: level changes, equipment events, stronghold changes
+        const rpg = meta._rpgChanges;
+        if (rpg) {
+            if (rpg.levels && Object.keys(rpg.levels).length > 0) {
+                for (const [owner, lv] of Object.entries(rpg.levels)) {
+                    parts.push(`${owner} 升级至Lv.${lv}`);
+                }
+            }
+            for (const eq of (rpg.equipment || [])) {
+                parts.push(`${eq.owner} 装备了 ${eq.name}(${eq.slot})`);
+            }
+            for (const u of (rpg.unequip || [])) {
+                parts.push(`${u.owner} 卸下 ${u.name}(${u.slot})`);
+            }
+            for (const bc of (rpg.baseChanges || [])) {
+                if (bc.field === 'level') parts.push(`据点 ${bc.path} 升至Lv.${bc.value}`);
+            }
         }
 
         return parts.join(' | ');

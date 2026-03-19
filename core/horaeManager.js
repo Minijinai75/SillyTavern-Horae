@@ -610,12 +610,23 @@ class HoraeManager {
             }
         }
         
-        // 物品
+        // 物品（已装备的物品不在此处显示，避免重复）
         if (sendItems) {
             const items = Object.entries(state.items);
-            if (items.length > 0) {
+            // 收集已装备物品名集合
+            const equippedNames = new Set();
+            if (this.settings?.rpgMode && !!this.settings.sendRpgEquipment) {
+                const rpgData = this.getRpgStateAt(skipLast);
+                for (const [, slots] of Object.entries(rpgData.equipment || {})) {
+                    for (const [, eqItems] of Object.entries(slots)) {
+                        for (const eq of eqItems) equippedNames.add(eq.name);
+                    }
+                }
+            }
+            const unequipped = items.filter(([name]) => !equippedNames.has(name));
+            if (unequipped.length > 0) {
                 lines.push('\n[物品清单]');
-                for (const [name, info] of items) {
+                for (const [name, info] of unequipped) {
                     const id = info._id || '???';
                     const icon = info.icon || '';
                     const imp = info.importance === '!!' ? '关键' : info.importance === '!' ? '重要' : '';
@@ -724,7 +735,10 @@ class HoraeManager {
             const userName = this.context?.name1 || '';
             const allRpgNames = new Set([
                 ...Object.keys(rpg.bars), ...Object.keys(rpg.status || {}),
-                ...Object.keys(rpg.skills), ...Object.keys(rpg.attributes || {})
+                ...Object.keys(rpg.skills), ...Object.keys(rpg.attributes || {}),
+                ...Object.keys(rpg.reputation || {}), ...Object.keys(rpg.equipment || {}),
+                ...Object.keys(rpg.levels || {}), ...Object.keys(rpg.xp || {}),
+                ...Object.keys(rpg.currency || {}),
             ]);
             const rpgAllowed = new Set();
             if (presentChars.length > 0) {
@@ -794,6 +808,123 @@ class HoraeManager {
                     const pre = npc?._id ? `N${npc._id} ` : '';
                     const parts = attrCfg.map(a => `${a.name}${vals[a.key] ?? '?'}`);
                     lines.push(`${pre}${name}: ${parts.join(' | ')}`);
+                }
+            }
+
+            // 装备（按角色独立格位，包含完整物品描述以节省 token）
+            const sendEq = !!this.settings?.sendRpgEquipment;
+            const eqPerChar = (rpg.equipmentConfig?.perChar) || {};
+            const storedEq = this.getChat()?.[0]?.horae_meta?.rpg?.equipment || {};
+            if (sendEq && Object.keys(rpg.equipment || {}).length > 0) {
+                let hasEqData = false;
+                for (const [name, slots] of Object.entries(rpg.equipment)) {
+                    if (filterRpg && !rpgAllowed.has(name)) continue;
+                    const ownerCfg = eqPerChar[name];
+                    const validEqSlots = (ownerCfg && Array.isArray(ownerCfg.slots))
+                        ? new Set(ownerCfg.slots.map(s => s.name)) : null;
+                    const deletedEqSlots = ownerCfg ? new Set(ownerCfg._deletedSlots || []) : new Set();
+                    const parts = [];
+                    for (const [slotName, items] of Object.entries(slots)) {
+                        if (deletedEqSlots.has(slotName)) continue;
+                        if (validEqSlots && validEqSlots.size > 0 && !validEqSlots.has(slotName)) continue;
+                        for (const item of items) {
+                            const attrStr = Object.entries(item.attrs || {}).map(([k, v]) => `${k}${v >= 0 ? '+' : ''}${v}`).join(',');
+                            const stored = storedEq[name]?.[slotName]?.find(e => e.name === item.name);
+                            const desc = stored?._itemMeta?.description || '';
+                            const descPart = desc ? ` "${desc}"` : '';
+                            parts.push(`[${slotName}]${item.name}${attrStr ? `{${attrStr}}` : ''}${descPart}`);
+                        }
+                    }
+                    if (parts.length > 0) {
+                        if (!hasEqData) { lines.push('\n[装备]'); hasEqData = true; }
+                        const npc = state.npcs[name];
+                        const pre = npc?._id ? `N${npc._id} ` : '';
+                        lines.push(`${pre}${name}: ${parts.join(' | ')}`);
+                    }
+                }
+            }
+
+            // 声望（需开关开启）
+            const sendRep = !!this.settings?.sendRpgReputation;
+            const repConfig = rpg.reputationConfig || { categories: [] };
+            if (sendRep && repConfig.categories.length > 0 && Object.keys(rpg.reputation || {}).length > 0) {
+                const validRepNames = new Set(repConfig.categories.map(c => c.name));
+                const deletedRepNames = new Set(repConfig._deletedCategories || []);
+                let hasRepData = false;
+                for (const [name, cats] of Object.entries(rpg.reputation)) {
+                    if (filterRpg && !rpgAllowed.has(name)) continue;
+                    const parts = [];
+                    for (const [catName, data] of Object.entries(cats)) {
+                        if (!validRepNames.has(catName) || deletedRepNames.has(catName)) continue;
+                        parts.push(`${catName}:${data.value}`);
+                    }
+                    if (parts.length > 0) {
+                        if (!hasRepData) { lines.push('\n[声望]'); hasRepData = true; }
+                        const npc = state.npcs[name];
+                        const pre = npc?._id ? `N${npc._id} ` : '';
+                        lines.push(`${pre}${name}: ${parts.join(' | ')}`);
+                    }
+                }
+            }
+
+            // 等级
+            const sendLvl = !!this.settings?.sendRpgLevel;
+            if (sendLvl && (Object.keys(rpg.levels || {}).length > 0 || Object.keys(rpg.xp || {}).length > 0)) {
+                const allLvlNames = new Set([...Object.keys(rpg.levels || {}), ...Object.keys(rpg.xp || {})]);
+                let hasLvlData = false;
+                for (const name of allLvlNames) {
+                    if (filterRpg && !rpgAllowed.has(name)) continue;
+                    const lv = rpg.levels?.[name];
+                    const xp = rpg.xp?.[name];
+                    if (lv == null && !xp) continue;
+                    if (!hasLvlData) { lines.push('\n[等级]'); hasLvlData = true; }
+                    const npc = state.npcs[name];
+                    const pre = npc?._id ? `N${npc._id} ` : '';
+                    let lvStr = lv != null ? `Lv.${lv}` : '';
+                    if (xp) lvStr += ` (经验: ${xp[0]}/${xp[1]})`;
+                    lines.push(`${pre}${name}: ${lvStr.trim()}`);
+                }
+            }
+
+            // 货币
+            const sendCur = !!this.settings?.sendRpgCurrency;
+            const curConfig = rpg.currencyConfig || { denominations: [] };
+            if (sendCur && curConfig.denominations.length > 0 && Object.keys(rpg.currency || {}).length > 0) {
+                let hasCurData = false;
+                for (const [name, coins] of Object.entries(rpg.currency)) {
+                    if (filterRpg && !rpgAllowed.has(name)) continue;
+                    const parts = [];
+                    for (const d of curConfig.denominations) {
+                        const val = coins[d.name];
+                        if (val != null) parts.push(`${d.name}×${val}`);
+                    }
+                    if (parts.length > 0) {
+                        if (!hasCurData) { lines.push('\n[货币]'); hasCurData = true; }
+                        const npc = state.npcs[name];
+                        const pre = npc?._id ? `N${npc._id} ` : '';
+                        lines.push(`${pre}${name}: ${parts.join(', ')}`);
+                    }
+                }
+            }
+
+            // 据点
+            if (!!this.settings?.sendRpgStronghold) {
+                const shNodes = rpg.strongholds || [];
+                if (shNodes.length > 0) {
+                    lines.push('\n[据点]');
+                    function _shTreeStr(nodes, parentId, indent) {
+                        const children = nodes.filter(n => (n.parent || null) === parentId);
+                        let str = '';
+                        for (const c of children) {
+                            const lvStr = c.level != null ? ` Lv.${c.level}` : '';
+                            str += `${'  '.repeat(indent)}${c.name}${lvStr}`;
+                            if (c.desc) str += ` — ${c.desc}`;
+                            str += '\n';
+                            str += _shTreeStr(nodes, c.id, indent + 1);
+                        }
+                        return str;
+                    }
+                    lines.push(_shTreeStr(shNodes, null, 0).trimEnd());
                 }
             }
         }
@@ -1309,7 +1440,7 @@ class HoraeManager {
 
         // 解析 RPG 数据
         if (rpgMatches.length > 0) {
-            result.rpg = { bars: {}, status: {}, skills: [], removedSkills: [], attributes: {} };
+            result.rpg = { bars: {}, status: {}, skills: [], removedSkills: [], attributes: {}, reputation: {}, equipment: [], unequip: [], levels: {}, xp: {}, currency: [], baseChanges: [] };
             for (const rm of rpgMatches) {
                 const rpgContent = rm[1].trim();
                 for (const rpgLine of rpgContent.split('\n')) {
@@ -1456,6 +1587,90 @@ class HoraeManager {
             }
             return;
         }
+        // equip:归属|格位|装备名|属性1=值,属性2=值
+        if (line.startsWith('equip:')) {
+            const parts = line.substring(6).trim().split('|').map(s => s.trim());
+            if (parts.length >= 3) {
+                const owner = parts[0], slot = parts[1], itemName = parts[2];
+                const attrs = {};
+                if (parts[3]) {
+                    for (const kv of parts[3].split(',')) {
+                        const m = kv.trim().match(/^(.+?)=(-?\d+)$/);
+                        if (m) attrs[m[1].trim()] = parseInt(m[2]);
+                    }
+                }
+                if (!rpg.equipment) rpg.equipment = [];
+                rpg.equipment.push({ owner, slot, name: itemName, attrs });
+            }
+            return;
+        }
+        // unequip:归属|格位|装备名
+        if (line.startsWith('unequip:')) {
+            const parts = line.substring(8).trim().split('|').map(s => s.trim());
+            if (parts.length >= 3) {
+                if (!rpg.unequip) rpg.unequip = [];
+                rpg.unequip.push({ owner: parts[0], slot: parts[1], name: parts[2] });
+            }
+            return;
+        }
+        // rep:归属|声望名=值
+        if (line.startsWith('rep:')) {
+            const parts = line.substring(4).trim().split('|').map(s => s.trim());
+            if (parts.length >= 2) {
+                const owner = parts[0];
+                const kv = parts[1].match(/^(.+?)=(-?\d+)$/);
+                if (kv) {
+                    if (!rpg.reputation) rpg.reputation = {};
+                    if (!rpg.reputation[owner]) rpg.reputation[owner] = {};
+                    rpg.reputation[owner][kv[1].trim()] = parseInt(kv[2]);
+                }
+            }
+            return;
+        }
+        // level:归属=等级
+        if (line.startsWith('level:')) {
+            const str = line.substring(6).trim();
+            const eq = str.indexOf('=');
+            if (eq > 0) {
+                const owner = str.substring(0, eq).trim();
+                const val = parseInt(str.substring(eq + 1).trim());
+                if (!isNaN(val)) {
+                    if (!rpg.levels) rpg.levels = {};
+                    rpg.levels[owner] = val;
+                }
+            }
+            return;
+        }
+        // xp:归属=当前/所需
+        if (line.startsWith('xp:')) {
+            const str = line.substring(3).trim();
+            const eq = str.indexOf('=');
+            if (eq > 0) {
+                const owner = str.substring(0, eq).trim();
+                const valStr = str.substring(eq + 1).trim();
+                const m = valStr.match(/^(\d+)\s*\/\s*(\d+)$/);
+                if (m) {
+                    if (!rpg.xp) rpg.xp = {};
+                    rpg.xp[owner] = [parseInt(m[1]), parseInt(m[2])];
+                }
+            }
+            return;
+        }
+        // currency:归属|币名=±值 或 currency:归属|币名=值
+        if (line.startsWith('currency:')) {
+            const parts = line.substring(9).trim().split('|').map(s => s.trim());
+            if (parts.length >= 2) {
+                const owner = parts[0];
+                const kv = parts[1].match(/^(.+?)=([+-]?\d+)$/);
+                if (kv) {
+                    if (!rpg.currency) rpg.currency = [];
+                    const rawVal = kv[2];
+                    const isDelta = rawVal.startsWith('+') || rawVal.startsWith('-');
+                    rpg.currency.push({ owner, name: kv[1].trim(), value: parseInt(rawVal), isDelta });
+                }
+            }
+            return;
+        }
         // attr:N01 Name|key=val|key=val...
         if (line.startsWith('attr:')) {
             const parts = line.substring(5).trim().split('|').map(s => s.trim());
@@ -1469,6 +1684,34 @@ class HoraeManager {
                 if (Object.keys(vals).length) {
                     if (!rpg.attributes) rpg.attributes = {};
                     rpg.attributes[owner] = vals;
+                }
+            }
+            return;
+        }
+        // base:据点路径=等级 或 base:据点路径|desc=描述
+        // 路径用 > 分隔层级，如 base:主角庄园>锻造区>锻造炉=2
+        if (line.startsWith('base:')) {
+            if (!rpg.baseChanges) rpg.baseChanges = [];
+            const raw = line.substring(5).trim();
+            const pipeIdx = raw.indexOf('|');
+            if (pipeIdx >= 0) {
+                const path = raw.substring(0, pipeIdx).trim();
+                const rest = raw.substring(pipeIdx + 1).trim();
+                const kv = rest.match(/^(desc|level)=(.+)$/);
+                if (kv) {
+                    rpg.baseChanges.push({ path, field: kv[1], value: kv[2].trim() });
+                }
+            } else {
+                const eqIdx = raw.indexOf('=');
+                if (eqIdx >= 0) {
+                    const path = raw.substring(0, eqIdx).trim();
+                    const val = raw.substring(eqIdx + 1).trim();
+                    const numVal = parseInt(val);
+                    if (!isNaN(numVal)) {
+                        rpg.baseChanges.push({ path, field: 'level', value: numVal });
+                    } else {
+                        rpg.baseChanges.push({ path, field: 'desc', value: val });
+                    }
                 }
             }
         }
@@ -1535,6 +1778,138 @@ class HoraeManager {
             if (!rpg.attributes) rpg.attributes = {};
             rpg.attributes[owner] = { ...(rpg.attributes[owner] || {}), ...vals };
         }
+        // 装备：按角色独立格位配置
+        if (changes.equipment?.length > 0 || changes.unequip?.length > 0) {
+            if (!rpg.equipmentConfig) rpg.equipmentConfig = { locked: false, perChar: {} };
+            if (!rpg.equipmentConfig.perChar) rpg.equipmentConfig.perChar = {};
+            if (!rpg.equipment) rpg.equipment = {};
+            const _getOwnerSlots = (owner) => {
+                const pc = rpg.equipmentConfig.perChar[owner];
+                if (!pc || !Array.isArray(pc.slots)) return { valid: new Set(), deleted: new Set(), maxMap: {} };
+                return {
+                    valid: new Set(pc.slots.map(s => s.name)),
+                    deleted: new Set(pc._deletedSlots || []),
+                    maxMap: Object.fromEntries(pc.slots.map(s => [s.name, s.maxCount ?? 1])),
+                };
+            };
+            const _findAndTakeItem = (name) => {
+                const state = this.getLatestState();
+                const itemInfo = state?.items?.[name];
+                if (!itemInfo) return null;
+                const meta = { icon: itemInfo.icon || '', description: itemInfo.description || '', importance: itemInfo.importance || '', _id: itemInfo._id || '', _locked: itemInfo._locked || false };
+                for (let k = chat.length - 1; k >= 0; k--) {
+                    if (chat[k]?.horae_meta?.items?.[name]) { delete chat[k].horae_meta.items[name]; break; }
+                }
+                return meta;
+            };
+            const _returnItemFromEquip = (entry, owner) => {
+                if (!first.horae_meta.items) first.horae_meta.items = {};
+                const m = entry._itemMeta || {};
+                first.horae_meta.items[entry.name] = {
+                    icon: m.icon || '📦', description: m.description || '', importance: m.importance || '',
+                    holder: owner, location: '', _id: m._id || '', _locked: m._locked || false,
+                };
+            };
+            for (const u of (changes.unequip || [])) {
+                const owner = this._resolveRpgOwner(u.owner);
+                if (!rpg.equipment[owner]?.[u.slot]) continue;
+                const removed = rpg.equipment[owner][u.slot].find(e => e.name === u.name);
+                rpg.equipment[owner][u.slot] = rpg.equipment[owner][u.slot].filter(e => e.name !== u.name);
+                if (removed) _returnItemFromEquip(removed, owner);
+                if (!rpg.equipment[owner][u.slot].length) delete rpg.equipment[owner][u.slot];
+                if (rpg.equipment[owner] && !Object.keys(rpg.equipment[owner]).length) delete rpg.equipment[owner];
+            }
+            for (const eq of (changes.equipment || [])) {
+                const slotName = eq.slot;
+                const owner = this._resolveRpgOwner(eq.owner);
+                const { valid, deleted, maxMap } = _getOwnerSlots(owner);
+                if (valid.size > 0 && (!valid.has(slotName) || deleted.has(slotName))) continue;
+                if (!rpg.equipment[owner]) rpg.equipment[owner] = {};
+                if (!rpg.equipment[owner][slotName]) rpg.equipment[owner][slotName] = [];
+                const existing = rpg.equipment[owner][slotName].findIndex(e => e.name === eq.name);
+                if (existing >= 0) {
+                    rpg.equipment[owner][slotName][existing].attrs = eq.attrs;
+                } else {
+                    const maxCount = maxMap[slotName] ?? 1;
+                    if (rpg.equipment[owner][slotName].length >= maxCount) {
+                        const bumped = rpg.equipment[owner][slotName].shift();
+                        if (bumped) _returnItemFromEquip(bumped, owner);
+                    }
+                    const itemMeta = _findAndTakeItem(eq.name);
+                    rpg.equipment[owner][slotName].push({ name: eq.name, attrs: eq.attrs || {}, ...(itemMeta ? { _itemMeta: itemMeta } : {}) });
+                }
+            }
+        }
+        // 声望：只接受 reputationConfig 中已定义且未删除的分类
+        if (changes.reputation && Object.keys(changes.reputation).length > 0) {
+            if (!rpg.reputationConfig) rpg.reputationConfig = { categories: [], _deletedCategories: [] };
+            if (!rpg.reputation) rpg.reputation = {};
+            const validNames = new Set((rpg.reputationConfig.categories || []).map(c => c.name));
+            const deleted = new Set(rpg.reputationConfig._deletedCategories || []);
+            for (const [raw, cats] of Object.entries(changes.reputation)) {
+                const owner = this._resolveRpgOwner(raw);
+                if (!rpg.reputation[owner]) rpg.reputation[owner] = {};
+                for (const [catName, val] of Object.entries(cats)) {
+                    if (!validNames.has(catName) || deleted.has(catName)) continue;
+                    const cfg = rpg.reputationConfig.categories.find(c => c.name === catName);
+                    const clamped = Math.max(cfg?.min ?? -100, Math.min(cfg?.max ?? 100, val));
+                    if (!rpg.reputation[owner][catName]) {
+                        rpg.reputation[owner][catName] = { value: clamped, subItems: {} };
+                    } else {
+                        rpg.reputation[owner][catName].value = clamped;
+                    }
+                }
+            }
+        }
+        // 等级
+        for (const [raw, val] of Object.entries(changes.levels || {})) {
+            const owner = this._resolveRpgOwner(raw);
+            if (!rpg.levels) rpg.levels = {};
+            rpg.levels[owner] = val;
+        }
+        // 经验值
+        for (const [raw, val] of Object.entries(changes.xp || {})) {
+            const owner = this._resolveRpgOwner(raw);
+            if (!rpg.xp) rpg.xp = {};
+            rpg.xp[owner] = val;
+        }
+        // 货币：只接受 currencyConfig 中已定义的币种
+        if (changes.currency?.length > 0) {
+            if (!rpg.currencyConfig) rpg.currencyConfig = { denominations: [] };
+            if (!rpg.currency) rpg.currency = {};
+            const validDenoms = new Set((rpg.currencyConfig.denominations || []).map(d => d.name));
+            for (const c of changes.currency) {
+                const owner = this._resolveRpgOwner(c.owner);
+                if (!validDenoms.has(c.name)) continue;
+                if (!rpg.currency[owner]) rpg.currency[owner] = {};
+                if (c.isDelta) {
+                    rpg.currency[owner][c.name] = (rpg.currency[owner][c.name] || 0) + c.value;
+                } else {
+                    rpg.currency[owner][c.name] = c.value;
+                }
+            }
+        }
+        // 据点变更
+        if (changes.baseChanges?.length > 0) {
+            if (!rpg.strongholds) rpg.strongholds = [];
+            for (const bc of changes.baseChanges) {
+                const pathParts = bc.path.split('>').map(s => s.trim()).filter(Boolean);
+                let parentId = null;
+                let targetNode = null;
+                for (const part of pathParts) {
+                    targetNode = rpg.strongholds.find(n => n.name === part && (n.parent || null) === parentId);
+                    if (!targetNode) {
+                        targetNode = { id: 'sh_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: part, level: null, desc: '', parent: parentId };
+                        rpg.strongholds.push(targetNode);
+                    }
+                    parentId = targetNode.id;
+                }
+                if (targetNode) {
+                    if (bc.field === 'level') targetNode.level = typeof bc.value === 'number' ? bc.value : parseInt(bc.value);
+                    else if (bc.field === 'desc') targetNode.desc = String(bc.value);
+                }
+            }
+        }
     }
 
     /** 从所有消息重建 RPG 全局数据（保留用户手动编辑） */
@@ -1553,8 +1928,21 @@ class HoraeManager {
         // 保留用户手动删除记录和手动填写的属性
         const deletedSkills = old._deletedSkills || [];
         const userAttrs = old.attributes || {};
+        // 保留声望配置和用户设置的细项
+        const oldRepConfig = old.reputationConfig || { categories: [], _deletedCategories: [] };
+        const oldReputation = old.reputation ? JSON.parse(JSON.stringify(old.reputation)) : {};
+        // 保留装备配置
+        const oldEquipConfig = old.equipmentConfig || { locked: false, perChar: {} };
+        // 保留货币配置
+        const oldCurrencyConfig = old.currencyConfig || { denominations: [] };
 
-        first.horae_meta.rpg = { bars: {}, status: {}, skills: {}, attributes: { ...userAttrs }, _deletedSkills: deletedSkills };
+        first.horae_meta.rpg = {
+            bars: {}, status: {}, skills: {}, attributes: { ...userAttrs }, _deletedSkills: deletedSkills,
+            reputationConfig: oldRepConfig, reputation: {},
+            equipmentConfig: oldEquipConfig, equipment: {},
+            levels: {}, xp: {},
+            currencyConfig: oldCurrencyConfig, currency: {},
+        };
         for (let i = 1; i < chat.length; i++) {
             const changes = chat[i]?.horae_meta?._rpgChanges;
             if (changes) this._mergeRpgData(changes);
@@ -1574,11 +1962,31 @@ class HoraeManager {
                 if (!rpg.skills[del.owner].length) delete rpg.skills[del.owner];
             }
         }
+        // 回填用户设置的声望细项（AI只写主数值，细项是纯用户数据）
+        const deletedRepCats = new Set(rpg.reputationConfig?._deletedCategories || []);
+        const validRepCats = new Set((rpg.reputationConfig?.categories || []).map(c => c.name));
+        for (const [owner, cats] of Object.entries(oldReputation)) {
+            if (!rpg.reputation[owner]) rpg.reputation[owner] = {};
+            for (const [catName, data] of Object.entries(cats)) {
+                if (deletedRepCats.has(catName) || !validRepCats.has(catName)) continue;
+                if (!rpg.reputation[owner][catName]) {
+                    rpg.reputation[owner][catName] = data;
+                } else {
+                    rpg.reputation[owner][catName].subItems = data.subItems || {};
+                }
+            }
+        }
     }
 
     /** 获取 RPG 全局数据（chat[0] 累积） */
     getRpgData() {
-        return this.getChat()?.[0]?.horae_meta?.rpg || { bars: {}, status: {}, skills: {}, attributes: {} };
+        return this.getChat()?.[0]?.horae_meta?.rpg || {
+            bars: {}, status: {}, skills: {}, attributes: {},
+            reputation: {}, reputationConfig: { categories: [], _deletedCategories: [] },
+            equipment: {}, equipmentConfig: { locked: false, perChar: {} },
+            levels: {}, xp: {},
+            currency: {}, currencyConfig: { denominations: [] },
+        };
     }
 
     /**
@@ -1587,11 +1995,16 @@ class HoraeManager {
      */
     getRpgStateAt(skipLast = 0) {
         const chat = this.getChat();
-        if (!chat?.length) return { bars: {}, status: {}, skills: {}, attributes: {} };
+        if (!chat?.length) return { bars: {}, status: {}, skills: {}, attributes: {}, reputation: {}, equipment: {}, levels: {}, xp: {}, currency: {} };
         const end = Math.max(1, chat.length - skipLast);
-        const snapshot = { bars: {}, status: {}, skills: {}, attributes: {} };
         const first = chat[0];
         const rpgMeta = first?.horae_meta?.rpg || {};
+        const snapshot = {
+            bars: {}, status: {}, skills: {}, attributes: {}, reputation: {}, equipment: {},
+            levels: JSON.parse(JSON.stringify(rpgMeta.levels || {})),
+            xp: JSON.parse(JSON.stringify(rpgMeta.xp || {})),
+            currency: JSON.parse(JSON.stringify(rpgMeta.currency || {})),
+        };
 
         // 用户手动编辑的数据
         const userSkills = {};
@@ -1604,6 +2017,10 @@ class HoraeManager {
         for (const [owner, vals] of Object.entries(rpgMeta.attributes || {})) {
             userAttrs[owner] = { ...vals };
         }
+
+        // 装备格位配置（提前获取，用于循环内校验 maxCount）
+        const _eqCfg = rpgMeta.equipmentConfig || { locked: false, perChar: {} };
+        const _eqPerChar = _eqCfg.perChar || {};
 
         // 从消息中累积属性（snapshot 是独立对象，不污染 chat[0]）
         const _resolve = (raw) => this._resolveRpgOwner(raw);
@@ -1640,6 +2057,61 @@ class HoraeManager {
                 const owner = _resolve(raw);
                 snapshot.attributes[owner] = { ...(snapshot.attributes[owner] || {}), ...vals };
             }
+            for (const [raw, cats] of Object.entries(changes.reputation || {})) {
+                const owner = _resolve(raw);
+                if (!snapshot.reputation[owner]) snapshot.reputation[owner] = {};
+                for (const [catName, val] of Object.entries(cats)) {
+                    if (!snapshot.reputation[owner][catName]) {
+                        snapshot.reputation[owner][catName] = { value: val, subItems: {} };
+                    } else {
+                        snapshot.reputation[owner][catName].value = val;
+                    }
+                }
+            }
+            // 装备
+            for (const u of (changes.unequip || [])) {
+                const owner = _resolve(u.owner);
+                if (!snapshot.equipment[owner]?.[u.slot]) continue;
+                snapshot.equipment[owner][u.slot] = snapshot.equipment[owner][u.slot].filter(e => e.name !== u.name);
+                if (!snapshot.equipment[owner][u.slot].length) delete snapshot.equipment[owner][u.slot];
+                if (!Object.keys(snapshot.equipment[owner] || {}).length) delete snapshot.equipment[owner];
+            }
+            for (const eq of (changes.equipment || [])) {
+                const owner = _resolve(eq.owner);
+                const ownerCfg = _eqPerChar[owner];
+                const maxCount = (ownerCfg && Array.isArray(ownerCfg.slots))
+                    ? (ownerCfg.slots.find(s => s.name === eq.slot)?.maxCount ?? 1) : 1;
+                if (!snapshot.equipment[owner]) snapshot.equipment[owner] = {};
+                if (!snapshot.equipment[owner][eq.slot]) snapshot.equipment[owner][eq.slot] = [];
+                const idx = snapshot.equipment[owner][eq.slot].findIndex(e => e.name === eq.name);
+                if (idx >= 0) {
+                    snapshot.equipment[owner][eq.slot][idx].attrs = eq.attrs;
+                } else {
+                    while (snapshot.equipment[owner][eq.slot].length >= maxCount) snapshot.equipment[owner][eq.slot].shift();
+                    snapshot.equipment[owner][eq.slot].push({ name: eq.name, attrs: eq.attrs || {} });
+                }
+            }
+            // 等级/经验
+            for (const [raw, val] of Object.entries(changes.levels || {})) {
+                snapshot.levels[_resolve(raw)] = val;
+            }
+            for (const [raw, val] of Object.entries(changes.xp || {})) {
+                snapshot.xp[_resolve(raw)] = val;
+            }
+            // 货币（过滤已删除/未注册的币种）
+            const validDenoms = new Set(
+                (rpgMeta.currencyConfig?.denominations || []).map(d => d.name)
+            );
+            for (const c of (changes.currency || [])) {
+                if (validDenoms.size && !validDenoms.has(c.name)) continue;
+                const owner = _resolve(c.owner);
+                if (!snapshot.currency[owner]) snapshot.currency[owner] = {};
+                if (c.isDelta) {
+                    snapshot.currency[owner][c.name] = (snapshot.currency[owner][c.name] || 0) + c.value;
+                } else {
+                    snapshot.currency[owner][c.name] = c.value;
+                }
+            }
         }
 
         // 合入用户手动属性（AI数据优先覆盖）
@@ -1663,6 +2135,48 @@ class HoraeManager {
                 if (!snapshot.skills[del.owner].length) delete snapshot.skills[del.owner];
             }
         }
+        // 声望：合入用户细项，过滤已删除分类
+        const repConfig = rpgMeta.reputationConfig || { categories: [], _deletedCategories: [] };
+        const validRepNames = new Set((repConfig.categories || []).map(c => c.name));
+        const deletedRepNames = new Set(repConfig._deletedCategories || []);
+        const userRep = rpgMeta.reputation || {};
+        for (const [owner, cats] of Object.entries(userRep)) {
+            if (!snapshot.reputation[owner]) snapshot.reputation[owner] = {};
+            for (const [catName, data] of Object.entries(cats)) {
+                if (deletedRepNames.has(catName) || !validRepNames.has(catName)) continue;
+                if (!snapshot.reputation[owner][catName]) {
+                    snapshot.reputation[owner][catName] = { ...data };
+                } else {
+                    snapshot.reputation[owner][catName].subItems = data.subItems || {};
+                }
+            }
+        }
+        // 移除快照中已删除的声望分类
+        for (const [owner, cats] of Object.entries(snapshot.reputation)) {
+            for (const catName of Object.keys(cats)) {
+                if (deletedRepNames.has(catName) || !validRepNames.has(catName)) {
+                    delete cats[catName];
+                }
+            }
+            if (!Object.keys(cats).length) delete snapshot.reputation[owner];
+        }
+        snapshot.reputationConfig = repConfig;
+        // 装备：按角色过滤已删除格位
+        for (const [owner, slots] of Object.entries(snapshot.equipment)) {
+            const ownerCfg = _eqPerChar[owner];
+            if (!ownerCfg || !Array.isArray(ownerCfg.slots)) continue;
+            const validEqSlots = new Set(ownerCfg.slots.map(s => s.name));
+            const deletedEqSlots = new Set(ownerCfg._deletedSlots || []);
+            for (const slotName of Object.keys(slots)) {
+                if (deletedEqSlots.has(slotName) || (validEqSlots.size > 0 && !validEqSlots.has(slotName))) {
+                    delete slots[slotName];
+                }
+            }
+            if (!Object.keys(slots).length) delete snapshot.equipment[owner];
+        }
+        snapshot.equipmentConfig = _eqCfg;
+        // 货币配置
+        snapshot.currencyConfig = rpgMeta.currencyConfig || { denominations: [] };
         return snapshot;
     }
 
@@ -2893,7 +3407,12 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
         const sendBars = this.settings?.sendRpgBars !== false;
         const sendSkills = this.settings?.sendRpgSkills !== false;
         const sendAttrs = this.settings?.sendRpgAttributes !== false;
-        if (!sendBars && !sendSkills && !sendAttrs) return '';
+        const sendEq = !!this.settings?.sendRpgEquipment;
+        const sendRep = !!this.settings?.sendRpgReputation;
+        const sendLvl = !!this.settings?.sendRpgLevel;
+        const sendCur = !!this.settings?.sendRpgCurrency;
+        const sendSh = !!this.settings?.sendRpgStronghold;
+        if (!sendBars && !sendSkills && !sendAttrs && !sendEq && !sendRep && !sendLvl && !sendCur && !sendSh) return '';
         const userName = this.context?.name1 || '主角';
         const barCfg = this.settings?.rpgBarConfig || [
             { key: 'hp', name: 'HP' }, { key: 'mp', name: 'MP' }, { key: 'sp', name: 'SP' }
@@ -2922,14 +3441,111 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
             p += `  skill:归属|技能名|等级|效果描述\n`;
             p += `  skill-:归属|技能名\n`;
         }
+        if (sendEq) {
+            const eqCfg = this._getRpgEquipmentConfig();
+            const perChar = eqCfg.perChar || {};
+            const present = new Set(this.getLatestState()?.scene?.characters_present || []);
+            const hasAnySlots = Object.values(perChar).some(c => c.slots?.length > 0);
+            if (hasAnySlots) {
+                p += `\n【装备】角色穿戴/卸下装备时写，无变化可省略\n`;
+                p += `  equip:归属|格位名|装备名|属性1=值,属性2=值\n`;
+                p += `  unequip:归属|格位名|装备名\n`;
+                for (const [owner, cfg] of Object.entries(perChar)) {
+                    if (!cfg.slots?.length) continue;
+                    if (present.size > 0 && !present.has(owner)) continue;
+                    const slotNames = cfg.slots.map(s => `${s.name}(×${s.maxCount ?? 1})`).join('、');
+                    p += `  ${owner} 格位: ${slotNames}\n`;
+                }
+                p += `  ⚠ 每个角色只能使用其已注册的格位。属性值为整数。\n`;
+                p += `  ⚠ 普通衣物非赋魔或特殊材料不应有高属性值。\n`;
+            }
+        }
+        if (sendRep) {
+            const repConfig = this._getRpgReputationConfig();
+            if (repConfig.categories.length > 0) {
+                const catNames = repConfig.categories.map(c => c.name).join('、');
+                p += `\n【声望】仅声望变化时写，无变化可省略\n`;
+                p += `  rep:归属|声望分类名=当前值\n`;
+                p += `  已注册的声望分类: ${catNames}\n`;
+                p += `  ⚠ 禁止创造新的声望分类。只允许使用上述已注册的分类名。\n`;
+            }
+        }
+        if (sendLvl) {
+            p += `\n【等级与经验值】仅升级/降级或经验变化时写，无变化可省略\n`;
+            p += `  level:归属=等级数值\n`;
+            p += `  xp:归属=当前经验/升级所需\n`;
+            p += `  经验值获取参考：\n`;
+            p += `  - 与角色等级相近或更强的挑战：获得较多经验(10~50+)\n`;
+            p += `  - 等级差 ≥10 的低级挑战：仅得 1 点经验\n`;
+            p += `  - 日常活动/对话/探索：少量经验(1~5)\n`;
+            p += `  - 升级所需经验随等级递增：建议 升级所需 = 等级 × 100\n`;
+        }
+        if (sendCur) {
+            const curConfig = this._getRpgCurrencyConfig();
+            if (curConfig.denominations.length > 0) {
+                const denomNames = curConfig.denominations.map(d => d.name).join('、');
+                p += `\n【货币——发生交易/拾取/消费时必写！】\n`;
+                p += `格式: currency:归属|币名=±变化量\n`;
+                p += `示例:\n`;
+                p += `  currency:${userName}|${curConfig.denominations[0].name}=+10\n`;
+                p += `  currency:${userName}|${curConfig.denominations[0].name}=-3\n`;
+                if (curConfig.denominations.length > 1) {
+                    p += `  currency:${userName}|${curConfig.denominations[1].name}=+50\n`;
+                }
+                p += `也可写绝对值: currency:归属|币名=数量\n`;
+                p += `已注册币种: ${denomNames}\n`;
+                p += `⚠ 禁止使用未注册的币种名。任何涉及金钱的行为（买卖/拾取/奖赏/偷窃）都必须写 currency 行。\n`;
+            }
+        }
+        if (!!this.settings?.sendRpgStronghold) {
+            const rpg = this.getChat()?.[0]?.horae_meta?.rpg;
+            const nodes = rpg?.strongholds || [];
+            p += `\n【据点/基地】据点状态变化时写（升级/建造/损毁/描述变更），无变化可省略\n`;
+            p += `格式: base:据点路径=等级 或 base:据点路径|desc=描述\n`;
+            p += `路径用 > 分隔层级\n`;
+            p += `示例:\n`;
+            p += `  base:主角庄园=3\n`;
+            p += `  base:主角庄园>锻造区>锻造炉=2\n`;
+            p += `  base:主角庄园|desc=坐落于河谷的石砌庄园，配有围墙和瞭望塔\n`;
+            if (nodes.length > 0) {
+                const rootNodes = nodes.filter(n => !n.parent);
+                const summary = rootNodes.map(r => {
+                    const kids = nodes.filter(n => n.parent === r.id);
+                    const kidStr = kids.length > 0 ? `(${kids.map(k => k.name).join('、')})` : '';
+                    return `${r.name}${r.level != null ? ' Lv.' + r.level : ''}${kidStr}`;
+                }).join('；');
+                p += `当前据点: ${summary}\n`;
+            }
+        }
         return p;
+    }
+
+    /** 获取当前对话的装备配置 */
+    _getRpgEquipmentConfig() {
+        const rpg = this.getChat()?.[0]?.horae_meta?.rpg;
+        return rpg?.equipmentConfig || { locked: false, perChar: {} };
+    }
+
+    /** 获取当前对话的声望配置 */
+    _getRpgReputationConfig() {
+        const rpg = this.getChat()?.[0]?.horae_meta?.rpg;
+        return rpg?.reputationConfig || { categories: [], _deletedCategories: [] };
+    }
+
+    /** 获取当前对话的货币配置 */
+    _getRpgCurrencyConfig() {
+        const rpg = this.getChat()?.[0]?.horae_meta?.rpg;
+        return rpg?.currencyConfig || { denominations: [] };
     }
 
     /** 动态生成必须包含的标签提醒（RPG 开启时追加 <horaerpg>） */
     _generateMustTagsReminder() {
         const tags = ['<horae>...</horae>', '<horaeevent>...</horaeevent>'];
         const rpgActive = this.settings?.rpgMode &&
-            (this.settings.sendRpgBars !== false || this.settings.sendRpgSkills !== false || this.settings.sendRpgAttributes !== false);
+            (this.settings.sendRpgBars !== false || this.settings.sendRpgSkills !== false ||
+             this.settings.sendRpgAttributes !== false || !!this.settings.sendRpgReputation ||
+             !!this.settings.sendRpgEquipment || !!this.settings.sendRpgLevel || !!this.settings.sendRpgCurrency ||
+             !!this.settings.sendRpgStronghold);
         if (rpgActive) tags.push('<horaerpg>...</horaerpg>');
         const count = tags.length === 2 ? '两个' : `${tags.length}个`;
         return `你的回复末尾必须包含 ${tags.join(' 和 ')} ${count}标签。\n缺少任何一个标签=不合格。`;

@@ -10,7 +10,7 @@
                 <i class="fa-regular fa-clock"></i>
                 Horae 时光记忆
             </div>
-            <span class="horae-version">v1.9.5</span>
+            <span class="horae-version">v1.10.0</span>
         </div>
         
         <!-- 标签页导航 -->
@@ -368,6 +368,60 @@
                     <div id="horae-rpg-skill-form" style="display:none;"></div>
                     <div id="horae-rpg-skills-section"></div>
                 </div>
+                <!-- 装备栏 -->
+                <div class="horae-rpg-equipment-area" id="horae-rpg-equipment-area" style="display:none;">
+                    <div class="horae-rpg-section-head">
+                        <span>装备</span>
+                        <button id="horae-rpg-eq-preset" class="horae-rpg-btn-sm" title="管理装备模板"><i class="fa-solid fa-shapes"></i></button>
+                        <button id="horae-rpg-eq-export" class="horae-rpg-btn-sm" title="导出装备配置"><i class="fa-solid fa-download"></i></button>
+                        <button id="horae-rpg-eq-import" class="horae-rpg-btn-sm" title="导入装备配置"><i class="fa-solid fa-upload"></i></button>
+                        <button id="horae-rpg-eq-lock" class="horae-rpg-btn-sm" title="锁定/解锁（锁定后AI不可建议新格位）"><i class="fa-solid fa-lock"></i></button>
+                    </div>
+                    <input type="file" id="horae-rpg-eq-import-file" accept=".json" style="display:none;" />
+                    <div id="horae-rpg-eq-values-section"></div>
+                </div>
+                <!-- 声望系统 -->
+                <div class="horae-rpg-reputation-area" id="horae-rpg-reputation-area" style="display:none;">
+                    <div class="horae-rpg-section-head">
+                        <span>声望配置</span>
+                        <button id="horae-rpg-rep-export" class="horae-rpg-btn-sm" title="导出声望配置"><i class="fa-solid fa-download"></i></button>
+                        <button id="horae-rpg-rep-import" class="horae-rpg-btn-sm" title="导入声望配置"><i class="fa-solid fa-upload"></i></button>
+                        <button id="horae-rpg-rep-add" class="horae-rpg-btn-sm" title="添加声望分类"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <input type="file" id="horae-rpg-rep-import-file" accept=".json" style="display:none;" />
+                    <div id="horae-rpg-rep-config-list"></div>
+                    <div id="horae-rpg-rep-values-section"></div>
+                </div>
+                <!-- 等级系统 -->
+                <div class="horae-rpg-level-area" id="horae-rpg-level-area" style="display:none;">
+                    <div class="horae-rpg-section-head">
+                        <span>等级 / 经验值</span>
+                    </div>
+                    <div id="horae-rpg-level-values-section"></div>
+                </div>
+                <!-- 货币系统 -->
+                <div class="horae-rpg-currency-area" id="horae-rpg-currency-area" style="display:none;">
+                    <div class="horae-rpg-section-head">
+                        <span>货币配置</span>
+                        <button id="horae-rpg-cur-export" class="horae-rpg-btn-sm" title="导出货币配置"><i class="fa-solid fa-download"></i></button>
+                        <button id="horae-rpg-cur-import" class="horae-rpg-btn-sm" title="导入货币配置"><i class="fa-solid fa-upload"></i></button>
+                        <button id="horae-rpg-cur-add" class="horae-rpg-btn-sm" title="添加币种"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <input type="file" id="horae-rpg-cur-import-file" accept=".json" style="display:none;" />
+                    <div id="horae-rpg-cur-denom-list"></div>
+                    <div id="horae-rpg-cur-values-section"></div>
+                </div>
+                <!-- 据点系统 -->
+                <div class="horae-rpg-stronghold-area" id="horae-rpg-stronghold-area" style="display:none;">
+                    <div class="horae-rpg-section-head">
+                        <span>据点 / 基地</span>
+                        <button id="horae-rpg-sh-add" class="horae-rpg-btn-sm" title="添加据点"><i class="fa-solid fa-plus"></i></button>
+                        <button id="horae-rpg-sh-export" class="horae-rpg-btn-sm" title="导出据点"><i class="fa-solid fa-download"></i></button>
+                        <button id="horae-rpg-sh-import" class="horae-rpg-btn-sm" title="导入据点"><i class="fa-solid fa-upload"></i></button>
+                    </div>
+                    <input type="file" id="horae-rpg-sh-import-file" accept=".json" style="display:none;" />
+                    <div id="horae-rpg-sh-tree"></div>
+                </div>
             </div>
             
             <!-- 设置页 -->
@@ -626,6 +680,26 @@
                             <label style="display:block;margin-bottom:4px;">
                                 <input type="checkbox" id="horae-setting-rpg-skills" checked>
                                 发送技能列表
+                            </label>
+                            <label style="display:block;margin-bottom:4px;">
+                                <input type="checkbox" id="horae-setting-rpg-reputation">
+                                声望系统（自定义势力声望追踪）
+                            </label>
+                            <label style="display:block;margin-bottom:4px;">
+                                <input type="checkbox" id="horae-setting-rpg-equipment">
+                                装备栏（格位、属性值追踪）
+                            </label>
+                            <label style="display:block;margin-bottom:4px;">
+                                <input type="checkbox" id="horae-setting-rpg-level">
+                                等级 / 经验值
+                            </label>
+                            <label style="display:block;margin-bottom:4px;">
+                                <input type="checkbox" id="horae-setting-rpg-currency">
+                                货币系统（自定义币种与兑换比率）
+                            </label>
+                            <label style="display:block;margin-bottom:4px;">
+                                <input type="checkbox" id="horae-setting-rpg-stronghold">
+                                据点系统（据点/基地/领地经营）
                             </label>
                             <label style="display:block;">
                                 <input type="checkbox" id="horae-setting-rpg-dice">
@@ -999,9 +1073,16 @@
                             <i class="fa-solid fa-bookmark" style="opacity:.5;font-size:12px"></i>
                             <select id="horae-prompt-preset-select" title="提示词预设"></select>
                             <button id="horae-prompt-preset-load" class="horae-rpg-btn-sm" title="加载选中预设"><i class="fa-solid fa-download"></i></button>
-                            <button id="horae-prompt-preset-save" class="horae-rpg-btn-sm" title="保存当前提示词到选中预设"><i class="fa-solid fa-floppy-disk"></i></button>
-                            <button id="horae-prompt-preset-new" class="horae-rpg-btn-sm" title="另存为新预设"><i class="fa-solid fa-plus"></i></button>
-                            <button id="horae-prompt-preset-delete" class="horae-rpg-btn-sm" title="删除选中预设"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                        <div class="horae-prompt-presets-bar" style="margin-top:-6px;justify-content:flex-end;">
+                            <button id="horae-prompt-preset-save" class="horae-rpg-btn-sm" title="保存当前提示词到选中预设"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
+                            <button id="horae-prompt-preset-new" class="horae-rpg-btn-sm" title="另存为新预设"><i class="fa-solid fa-plus"></i> 新建</button>
+                            <button id="horae-prompt-preset-delete" class="horae-rpg-btn-sm" title="删除选中预设"><i class="fa-solid fa-trash"></i> 删除</button>
+                            <span style="border-left:1px solid var(--horae-border);height:16px;margin:0 2px;opacity:.3"></span>
+                            <button id="horae-prompt-preset-export" class="horae-rpg-btn-sm" title="导出提示词为文件"><i class="fa-solid fa-file-export"></i> 导出</button>
+                            <button id="horae-prompt-preset-import" class="horae-rpg-btn-sm" title="从文件导入提示词"><i class="fa-solid fa-file-import"></i> 导入</button>
+                            <span style="border-left:1px solid var(--horae-border);height:16px;margin:0 2px;opacity:.3"></span>
+                            <button id="horae-prompt-reset-all" class="horae-rpg-btn-sm" title="全部恢复默认提示词" style="color:#ef4444;"><i class="fa-solid fa-rotate-left"></i> 全部重置</button>
                         </div>
                         
                         <div class="horae-prompt-editor-group">
@@ -1176,7 +1257,7 @@
                 </div>
                 
                 <div class="horae-about">
-                    <p>Horae v1.9.5 | 作者: SenriYuki</p>
+                    <p>Horae v1.10.0 | 作者: SenriYuki</p>
                     <p>基于时间锚点的AI记忆增强系统</p>
                 </div>
             </div>

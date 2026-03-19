@@ -189,10 +189,10 @@ export function calculateRelativeTime(fromDate, toDate) {
             return toDay - fromDay;
         }
         
-        // 跨月估算
+        // 跨月：旧逻辑用「日」大小猜先后，在西幻/架空月名日历上极易误判（如 霜月3日 vs 火月25日）
         if (fromDay !== null && toDay !== null) {
             if (fromMonth && toMonth && fromMonth !== toMonth) {
-                return toDay > fromDay ? -998 : -997; // -998=之后, -997=之前
+                return null;
             }
             return toDay - fromDay;
         }
