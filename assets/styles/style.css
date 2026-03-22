@@ -1,9 +1,9 @@
 /**
- * Horae - 时光记忆插件样式
+ * Horae - 時光記憶插件樣式
  * 作者: SenriYuki
  */
 
-/* === 变量定义 === */
+/* === 變數定義 === */
 #horae_drawer,
 .horae-message-panel,
 .horae-modal,
@@ -31,7 +31,7 @@
     --horae-radius-sm: 4px;
 }
 
-/* 非#horae_drawer的容器直接应用主题色 */
+/* 非#horae_drawer的容器直接應用主題色 */
 .horae-message-panel,
 .horae-modal,
 .horae-modal-overlay,
@@ -40,7 +40,7 @@
     color: var(--horae-text);
 }
 
-/* 输入框隔离 */
+/* 輸入框隔離 */
 #horae_drawer input:not([type="checkbox"]):not([type="radio"]),
 #horae_drawer textarea,
 #horae_drawer select,
@@ -58,26 +58,26 @@
     border-color: var(--horae-border) !important;
 }
 
-/* 表格单元格input透明 */
+/* 表格單元格input透明 */
 #horae_drawer .horae-excel-table td input:not([type="checkbox"]):not([type="radio"]),
 #horae_drawer .horae-excel-table th input:not([type="checkbox"]):not([type="radio"]) {
     background: transparent !important;
     border: none !important;
 }
 
-/* 表格名称下划线 */
+/* 表格名稱下劃線 */
 #horae_drawer .horae-excel-table-title input:not([type="checkbox"]):not([type="radio"]) {
     background: transparent !important;
     border: none !important;
     border-bottom: 1px dashed var(--horae-border) !important;
 }
 
-/* 表格提示词样式 */
+/* 表格提示詞樣式 */
 #horae_drawer .horae-table-prompt-row input:not([type="checkbox"]):not([type="radio"]) {
     background: var(--horae-bg) !important;
 }
 
-/* Checkbox隔离 */
+/* Checkbox隔離 */
 #horae_drawer input[type="checkbox"],
 .horae-message-panel input[type="checkbox"],
 .horae-modal input[type="checkbox"],
@@ -138,7 +138,7 @@
     color: var(--horae-text-muted) !important;
 }
 
-/* 标签页/按钮隔离 */
+/* 標籤頁/按鈕隔離 */
 #horae_drawer .horae-tab {
     background-image: none !important;
     opacity: 1 !important;
@@ -149,7 +149,7 @@
     opacity: 1 !important;
 }
 
-/* === 抽屉面板 === */
+/* === 抽屜面板 === */
 #horae_drawer .drawer-header {
     display: flex;
     justify-content: space-between;
@@ -176,7 +176,7 @@
     border-radius: 10px;
 }
 
-/* 标签页 */
+/* 標籤頁 */
 .horae-tabs {
     display: flex;
     background: var(--horae-bg);
@@ -216,7 +216,7 @@
     font-size: 16px;
 }
 
-/* 标签页内容 */
+/* 標籤頁內容 */
 .horae-tab-contents {
     background: var(--horae-bg-secondary);
     max-height: 60vh;
@@ -232,7 +232,7 @@
     display: block;
 }
 
-/* 状态区块 */
+/* 狀態區塊 */
 .horae-state-section {
     background: var(--horae-bg);
     border-radius: var(--horae-radius);
@@ -255,7 +255,7 @@
     color: var(--horae-primary-light);
 }
 
-/* 时间显示 */
+/* 時間顯示 */
 .horae-time-display {
     display: flex;
     align-items: baseline;
@@ -274,7 +274,7 @@
     color: var(--horae-text);
 }
 
-/* 地点显示 */
+/* 地點顯示 */
 .horae-location-display {
     font-size: 14px;
     color: var(--horae-text);
@@ -295,7 +295,7 @@
     display: none;
 }
 
-/* 服装列表 */
+/* 服裝列表 */
 .horae-costume-list {
     display: flex;
     flex-direction: column;
@@ -351,7 +351,7 @@
     color: var(--horae-text-muted);
 }
 
-/* 操作按钮组 */
+/* 操作按鈕組 */
 .horae-action-buttons {
     display: flex;
     gap: 8px;
@@ -362,7 +362,7 @@
     flex-direction: column;
 }
 
-/* 刷新按钮横向布局 */
+/* 重新整理按鈕橫向格局 */
 .horae-action-buttons .horae-data-btn {
     flex: 1;
     flex-direction: row;
@@ -375,7 +375,7 @@
     font-size: 14px;
 }
 
-/* 通用按钮 */
+/* 通用按鈕 */
 .horae-btn {
     display: inline-flex;
     align-items: center;
@@ -418,7 +418,7 @@
     background: var(--horae-danger);
 }
 
-/* 数据按钮网格 */
+/* 數據按鈕網格 */
 .horae-data-buttons-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -467,7 +467,7 @@
     transform: translateY(0);
 }
 
-/* 主要按钮 */
+/* 主要按鈕 */
 .horae-data-btn.primary {
     background: linear-gradient(135deg, var(--horae-primary-dark), var(--horae-primary));
     border-color: var(--horae-primary);
@@ -487,7 +487,7 @@
     box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
 }
 
-/* 危险按钮 */
+/* 危險按鈕 */
 .horae-data-btn.danger {
     border-color: rgba(239, 68, 68, 0.3);
 }
@@ -505,7 +505,7 @@
     color: #f87171;
 }
 
-/* === 待办事项 === */
+/* === 待辦事項 === */
 .horae-agenda-section {
     margin-bottom: 16px;
     padding-bottom: 12px;
@@ -594,7 +594,7 @@
     transition: color 0.15s;
 }
 
-/* 待办多选模式 */
+/* 待辦多選模式 */
 .horae-agenda-select-check {
     flex-shrink: 0;
     display: flex;
@@ -614,7 +614,7 @@
     border-left-color: var(--horae-accent, #f59e0b);
 }
 
-/* === 时间线搜索 === */
+/* === 時間線搜索 === */
 .horae-timeline-search-row {
     display: flex;
     align-items: center;
@@ -646,7 +646,7 @@
     color: var(--horae-text-muted);
 }
 
-/* === 时间线 === */
+/* === 時間線 === */
 .horae-timeline-header {
     display: flex;
     justify-content: space-between;
@@ -740,14 +740,14 @@
     background: rgba(37, 99, 235, 0.08);
 }
 
-/* 已压缩但切换为原始视图的事件 */
+/* 已壓縮但切換為原始視圖的事件 */
 .horae-timeline-item.horae-compressed-restored {
     border: 1px dashed var(--horae-border);
     opacity: 0.75;
     border-left-width: 3px;
 }
 
-/* 摘要折叠指示条（inactive 状态） */
+/* 摘要摺疊指示條（inactive 狀態） */
 .horae-timeline-item.horae-summary-collapsed {
     opacity: 0.8;
     border: 1px dashed var(--horae-info, #2563eb);
@@ -757,7 +757,7 @@
     position: relative;
 }
 
-/* 摘要操作按钮组 */
+/* 摘要操作按鈕組 */
 .horae-summary-actions {
     display: flex;
     flex-direction: column;
@@ -837,7 +837,7 @@
     opacity: 0.7;
 }
 
-/* 时间线上下文菜单 */
+/* 時間線上下文選單 */
 .horae-context-menu {
     position: fixed;
     z-index: 99999;
@@ -886,7 +886,7 @@
     background: var(--horae-border);
 }
 
-/* 多选按钮激活状态 */
+/* 多選按鈕打開狀態 */
 #horae-btn-timeline-multiselect.active {
     background: var(--horae-primary);
     color: #fff;
@@ -908,7 +908,7 @@
     flex: 1;
 }
 
-/* 手机端时间线：日期换行，内容用满宽度 */
+/* 手機端時間線：日期換行，內容用滿寬度 */
 @media screen and (max-width: 768px) {
     .horae-timeline-item {
         flex-wrap: wrap;
@@ -936,7 +936,7 @@
     color: var(--horae-text-muted);
 }
 
-/* 空状态 */
+/* 空狀態 */
 .horae-empty-state {
     display: flex;
     flex-direction: column;
@@ -952,7 +952,7 @@
     opacity: 0.5;
 }
 
-/* === 角色页 === */
+/* === 角色頁 === */
 .horae-subsection {
     margin-bottom: 16px;
 }
@@ -1095,7 +1095,7 @@
     color: var(--horae-text-muted);
 }
 
-/* === 物品页 === */
+/* === 物品頁 === */
 .horae-items-header {
     display: flex;
     justify-content: space-between;
@@ -1155,7 +1155,7 @@
     color: var(--horae-accent);
 }
 
-/* === 设置页 === */
+/* === 設定頁 === */
 .horae-settings-section {
     background: var(--horae-bg);
     border-radius: var(--horae-radius);
@@ -1180,7 +1180,7 @@
     cursor: pointer;
 }
 
-/* 美化导入/导出按钮组 */
+/* 美化導入/導出按鈕組 */
 .horae-theme-buttons {
     display: flex;
     gap: 6px;
@@ -1219,14 +1219,14 @@
     border-top: 1px solid var(--horae-border);
 }
 
-/* === 消息面板 === */
+/* === 訊息面板 === */
 .horae-message-panel {
     margin-top: 8px;
     border-radius: var(--horae-radius);
     overflow: hidden;
     background: var(--horae-bg);
     border: 1px solid var(--horae-border);
-    order: 9999;  /* 强制底部 */
+    order: 9999;  /* 強制底部 */
 }
 
 .horae-panel-toggle {
@@ -1294,7 +1294,7 @@
     color: var(--horae-primary-light);
 }
 
-/* 番外/小剧场 */
+/* 番外/小劇場 */
 .horae-message-panel.horae-sideplay {
     opacity: 0.6;
     border-left: 3px solid var(--horae-text-muted);
@@ -1376,13 +1376,13 @@
     outline: none;
 }
 
-/* 日期时间输入 */
+/* 日期時間輸入 */
 .horae-input-datetime {
     flex: 1 !important;
     min-width: 100px;
 }
 
-/* 编辑器通用 */
+/* 編輯器通用 */
 .horae-costume-editor,
 .horae-items-editor,
 .horae-affection-editor,
@@ -1413,7 +1413,7 @@
     max-width: 80px;
 }
 
-/* 物品图标输入 */
+/* 物品圖示輸入 */
 .horae-editor-row .horae-item-icon {
     max-width: 40px;
     min-width: 40px;
@@ -1475,7 +1475,7 @@
     padding: 4px;
 }
 
-/* 好感度编辑行 */
+/* 好感度編輯行 */
 .horae-affection-row {
     display: flex;
     gap: 6px;
@@ -1542,7 +1542,7 @@
     color: var(--horae-primary-light);
 }
 
-/* 事件编辑器 */
+/* 事件編輯器 */
 .horae-event-editor {
     display: flex;
     gap: 8px;
@@ -1568,7 +1568,7 @@
     font-size: 12px;
 }
 
-/* 重新扫描区域 */
+/* 重新掃描區域 */
 .horae-panel-rescan {
     margin-top: 12px;
     padding: 12px;
@@ -1629,7 +1629,7 @@
     cursor: wait;
 }
 
-/* 面板底部按钮 */
+/* 面板底部按鈕 */
 .horae-panel-footer {
     display: flex;
     gap: 8px;
@@ -1662,7 +1662,7 @@
     opacity: 1;
 }
 
-/* === 进度条 === */
+/* === 進度條 === */
 .horae-progress-overlay {
     position: fixed;
     top: 0;
@@ -1715,7 +1715,7 @@
     color: var(--horae-text-muted);
 }
 
-/* === 响应式 === */
+/* === 響應式 === */
 @media (max-width: 768px) {
     .horae-tabs {
         flex-wrap: nowrap;
@@ -1734,12 +1734,12 @@
         font-size: 11px;
     }
     
-    /* 待办删除常显 */
+    /* 待辦刪除常顯 */
     .horae-agenda-delete {
         opacity: 1;
     }
     
-    /* 数据按钮网格 */
+    /* 數據按鈕網格 */
     .horae-data-buttons-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
@@ -1775,7 +1775,7 @@
         font-size: 16px;
     }
     
-    /* 物品编辑器适配 */
+    /* 物品編輯器符合 */
     .horae-item-row {
         flex-wrap: wrap;
         gap: 6px;
@@ -1821,7 +1821,7 @@
         margin-left: 0;
     }
     
-    /* 服装编辑器适配 */
+    /* 服裝編輯器符合 */
     .horae-costume-editor .horae-editor-row {
         flex-wrap: wrap;
     }
@@ -1836,13 +1836,13 @@
         min-width: calc(100% - 120px);
     }
     
-    /* 面板内容可滚动 */
+    /* 面板內容可滾動 */
     .horae-panel-content {
         max-height: 60vh;
         overflow-y: auto;
     }
     
-    /* 底部按钮固定 */
+    /* 底部按鈕固定 */
     .horae-panel-footer {
         position: sticky;
         bottom: 0;
@@ -1852,7 +1852,7 @@
         padding: 10px 12px;
     }
     
-    /* 重扫描紧凑 */
+    /* 重掃描緊湊 */
     .horae-panel-rescan {
         padding: 10px;
     }
@@ -1863,7 +1863,7 @@
     }
 }
 
-/* === 动画 === */
+/* === 動畫 === */
 @keyframes horae-fade-in {
     from {
         opacity: 0;
@@ -1883,7 +1883,7 @@
     animation: horae-fade-in 0.3s ease;
 }
 
-/* === 滚动条 === */
+/* === 滾動條 === */
 .horae-tab-contents::-webkit-scrollbar,
 .horae-timeline-list::-webkit-scrollbar {
     width: 6px;
@@ -1990,7 +1990,7 @@
     border-left: 3px solid transparent;
 }
 
-/* === NPC样式 === */
+/* === NPC樣式 === */
 .horae-npc-name {
     display: flex;
     align-items: center;
@@ -2057,7 +2057,7 @@
     color: var(--horae-text-muted);
 }
 
-/* NPC扩展标签 */
+/* NPC擴展標籤 */
 .horae-npc-extras {
     display: inline-flex;
     align-items: center;
@@ -2079,7 +2079,7 @@
     cursor: help;
 }
 
-/* 待办编辑行 */
+/* 待辦編輯行 */
 .horae-editor-row.horae-agenda-edit-row input.horae-agenda-date {
     flex: 0 0 90px !important;
     max-width: 90px;
@@ -2118,7 +2118,7 @@
     font-style: normal;
 }
 
-/* 性别图标色 */
+/* 性別圖示色 */
 .horae-gender-male {
     color: #60a5fa !important;
 }
@@ -2135,7 +2135,7 @@
     color: var(--horae-primary) !important;
 }
 
-/* 性别过滤栏 */
+/* 性別過濾欄 */
 .horae-gender-filter {
     display: flex;
     gap: 4px;
@@ -2170,7 +2170,7 @@
     color: #fff;
 }
 
-/* NPC 编辑弹窗 */
+/* NPC 編輯彈窗 */
 .horae-edit-field-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -2209,7 +2209,7 @@
     }
 }
 
-/* === NPC星标 === */
+/* === NPC星標 === */
 .horae-npc-header {
     display: flex;
     justify-content: space-between;
@@ -2243,7 +2243,7 @@
     background: rgba(245, 158, 11, 0.05);
 }
 
-/* 主角色样式 */
+/* 主角色樣式 */
 .horae-npc-item.main-character {
     border-left: 3px solid var(--horae-primary);
     background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(124, 58, 237, 0.05));
@@ -2319,14 +2319,14 @@
     gap: 8px;
 }
 
-/* 好感度分隔线 */
+/* 好感度分隔線 */
 .horae-affection-divider {
     height: 1px;
     background: var(--horae-border);
     margin: 8px 0;
 }
 
-/* === 已删物品 === */
+/* === 已刪物品 === */
 .horae-deleted-items-display {
     display: flex;
     flex-wrap: wrap;
@@ -2351,7 +2351,7 @@
     opacity: 0.7;
 }
 
-/* === 图标按钮 === */
+/* === 圖示按鈕 === */
 .horae-icon-btn {
     display: flex;
     align-items: center;
@@ -2372,7 +2372,7 @@
     border-color: var(--horae-warning);
 }
 
-/* === 模态弹窗 === */
+/* === 模態彈窗 === */
 .horae-modal,
 .horae-modal-overlay {
     position: fixed;
@@ -2456,7 +2456,7 @@
     border-color: var(--horae-danger);
 }
 
-/* 设置说明 */
+/* 設定說明 */
 .horae-setting-hint {
     display: block;
     font-size: 11px;
@@ -2488,7 +2488,7 @@
     color: var(--horae-success);
 }
 
-/* === 物品多选 === */
+/* === 物品多選 === */
 .horae-items-hint {
     font-size: 11px;
     color: var(--horae-text-muted);
@@ -2560,7 +2560,7 @@
     border-color: var(--horae-danger);
 }
 
-/* 选中状态 */
+/* 選中狀態 */
 .horae-full-item {
     position: relative;
     transition: all 0.15s ease;
@@ -2586,7 +2586,7 @@
     cursor: pointer;
 }
 
-/* 多选可点击 */
+/* 多選可點擊 */
 .horae-full-item[data-item-name] {
     cursor: pointer;
 }
@@ -2595,7 +2595,7 @@
     background: var(--horae-bg-hover);
 }
 
-/* 设置子提示 */
+/* 設定子提示 */
 .horae-setting-sub-hint {
     display: block;
     font-size: 10px;
@@ -2635,7 +2635,7 @@
     content: "📝 ";
 }
 
-/* === 编辑按钮 === */
+/* === 編輯按鈕 === */
 .horae-editable-item {
     position: relative;
 }
@@ -2704,7 +2704,7 @@
     opacity: 1 !important;
 }
 
-/* === 编辑弹窗 === */
+/* === 編輯彈窗 === */
 .horae-edit-modal-body {
     display: flex;
     flex-direction: column;
@@ -2752,7 +2752,7 @@
     gap: 4px;
 }
 
-/* 时间线编辑按钮 */
+/* 時間線編輯按鈕 */
 .horae-timeline-item.horae-editable-item {
     position: relative;
     padding-right: 32px;
@@ -2763,13 +2763,13 @@
     transform: translateY(-50%);
 }
 
-/* 时间线项选中状态 */
+/* 時間線項選中狀態 */
 .horae-timeline-item.selected {
     background: rgba(124, 58, 237, 0.2) !important;
     border-left-color: var(--horae-primary) !important;
 }
 
-/* === 移动端弹窗 === */
+/* === 移動端彈窗 === */
 @media screen and (max-width: 768px) {
     .horae-modal,
     .horae-modal-overlay {
@@ -2801,7 +2801,7 @@
         font-size: 13px;
     }
     
-    /* iOS缩放修复 */
+    /* iOS縮放修復 */
     .horae-modal input,
     .horae-modal textarea,
     .horae-modal select,
@@ -2812,9 +2812,9 @@
     }
 }
 
-/* === PC端编辑器 === */
+/* === PC端編輯器 === */
 @media screen and (min-width: 769px) {
-    /* 物品编辑行 */
+    /* 物品編輯行 */
     .horae-item-row {
         display: flex;
         align-items: center;
@@ -2848,7 +2848,7 @@
         flex-shrink: 0;
     }
     
-    /* 编辑器行 */
+    /* 編輯器行 */
     .horae-editor-row {
         display: flex;
         align-items: center;
@@ -2860,7 +2860,7 @@
         min-width: 60px;
     }
     
-    /* 服装编辑器 */
+    /* 服裝編輯器 */
     .horae-costume-editor .horae-editor-row .char-input {
         width: 100px;
         min-width: 100px;
@@ -2873,7 +2873,7 @@
     }
 }
 
-/* === 自定义表格 === */
+/* === 客製化表格 === */
 .horae-custom-tables-list {
     display: flex;
     flex-direction: column;
@@ -2881,7 +2881,7 @@
     margin-bottom: 12px;
 }
 
-/* 表格分组标签 */
+/* 表格分組標籤 */
 .horae-tables-group-label {
     font-size: 11px;
     font-weight: 600;
@@ -2898,7 +2898,7 @@
     padding-top: 12px;
 }
 
-/* 作用域标签 */
+/* 作用域標籤 */
 .horae-table-scope-label {
     font-size: 10px;
     font-weight: 600;
@@ -2910,7 +2910,7 @@
     flex-shrink: 0;
 }
 
-/* 锁定标记 */
+/* 鎖定標記 */
 .horae-cell-locked {
     position: relative;
 }
@@ -2932,7 +2932,7 @@
     overflow: hidden;
 }
 
-/* 表格滚动容器 */
+/* 表格滾動容器 */
 .horae-excel-table-wrapper {
     overflow-x: auto;
     overflow-y: visible;
@@ -3035,7 +3035,7 @@
     border-color: var(--horae-warning);
 }
 
-/* 表格主体 */
+/* 表格主體 */
 .horae-excel-table {
     width: max-content;
     min-width: 100%;
@@ -3091,7 +3091,7 @@
 }
 
 .horae-excel-table input {
-    /* size属性决定宽度 */
+    /* size屬性決定寬度 */
     min-width: 50px;
     padding: 6px 8px;
     background: transparent;
@@ -3111,7 +3111,7 @@
     opacity: 0.5;
 }
 
-/* 表格按钮容器 */
+/* 表格按鈕容器 */
 .horae-table-undo-btn,
 .horae-table-redo-btn {
     background: none !important;
@@ -3144,7 +3144,7 @@
     flex-wrap: wrap;
 }
 
-/* 表格操作按钮 */
+/* 表格操作按鈕 */
 .horae-btn-add-table,
 .horae-btn-import-table {
     flex: 1;
@@ -3187,7 +3187,7 @@
     opacity: 0.5;
 }
 
-/* 右键菜单 */
+/* 右鍵選單 */
 .horae-context-menu {
     position: fixed;
     background: var(--horae-bg);
@@ -3224,7 +3224,7 @@
     margin: 4px 0;
 }
 
-/* 表格提示词 */
+/* 表格提示詞 */
 .horae-table-prompt-row {
     padding: 8px 12px;
     border-top: 1px solid var(--horae-border);
@@ -3250,7 +3250,7 @@
     color: var(--horae-text-muted);
 }
 
-/* === 提示词编辑器 === */
+/* === 提示詞編輯器 === */
 .horae-prompt-editor-group {
     background: var(--horae-bg-secondary);
     border: 1px solid var(--horae-border);
@@ -3318,7 +3318,7 @@
     text-align: right;
 }
 
-/* 折叠区域 */
+/* 摺疊區域 */
 .horae-collapse-header {
     cursor: pointer;
     user-select: none;
@@ -3339,7 +3339,7 @@
     transform: rotate(-90deg);
 }
 
-/* 取消按钮 */
+/* 取消按鈕 */
 .horae-progress-overlay .horae-progress-cancel {
     display: flex !important;
     align-items: center !important;
@@ -3372,7 +3372,7 @@
     box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4) !important;
 }
 
-/* === 摘要审阅 === */
+/* === 摘要審閱 === */
 .horae-review-modal .horae-modal-content {
     max-width: 600px;
     width: 95vw;
@@ -3552,7 +3552,7 @@
     gap: 5px;
 }
 
-/* 事件级别 */
+/* 事件層級 */
 .horae-review-item[data-level="关键"] {
     border-left-color: #ef4444;
 }
@@ -3565,12 +3565,12 @@
     border-left-color: var(--horae-border);
 }
 
-/* 抽屉内容区应用主题色（不影响顶栏图标） */
+/* 抽屜內容區應用主題色（不影響頂欄圖示） */
 #horae_drawer_content {
     color: var(--horae-text);
 }
 
-/* === 浅色模式 === */
+/* === 淺色模式 === */
 #horae_drawer.horae-light,
 .horae-message-panel.horae-light,
 .horae-modal.horae-light,
@@ -3609,24 +3609,24 @@
     border-color: var(--horae-primary) !important;
 }
 
-/* 标签页激活 */
+/* 標籤頁打開 */
 #horae_drawer.horae-light .horae-tab.active {
     border-bottom-color: var(--horae-primary);
     color: var(--horae-primary);
 }
 
-/* 物品标签 */
+/* 物品標籤 */
 .horae-message-panel.horae-light .horae-item-tag,
 #horae_drawer.horae-light .horae-item-tag {
     background: rgba(124, 58, 237, 0.12);
 }
 
-/* 状态区块 */
+/* 狀態區塊 */
 #horae_drawer.horae-light .horae-state-section {
     border: 1px solid var(--horae-border);
 }
 
-/* 时间线 */
+/* 時間線 */
 #horae_drawer.horae-light .horae-timeline-item {
     border: 1px solid var(--horae-border);
 }
@@ -3639,7 +3639,7 @@
     border-color: var(--horae-border);
 }
 
-/* 上下文菜单浅色模式 */
+/* 上下文選單淺色模式 */
 .horae-light .horae-context-menu,
 body .horae-context-menu {
     background: var(--horae-bg-secondary, #2a2a3e);
@@ -3647,7 +3647,7 @@ body .horae-context-menu {
     color: var(--horae-text);
 }
 
-/* 表格表头 */
+/* 表格表頭 */
 #horae_drawer.horae-light .horae-excel-table th {
     background: #e0e0e5;
 }
@@ -3656,7 +3656,7 @@ body .horae-context-menu {
     border-color: rgba(0, 0, 0, 0.08);
 }
 
-/* ==================== 场景记忆 ==================== */
+/* ==================== 場景記憶 ==================== */
 
 .horae-location-toolbar {
     display: flex;
@@ -3736,7 +3736,7 @@ body .horae-context-menu {
     margin-top: 6px;
 }
 
-/* 场景记忆编辑弹窗 */
+/* 場景記憶編輯彈窗 */
 .horae-location-modal-overlay {
     position: fixed;
     top: 0;
@@ -3770,7 +3770,7 @@ body .horae-context-menu {
     border-color: var(--horae-primary);
 }
 
-/* 浅色模式 */
+/* 淺色模式 */
 #horae_drawer.horae-light .horae-location-card {
     background: #f0f0f5;
     border-color: #d0d0d8;
@@ -3780,7 +3780,7 @@ body .horae-context-menu {
     border-color: var(--horae-primary);
 }
 
-/* === 关系网络 === */
+/* === 關係網路 === */
 .horae-relationship-list {
     display: flex;
     flex-direction: column;
@@ -3860,7 +3860,7 @@ body .horae-context-menu {
 .horae-rel-edit:hover { color: var(--horae-primary); }
 .horae-rel-delete:hover { color: var(--horae-danger, #ef4444); }
 
-/* 底部面板关系/情绪 */
+/* 底部面板關係/情緒 */
 .horae-panel-relationships {
     display: flex;
     flex-direction: column;
@@ -3899,7 +3899,7 @@ body .horae-context-menu {
     font-size: 12px;
 }
 
-/* 关系编辑弹窗 */
+/* 關係編輯彈窗 */
 .horae-form-row {
     margin-bottom: 12px;
 }
@@ -3942,7 +3942,7 @@ body .horae-context-menu {
     color: var(--horae-primary);
 }
 
-/* === 场景记忆列表 === */
+/* === 場景記憶列表 === */
 .horae-location-card {
     padding: 10px 14px;
     background: var(--horae-bg-secondary);
@@ -4036,7 +4036,7 @@ body .horae-context-menu {
     opacity: 0.7;
 }
 
-/* 合并预览 */
+/* 合併預覽 */
 .horae-merge-preview {
     margin-top: 8px;
     padding: 8px 12px;
@@ -4048,7 +4048,7 @@ body .horae-context-menu {
     word-break: break-all;
 }
 
-/* 场景工具栏 */
+/* 場景工具欄 */
 .horae-location-toolbar {
     display: flex;
     gap: 8px;
@@ -4060,7 +4060,7 @@ body .horae-context-menu {
     font-size: 12px;
 }
 
-/* 场景分组折叠 */
+/* 場景分組摺疊 */
 .horae-loc-group {
     margin-bottom: 8px;
     border: 1px solid var(--horae-border);
@@ -4121,7 +4121,7 @@ body .horae-context-menu {
     padding-left: 24px;
 }
 
-/* 移动端关系/场景操作始终可见 */
+/* 移動端關係/場景操作始終可見 */
 @media (max-width: 768px) {
     .horae-rel-actions,
     .horae-loc-actions {
@@ -4130,7 +4130,7 @@ body .horae-context-menu {
 }
 
 /* ============================================
-   向量记忆
+   向量記憶
    ============================================ */
 
 .horae-vector-status {
@@ -4230,7 +4230,7 @@ body .horae-context-menu {
 
 /* ========== RPG 模式 ========== */
 
-/* 分页区域头 */
+/* 分頁區域頭 */
 .horae-rpg-section-head {
     display: flex;
     align-items: center;
@@ -4269,7 +4269,7 @@ body .horae-context-menu {
 }
 .horae-rpg-btn-muted { opacity: 0.6; }
 
-/* 属性条配置 */
+/* 屬性條配置 */
 .horae-rpg-config-section { margin-bottom: 12px; }
 .horae-rpg-config-row {
     display: flex;
@@ -4340,7 +4340,7 @@ body .horae-context-menu {
     color: #ef4444;
 }
 
-/* 装备条目详细样式 */
+/* 裝備條目詳細樣式 */
 .horae-rpg-eq-item {
     padding: 4px 0;
     border-bottom: 1px solid rgba(255,255,255,0.04);
@@ -4385,7 +4385,7 @@ body .horae-context-menu {
     margin-bottom: 2px;
     display: block;
 }
-/* 物品栏装备按钮 */
+/* 物品欄裝備按鈕 */
 .horae-item-equip-btn {
     display: flex;
     align-items: center;
@@ -4405,7 +4405,7 @@ body .horae-context-menu {
     color: #a78bfa;
 }
 
-/* 角色属性卡片 */
+/* 角色屬性卡片 */
 .horae-rpg-char-card,
 .horae-rpg-skill-group {
     background: var(--horae-card-bg, rgba(255,255,255,0.04));
@@ -4466,7 +4466,7 @@ body .horae-context-menu {
     font-variant-numeric: tabular-nums;
 }
 
-/* 异常状态标签 */
+/* 異常狀態標籤 */
 .horae-rpg-status {
     display: flex;
     flex-wrap: wrap;
@@ -4485,7 +4485,7 @@ body .horae-context-menu {
     border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
-/* RPG 分页状态标题 */
+/* RPG 分頁狀態標題 */
 .horae-rpg-status-label {
     font-size: 11px;
     font-weight: 600;
@@ -4495,7 +4495,7 @@ body .horae-context-menu {
     padding-left: 2px;
 }
 
-/* RPG 分页详细状态列表 */
+/* RPG 分頁詳細狀態列表 */
 .horae-rpg-status-detail {
     display: flex;
     flex-direction: column;
@@ -4522,7 +4522,7 @@ body .horae-context-menu {
     flex-shrink: 0;
 }
 
-/* 技能区 */
+/* 技能區 */
 .horae-rpg-skills-area { margin-top: 12px; }
 .horae-rpg-skills-empty {
     font-size: 11px;
@@ -4573,7 +4573,7 @@ body .horae-context-menu {
 }
 .horae-rpg-skill-del:hover { opacity: 1; color: #ef4444; }
 
-/* 技能添加表单 */
+/* 技能添加表單 */
 #horae-rpg-skill-form {
     display: flex;
     flex-wrap: wrap;
@@ -4602,7 +4602,7 @@ body .horae-context-menu {
     justify-content: flex-end;
 }
 
-/* ========== RPG HUD（底部面板上方简易状态条） ========== */
+/* ========== RPG HUD（底部面板上方簡易狀態條） ========== */
 .horae-rpg-hud {
     padding: 6px 10px;
     margin: 4px 0 2px;
@@ -4707,7 +4707,7 @@ body .horae-context-menu {
     min-width: 80px;
 }
 
-/* 等级配置面板 */
+/* 等級配置面板 */
 .horae-rpg-lv-entry {
     padding: 6px 0;
     border-bottom: 1px solid var(--horae-border, rgba(255,255,255,0.06));
@@ -4742,7 +4742,7 @@ body .horae-context-menu {
     text-align: right;
 }
 
-/* ========== RPG 角色卡折叠（details/summary） ========== */
+/* ========== RPG 角色卡摺疊（details/summary） ========== */
 .horae-rpg-char-detail {
     border: 1px solid var(--horae-border, rgba(255,255,255,0.1));
     border-radius: 6px;
@@ -4787,7 +4787,7 @@ body .horae-context-menu {
     padding: 10px 12px;
 }
 
-/* ========== RPG 雷达图 ========== */
+/* ========== RPG 雷達圖 ========== */
 .horae-rpg-radar {
     display: block;
     margin: 0 auto 8px;
@@ -4796,7 +4796,7 @@ body .horae-context-menu {
     aspect-ratio: 1;
 }
 
-/* ========== RPG 角色块（属性条+折叠卡一体） ========== */
+/* ========== RPG 角色塊（屬性條+摺疊卡一體） ========== */
 .horae-rpg-char-block {
     margin-bottom: 8px;
 }
@@ -4818,7 +4818,7 @@ body .horae-context-menu {
     border-radius: 6px;
 }
 
-/* ========== RPG 角色卡分页标签 ========== */
+/* ========== RPG 角色卡分頁標籤 ========== */
 .horae-rpg-card-tabs { width: 100%; }
 .horae-rpg-card-tab-bar {
     display: flex;
@@ -4846,7 +4846,7 @@ body .horae-context-menu {
 .horae-rpg-card-tab-panel { display: none; }
 .horae-rpg-card-tab-panel.active { display: block; }
 
-/* 等级徽章 */
+/* 等級徽章 */
 .horae-rpg-lv-badge {
     font-size: 11px;
     font-weight: 700;
@@ -4857,7 +4857,7 @@ body .horae-context-menu {
     margin-left: 4px;
 }
 
-/* 角色卡内装备 */
+/* 角色卡內裝備 */
 .horae-rpg-card-eq { font-size: 12px; }
 .horae-rpg-card-eq-item {
     padding: 3px 0;
@@ -4873,7 +4873,7 @@ body .horae-context-menu {
     color: var(--horae-text-muted, #94a3b8);
 }
 
-/* 角色卡内声望 */
+/* 角色卡內聲望 */
 .horae-rpg-card-rep {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -4888,7 +4888,7 @@ body .horae-context-menu {
     background: rgba(255,255,255,0.03);
 }
 
-/* 角色卡内等级 */
+/* 角色卡內等級 */
 .horae-rpg-card-lvl { font-size: 12px; }
 .horae-rpg-card-lvl-val {
     font-size: 18px;
@@ -4901,7 +4901,7 @@ body .horae-context-menu {
 .horae-rpg-card-xp { display: flex; flex-direction: column; gap: 4px; }
 .horae-rpg-card-xp span { font-size: 11px; color: var(--horae-text-muted, #94a3b8); }
 
-/* 角色卡内货币 */
+/* 角色卡內貨幣 */
 .horae-rpg-card-cur {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -4916,7 +4916,7 @@ body .horae-context-menu {
     background: rgba(255,255,255,0.03);
 }
 
-/* ========== RPG 属性面板文字模式 ========== */
+/* ========== RPG 屬性面板文字模式 ========== */
 .horae-rpg-attr-text {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -4937,7 +4937,7 @@ body .horae-context-menu {
 }
 .horae-rpg-attr-section { margin-bottom: 8px; }
 
-/* ========== RPG 角色卡内技能折叠 ========== */
+/* ========== RPG 角色卡內技能摺疊 ========== */
 .horae-rpg-card-skills { margin-top: 6px; }
 .horae-rpg-skill-detail {
     border: 1px solid var(--horae-border, rgba(255,255,255,0.06));
@@ -4967,7 +4967,7 @@ body .horae-context-menu {
     color: var(--horae-text-muted, #94a3b8);
 }
 
-/* ========== RPG 属性描述输入 ========== */
+/* ========== RPG 屬性描述輸入 ========== */
 .horae-rpg-attr-desc {
     flex: 1;
     font-size: 11px;
@@ -4990,7 +4990,7 @@ body .horae-context-menu {
 }
 .horae-rpg-attr-del:hover { opacity: 1; }
 
-/* ========== RPG 角色属性编辑表单 ========== */
+/* ========== RPG 角色屬性編輯表單 ========== */
 .horae-rpg-manual-section { margin-top: 6px; }
 .horae-rpg-charattr-row {
     display: flex;
@@ -5341,7 +5341,7 @@ body .horae-context-menu {
     padding: 10px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
-/* 面板靠近顶部时弹出方向翻转到下方 */
+/* 面板靠近頂部時彈出方向翻轉到下方 */
 .horae-rpg-dice-panel.horae-dice-flip-down .horae-rpg-dice-body {
     bottom: auto;
     top: 50px;
@@ -5423,26 +5423,26 @@ body .horae-context-menu {
     .horae-rpg-dice-body { width: 220px; }
 }
 
-/* ========== 平板适配（769px ~ 1024px） ========== */
+/* ========== 平板符合（769px ~ 1024px） ========== */
 @media screen and (min-width: 769px) and (max-width: 1024px) {
-    /* 标签页 */
+    /* 標籤頁 */
     .horae-tab { min-width: 0; padding: 8px 6px; font-size: 11px; gap: 4px; }
     .horae-tab i { font-size: 13px; }
     .horae-tab span { font-size: 10px; }
 
-    /* 设置区稍微收紧 */
+    /* 設定區稍微收緊 */
     .horae-setting-item { margin-bottom: 8px; }
     .horae-setting-sub-hint { font-size: 10px; }
 
-    /* 编辑字段行 */
+    /* 編輯資料欄行 */
     .horae-edit-field-row { grid-template-columns: 1fr 1fr 1fr; }
 
-    /* 数据按钮网格 */
+    /* 數據按鈕網格 */
     .horae-data-btn { padding: 14px 8px; min-height: 60px; }
     .horae-data-btn i { font-size: 20px; }
     .horae-data-btn span { font-size: 12px; }
 
-    /* 弹窗 */
+    /* 彈窗 */
     .horae-modal { padding: 12px; box-sizing: border-box; }
     .horae-modal-content {
         width: 100% !important;
@@ -5460,14 +5460,14 @@ body .horae-context-menu {
         width: 92vw !important;
         max-height: 85vh;
     }
-    /* 触屏输入缩放修复 */
+    /* 觸控式螢幕輸入縮放修復 */
     .horae-modal input,
     .horae-modal textarea,
     .horae-modal select { font-size: 16px; }
     .horae-modal-footer { flex-wrap: wrap; gap: 6px; }
     .horae-modal-footer .horae-btn { flex: 1 1 calc(50% - 3px); min-width: calc(50% - 3px); }
 
-    /* 进度弹窗 */
+    /* 進度彈窗 */
     .horae-progress-container { max-width: 88vw; min-width: auto; }
 
     /* RPG HUD */
@@ -5476,12 +5476,12 @@ body .horae-context-menu {
     .horae-rpg-hud-lbl { font-size: 8px; }
     .horae-rpg-hud-val { font-size: 8px; }
 
-    /* 时间线 */
+    /* 時間線 */
     .horae-timeline-item { flex-wrap: wrap; row-gap: 4px; }
     .horae-timeline-summary { font-size: 12px; }
     .horae-timeline-meta { font-size: 10px; }
 
-    /* 物品编辑器适配 */
+    /* 物品編輯器符合 */
     .horae-item-row { flex-wrap: wrap; gap: 6px; }
     .horae-item-row .horae-item-icon { max-width: 36px; min-width: 36px; order: 1; }
     .horae-item-row .horae-item-name { flex: 1; min-width: calc(100% - 80px); order: 2; }
@@ -5491,21 +5491,21 @@ body .horae-context-menu {
     .horae-item-row .horae-item-importance { width: 60px; min-width: 60px; order: 6; }
     .horae-item-desc-row { padding-left: 0; margin-left: 0; }
 
-    /* 服装编辑器适配 */
+    /* 服裝編輯器符合 */
     .horae-costume-editor .horae-editor-row { flex-wrap: wrap; }
     .horae-costume-editor .horae-editor-row .char-input { max-width: 80px; flex: 0 0 80px; }
     .horae-costume-editor .horae-editor-row input:not(.char-input) { flex: 1; min-width: calc(100% - 120px); }
 
-    /* 面板内容可滚动 */
+    /* 面板內容可滾動 */
     .horae-panel-content { max-height: 60vh; overflow-y: auto; }
 
-    /* 物品/NPC/关系/待办行操作按钮常显（触屏无 hover） */
+    /* 物品/NPC/關係/待辦行操作按鈕常顯（觸控式螢幕無 hover） */
     .horae-rel-actions,
     .horae-loc-actions,
     .horae-agenda-delete,
     .horae-item-lock-btn { opacity: 1; }
 
-    /* 提示词预设按钮区手机端自动换行 */
+    /* 提示詞預設按鈕區手機端自動換行 */
     .horae-prompt-presets-actions {
         flex-wrap: wrap;
         row-gap: 6px;
@@ -5515,7 +5515,7 @@ body .horae-context-menu {
     }
 }
 
-/* ── 提示词预设工具栏 ── */
+/* ── 提示詞預設工具欄 ── */
 .horae-prompt-presets-bar {
     display: flex;
     align-items: center;
@@ -5537,7 +5537,7 @@ body .horae-context-menu {
     font-size: 12px;
 }
 
-/* ── 据点树形节点 ── */
+/* ── 據點樹形節點 ── */
 .horae-rpg-sh-node {
     margin-bottom: 2px;
 }
@@ -5580,7 +5580,7 @@ body .horae-context-menu {
     word-break: break-word;
 }
 
-/* ── 装备模板列表 ── */
+/* ── 裝備模範列表 ── */
 .horae-rpg-tpl-item {
     display: flex;
     align-items: center;
@@ -5611,7 +5611,7 @@ body .horae-context-menu {
     flex-shrink: 0;
 }
 
-/* ── 移动端 RPG 配置行适配 ── */
+/* ── 移動端 RPG 配置行符合 ── */
 @media screen and (max-width: 768px) {
     .horae-rpg-config-row {
         flex-wrap: wrap;

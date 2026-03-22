@@ -1,6 +1,6 @@
 /**
- * Horae - 时光记忆插件 
- * 基于时间锚点的AI记忆增强系统
+ * Horae - 時光記憶插件 
+ * 基於時間錨點的AI記憶增強系統
  * 
  * 作者: SenriYuki
  * 版本: 1.10.1
@@ -15,19 +15,19 @@ import { vectorManager } from './core/vectorManager.js';
 import { calculateRelativeTime, calculateDetailedRelativeTime, formatRelativeTime, generateTimeReference, getCurrentSystemTime, formatStoryDate, formatFullDateTime, parseStoryDate } from './utils/timeUtils.js';
 
 // ============================================
-// 常量定义
+// 常數定義
 // ============================================
 const EXTENSION_NAME = 'horae';
 const EXTENSION_FOLDER = `third-party/SillyTavern-Horae`;
 const TEMPLATE_PATH = `${EXTENSION_FOLDER}/assets/templates`;
 const VERSION = '1.10.1';
 
-// 配套正则规则（自动注入ST原生正则系统）
+// 配套正則規則（自動注入ST原生正則系統）
 const HORAE_REGEX_RULES = [
     {
         id: 'horae_hide',
-        scriptName: 'Horae - 隐藏状态标签',
-        description: '隐藏<horae>状态标签，不显示在正文，不发送给AI',
+        scriptName: 'Horae - 隱藏狀態標籤',
+        description: '隱藏<horae>狀態標籤，不顯示在正文，不發送給AI',
         findRegex: '/(?:<horae>(?:(?!<\\/think(?:ing)?>|<horae>)[\\s\\S])*?<\\/horae>|<!--horae[\\s\\S]*?-->)/gim',
         replaceString: '',
         trimStrings: [],
@@ -42,8 +42,8 @@ const HORAE_REGEX_RULES = [
     },
     {
         id: 'horae_event_display_only',
-        scriptName: 'Horae - 隐藏事件标签',
-        description: '隐藏<horaeevent>事件标签的显示，不发送给AI',
+        scriptName: 'Horae - 隱藏事件標籤',
+        description: '隱藏<horaeevent>事件標籤的顯示，不發送給AI',
         findRegex: '/<horaeevent>(?:(?!<\\/think(?:ing)?>|<horaeevent>)[\\s\\S])*?<\\/horaeevent>/gim',
         replaceString: '',
         trimStrings: [],
@@ -58,8 +58,8 @@ const HORAE_REGEX_RULES = [
     },
     {
         id: 'horae_table_hide',
-        scriptName: 'Horae - 隐藏表格标签',
-        description: '隐藏<horaetable>标签，不显示在正文，不发送给AI',
+        scriptName: 'Horae - 隱藏表格標籤',
+        description: '隱藏<horaetable>標籤，不顯示在正文，不發送給AI',
         findRegex: '/<horaetable[:\\uff1a][\\s\\S]*?<\\/horaetable>/gim',
         replaceString: '',
         trimStrings: [],
@@ -74,8 +74,8 @@ const HORAE_REGEX_RULES = [
     },
     {
         id: 'horae_rpg_hide',
-        scriptName: 'Horae - 隐藏RPG标签',
-        description: '隐藏<horaerpg>标签，不显示在正文，不发送给AI',
+        scriptName: 'Horae - 隱藏RPG標籤',
+        description: '隱藏<horaerpg>標籤，不顯示在正文，不發送給AI',
         findRegex: '/<horaerpg>(?:(?!<\\/think(?:ing)?>|<horaerpg>)[\\s\\S])*?<\\/horaerpg>/gim',
         replaceString: '',
         trimStrings: [],
@@ -91,7 +91,7 @@ const HORAE_REGEX_RULES = [
 ];
 
 // ============================================
-// 默认设置
+// 預設設定
 // ============================================
 const DEFAULT_SETTINGS = {
     enabled: true,
@@ -102,135 +102,135 @@ const DEFAULT_SETTINGS = {
     injectionPosition: 1,
     lastStoryDate: '',
     lastStoryTime: '',
-    favoriteNpcs: [],  // 用户标记的星标NPC列表
-    pinnedNpcs: [],    // 用户手动标记的重要角色列表（特殊边框）
-    // 发送给AI的内容控制
-    sendTimeline: true,    // 发送剧情轨迹（关闭则无法计算相对时间）
-    sendCharacters: true,  // 发送角色信息（服装、好感度）
-    sendItems: true,       // 发送物品栏
-    customTables: [],      // 自定义表格 [{id, name, rows, cols, data, prompt}]
-    customSystemPrompt: '',      // 自定义系统注入提示词（空=使用默认）
-    customBatchPrompt: '',       // 自定义AI摘要提示词（空=使用默认）
-    customAnalysisPrompt: '',    // 自定义AI分析提示词（空=使用默认）
-    customCompressPrompt: '',    // 自定义剧情压缩提示词（空=使用默认）
-    customAutoSummaryPrompt: '', // 自定义自动摘要提示词（空=使用默认；独立于手动压缩）
+    favoriteNpcs: [],  // 用戶標記的星標NPC列表
+    pinnedNpcs: [],    // 用戶手動標記的重要角色列表（特殊邊框）
+    // 發送給AI的內容控制
+    sendTimeline: true,    // 發送劇情軌跡（關閉則無法計算相對時間）
+    sendCharacters: true,  // 發送角色資訊（服裝、好感度）
+    sendItems: true,       // 發送物品欄
+    customTables: [],      // 客製化表格 [{id, name, rows, cols, data, prompt}]
+    customSystemPrompt: '',      // 客製化系統注入提示詞（空=使用預設）
+    customBatchPrompt: '',       // 客製化AI摘要提示詞（空=使用預設）
+    customAnalysisPrompt: '',    // 客製化AI分析提示詞（空=使用預設）
+    customCompressPrompt: '',    // 客製化劇情壓縮提示詞（空=使用預設）
+    customAutoSummaryPrompt: '', // 客製化自動摘要提示詞（空=使用預設；獨立於手動壓縮）
     aiScanIncludeNpc: false,     // AI摘要是否提取NPC
     aiScanIncludeAffection: false, // AI摘要是否提取好感度
-    aiScanIncludeScene: false,    // AI摘要是否提取场景记忆
-    aiScanIncludeRelationship: false, // AI摘要是否提取关系网络
-    panelWidth: 100,               // 消息面板宽度百分比（50-100）
-    panelOffset: 0,                // 消息面板右偏移量（px）
-    themeMode: 'dark',             // 插件主题：dark / light / custom-{index}
-    customCSS: '',                 // 用户自定义CSS
-    customThemes: [],              // 导入的美化主题 [{name, author, variables, css}]
-    globalTables: [],              // 全局表格（跨角色卡共享）
-    showTopIcon: true,             // 显示顶部导航栏图标
-    customTablesPrompt: '',        // 自定义表格填写规则提示词（空=使用默认）
-    sendLocationMemory: false,     // 发送场景记忆（地点固定特征描述）
-    customLocationPrompt: '',      // 自定义场景记忆提示词（空=使用默认）
-    sendRelationships: false,      // 发送关系网络
-    sendMood: false,               // 发送情绪/心理状态追踪
-    customRelationshipPrompt: '',  // 自定义关系网络提示词（空=使用默认）
-    customMoodPrompt: '',          // 自定义情绪追踪提示词（空=使用默认）
-    // 自动摘要
-    autoSummaryEnabled: false,      // 自动摘要开关
-    autoSummaryKeepRecent: 10,      // 保留最近N条消息不压缩
+    aiScanIncludeScene: false,    // AI摘要是否提取場景記憶
+    aiScanIncludeRelationship: false, // AI摘要是否提取關係網路
+    panelWidth: 100,               // 訊息面板寬度百分比（50-100）
+    panelOffset: 0,                // 訊息面板右偏移量（px）
+    themeMode: 'dark',             // 插件主題：dark / light / custom-{index}
+    customCSS: '',                 // 用戶客製化CSS
+    customThemes: [],              // 導入的美化主題 [{name, author, variables, css}]
+    globalTables: [],              // 全域表格（跨角色卡共享）
+    showTopIcon: true,             // 顯示頂部導航欄圖示
+    customTablesPrompt: '',        // 客製化表格填寫規則提示詞（空=使用預設）
+    sendLocationMemory: false,     // 發送場景記憶（地點固定特徵描述）
+    customLocationPrompt: '',      // 客製化場景記憶提示詞（空=使用預設）
+    sendRelationships: false,      // 發送關係網路
+    sendMood: false,               // 發送情緒/心理狀態追蹤
+    customRelationshipPrompt: '',  // 客製化關係網路提示詞（空=使用預設）
+    customMoodPrompt: '',          // 客製化情緒追蹤提示詞（空=使用預設）
+    // 自動摘要
+    autoSummaryEnabled: false,      // 自動摘要開關
+    autoSummaryKeepRecent: 10,      // 保留最近N條訊息不壓縮
     autoSummaryBufferMode: 'messages', // 'messages' | 'tokens'
-    autoSummaryBufferLimit: 20,     // 缓冲阈值（楼层数或Token数）
-    autoSummaryBatchMaxMsgs: 50,    // 单次摘要最大消息条数
-    autoSummaryBatchMaxTokens: 80000, // 单次摘要最大Token数
-    autoSummaryUseCustomApi: false, // 是否使用独立API端点
-    autoSummaryApiUrl: '',          // 独立API端点地址（OpenAI兼容）
-    autoSummaryApiKey: '',          // 独立API密钥
-    autoSummaryModel: '',           // 独立API模型名称
-    antiParaphraseMode: false,      // 反转述模式：AI回复时结算上一条USER的内容
-    sideplayMode: false,            // 番外/小剧场模式：启用后可标记消息跳过Horae
+    autoSummaryBufferLimit: 20,     // 緩衝閾值（樓層數或Token數）
+    autoSummaryBatchMaxMsgs: 50,    // 單次摘要最大訊息條數
+    autoSummaryBatchMaxTokens: 80000, // 單次摘要最大Token數
+    autoSummaryUseCustomApi: false, // 是否使用獨立API端點
+    autoSummaryApiUrl: '',          // 獨立API端點地址（OpenAI相容）
+    autoSummaryApiKey: '',          // 獨立API密鑰
+    autoSummaryModel: '',           // 獨立API模型名稱
+    antiParaphraseMode: false,      // 反轉述模式：AI回覆時結算上一條USER的內容
+    sideplayMode: false,            // 番外/小劇場模式：啟用後可標記訊息跳過Horae
     // RPG 模式
-    rpgMode: false,                 // RPG 模式总开关
-    sendRpgBars: true,              // 发送属性条（HP/MP/SP/状态）
-    rpgBarsUserOnly: false,         // 属性条仅限主角
-    sendRpgSkills: true,            // 发送技能列表
-    rpgSkillsUserOnly: false,       // 技能仅限主角
-    sendRpgAttributes: true,        // 发送多维属性面板
-    rpgAttrsUserOnly: false,        // 属性面板仅限主角
-    sendRpgReputation: true,        // 发送声望数据
-    rpgReputationUserOnly: false,   // 声望仅限主角
-    sendRpgEquipment: false,        // 发送装备栏（可选）
-    rpgEquipmentUserOnly: false,    // 装备仅限主角
-    sendRpgLevel: false,            // 发送等级/经验值
-    rpgLevelUserOnly: false,        // 等级仅限主角
-    sendRpgCurrency: false,         // 发送货币系统
-    rpgCurrencyUserOnly: false,     // 货币仅限主角
-    rpgUserOnly: false,             // RPG全局仅限主角（总开关，联动所有子模块）
-    sendRpgStronghold: false,       // 发送据点/基地系统
+    rpgMode: false,                 // RPG 模式總開關
+    sendRpgBars: true,              // 發送屬性條（HP/MP/SP/狀態）
+    rpgBarsUserOnly: false,         // 屬性條僅限主角
+    sendRpgSkills: true,            // 發送技能列表
+    rpgSkillsUserOnly: false,       // 技能僅限主角
+    sendRpgAttributes: true,        // 發送多維屬性面板
+    rpgAttrsUserOnly: false,        // 屬性面板僅限主角
+    sendRpgReputation: true,        // 發送聲望數據
+    rpgReputationUserOnly: false,   // 聲望僅限主角
+    sendRpgEquipment: false,        // 發送裝備欄（可選）
+    rpgEquipmentUserOnly: false,    // 裝備僅限主角
+    sendRpgLevel: false,            // 發送等級/經驗值
+    rpgLevelUserOnly: false,        // 等級僅限主角
+    sendRpgCurrency: false,         // 發送貨幣系統
+    rpgCurrencyUserOnly: false,     // 貨幣僅限主角
+    rpgUserOnly: false,             // RPG全域僅限主角（總開關，聯動所有子模組）
+    sendRpgStronghold: false,       // 發送據點/基地系統
     rpgBarConfig: [
         { key: 'hp', name: 'HP', color: '#22c55e' },
         { key: 'mp', name: 'MP', color: '#6366f1' },
         { key: 'sp', name: 'SP', color: '#f59e0b' },
     ],
     rpgAttributeConfig: [
-        { key: 'str', name: '力量', desc: '物理攻击、负重与近战伤害' },
-        { key: 'dex', name: '敏捷', desc: '反射、闪避与远程精准' },
-        { key: 'con', name: '体质', desc: '生命力、耐久与抗毒' },
-        { key: 'int', name: '智力', desc: '学识、魔法与推理能力' },
-        { key: 'wis', name: '感知', desc: '洞察、直觉与意志力' },
-        { key: 'cha', name: '魅力', desc: '说服、领导与人格魅力' },
+        { key: 'str', name: '力量', desc: '物理攻擊、負重與近戰傷害' },
+        { key: 'dex', name: '敏捷', desc: '反射、閃避與遠程精準' },
+        { key: 'con', name: '體質', desc: '生命力、耐久與抗毒' },
+        { key: 'int', name: '智力', desc: '學識、魔法與推理能力' },
+        { key: 'wis', name: '感知', desc: '洞察、直覺與意志力' },
+        { key: 'cha', name: '魅力', desc: '說服、主管與人格魅力' },
     ],
     rpgAttrViewMode: 'radar',       // 'radar' 或 'text'
-    customRpgPrompt: '',            // 自定义RPG提示词（空=默认）
-    promptPresets: [],              // 提示词预设存档 [{name, prompts:{system,batch,...}}]
-    equipmentTemplates: [           // 装备格位模板
-        { name: '人类', slots: [
-            { name: '头部', maxCount: 1 }, { name: '躯干', maxCount: 1 }, { name: '手部', maxCount: 1 },
-            { name: '腰带', maxCount: 1 }, { name: '下身', maxCount: 1 }, { name: '足部', maxCount: 1 },
-            { name: '项链', maxCount: 1 }, { name: '护身符', maxCount: 1 }, { name: '戒指', maxCount: 2 },
+    customRpgPrompt: '',            // 客製化RPG提示詞（空=預設）
+    promptPresets: [],              // 提示詞預設存檔 [{name, prompts:{system,batch,...}}]
+    equipmentTemplates: [           // 裝備格位模範
+        { name: '人類', slots: [
+            { name: '頭部', maxCount: 1 }, { name: '軀幹', maxCount: 1 }, { name: '手部', maxCount: 1 },
+            { name: '腰帶', maxCount: 1 }, { name: '下身', maxCount: 1 }, { name: '足部', maxCount: 1 },
+            { name: '項鍊', maxCount: 1 }, { name: '護身符', maxCount: 1 }, { name: '戒指', maxCount: 2 },
         ]},
-        { name: '兽人', slots: [
-            { name: '头部', maxCount: 1 }, { name: '躯干', maxCount: 1 }, { name: '手部', maxCount: 1 },
-            { name: '腰带', maxCount: 1 }, { name: '下身', maxCount: 1 }, { name: '足部', maxCount: 1 },
-            { name: '尾部', maxCount: 1 }, { name: '项链', maxCount: 1 }, { name: '戒指', maxCount: 2 },
+        { name: '獸人', slots: [
+            { name: '頭部', maxCount: 1 }, { name: '軀幹', maxCount: 1 }, { name: '手部', maxCount: 1 },
+            { name: '腰帶', maxCount: 1 }, { name: '下身', maxCount: 1 }, { name: '足部', maxCount: 1 },
+            { name: '尾部', maxCount: 1 }, { name: '項鍊', maxCount: 1 }, { name: '戒指', maxCount: 2 },
         ]},
         { name: '翼族', slots: [
-            { name: '头部', maxCount: 1 }, { name: '躯干', maxCount: 1 }, { name: '手部', maxCount: 1 },
-            { name: '腰带', maxCount: 1 }, { name: '下身', maxCount: 1 }, { name: '足部', maxCount: 1 },
-            { name: '翅膀', maxCount: 1 }, { name: '项链', maxCount: 1 }, { name: '戒指', maxCount: 2 },
+            { name: '頭部', maxCount: 1 }, { name: '軀幹', maxCount: 1 }, { name: '手部', maxCount: 1 },
+            { name: '腰帶', maxCount: 1 }, { name: '下身', maxCount: 1 }, { name: '足部', maxCount: 1 },
+            { name: '翅膀', maxCount: 1 }, { name: '項鍊', maxCount: 1 }, { name: '戒指', maxCount: 2 },
         ]},
-        { name: '人马', slots: [
-            { name: '头部', maxCount: 1 }, { name: '躯干', maxCount: 1 }, { name: '手部', maxCount: 1 },
-            { name: '腰带', maxCount: 1 }, { name: '马甲', maxCount: 1 }, { name: '马蹄铁', maxCount: 4 },
-            { name: '项链', maxCount: 1 }, { name: '戒指', maxCount: 2 },
+        { name: '人馬', slots: [
+            { name: '頭部', maxCount: 1 }, { name: '軀幹', maxCount: 1 }, { name: '手部', maxCount: 1 },
+            { name: '腰帶', maxCount: 1 }, { name: '馬甲', maxCount: 1 }, { name: '馬蹄鐵', maxCount: 4 },
+            { name: '項鍊', maxCount: 1 }, { name: '戒指', maxCount: 2 },
         ]},
-        { name: '拉弥亚', slots: [
-            { name: '头部', maxCount: 1 }, { name: '躯干', maxCount: 1 }, { name: '手部', maxCount: 1 },
-            { name: '腰带', maxCount: 1 }, { name: '蛇尾饰', maxCount: 1 },
-            { name: '项链', maxCount: 1 }, { name: '护身符', maxCount: 1 }, { name: '戒指', maxCount: 2 },
+        { name: '拉彌亞', slots: [
+            { name: '頭部', maxCount: 1 }, { name: '軀幹', maxCount: 1 }, { name: '手部', maxCount: 1 },
+            { name: '腰帶', maxCount: 1 }, { name: '蛇尾飾', maxCount: 1 },
+            { name: '項鍊', maxCount: 1 }, { name: '護身符', maxCount: 1 }, { name: '戒指', maxCount: 2 },
         ]},
-        { name: '恶魔', slots: [
-            { name: '头部', maxCount: 1 }, { name: '角饰', maxCount: 1 }, { name: '躯干', maxCount: 1 },
-            { name: '手部', maxCount: 1 }, { name: '腰带', maxCount: 1 }, { name: '下身', maxCount: 1 },
+        { name: '惡魔', slots: [
+            { name: '頭部', maxCount: 1 }, { name: '角飾', maxCount: 1 }, { name: '軀幹', maxCount: 1 },
+            { name: '手部', maxCount: 1 }, { name: '腰帶', maxCount: 1 }, { name: '下身', maxCount: 1 },
             { name: '足部', maxCount: 1 }, { name: '翅膀', maxCount: 1 }, { name: '尾部', maxCount: 1 },
-            { name: '项链', maxCount: 1 }, { name: '戒指', maxCount: 2 },
+            { name: '項鍊', maxCount: 1 }, { name: '戒指', maxCount: 2 },
         ]},
     ],
     rpgDiceEnabled: false,          // RPG骰子面板
-    dicePosX: null,                 // 骰子面板拖拽位置X（null=默认右下角）
+    dicePosX: null,                 // 骰子面板拖拽位置X（null=預設右下角）
     dicePosY: null,                 // 骰子面板拖拽位置Y
-    // 教学
-    tutorialCompleted: false,       // 新用户导航教学是否已完成
-    // 向量记忆
+    // 教學
+    tutorialCompleted: false,       // 新用戶導航教學是否已完成
+    // 向量記憶
     vectorEnabled: false,
-    vectorSource: 'local',             // 'local' = 本地模型, 'api' = 远程 API
+    vectorSource: 'local',             // 'local' = 本地模型, 'api' = 遠程 API
     vectorModel: 'Xenova/bge-small-zh-v1.5',
     vectorDtype: 'q8',
-    vectorApiUrl: '',                  // OpenAI 兼容 embedding API 地址
-    vectorApiKey: '',                  // API 密钥
-    vectorApiModel: '',                // 远程 embedding 模型名称
-    vectorPureMode: false,             // 纯向量模式（强模型优化，关闭关键词启发式）
-    vectorRerankEnabled: false,        // 启用 Rerank 二次排序
-    vectorRerankFullText: false,       // Rerank 使用全文而非摘要（需要长上下文模型如 Qwen3-Reranker）
-    vectorRerankModel: '',             // Rerank 模型名称
-    vectorRerankUrl: '',               // Rerank API 地址（留空则复用 embedding 地址）
-    vectorRerankKey: '',               // Rerank API 密钥（留空则复用 embedding 密钥）
+    vectorApiUrl: '',                  // OpenAI 相容 embedding API 地址
+    vectorApiKey: '',                  // API 密鑰
+    vectorApiModel: '',                // 遠程 embedding 模型名稱
+    vectorPureMode: false,             // 純向量模式（強模型最佳化，關閉關鍵詞啟發式）
+    vectorRerankEnabled: false,        // 啟用 Rerank 二次排序
+    vectorRerankFullText: false,       // Rerank 使用全文而非摘要（需要長上下文模型如 Qwen3-Reranker）
+    vectorRerankModel: '',             // Rerank 模型名稱
+    vectorRerankUrl: '',               // Rerank API 地址（留空則複用 embedding 地址）
+    vectorRerankKey: '',               // Rerank API 密鑰（留空則複用 embedding 密鑰）
     vectorTopK: 5,
     vectorThreshold: 0.72,
     vectorFullTextCount: 3,
@@ -239,31 +239,31 @@ const DEFAULT_SETTINGS = {
 };
 
 // ============================================
-// 全局变量
+// 全域變數
 // ============================================
 let settings = { ...DEFAULT_SETTINGS };
 let doNavbarIconClick = null;
 let isInitialized = false;
 let _isSummaryGeneration = false;
 let _summaryInProgress = false;
-let itemsMultiSelectMode = false;  // 物品多选模式
-let selectedItems = new Set();     // 选中的物品名称
-let longPressTimer = null;         // 长按计时器
-let agendaMultiSelectMode = false; // 待办多选模式
-let selectedAgendaIndices = new Set(); // 选中的待办索引
-let agendaLongPressTimer = null;   // 待办长按计时器
-let npcMultiSelectMode = false;     // NPC多选模式
-let selectedNpcs = new Set();       // 选中的NPC名称
-let timelineMultiSelectMode = false; // 时间线多选模式
-let selectedTimelineEvents = new Set(); // 选中的事件（"msgIndex-eventIndex"格式）
-let timelineLongPressTimer = null;  // 时间线长按计时器
+let itemsMultiSelectMode = false;  // 物品多選模式
+let selectedItems = new Set();     // 選中的物品名稱
+let longPressTimer = null;         // 長按計時器
+let agendaMultiSelectMode = false; // 待辦多選模式
+let selectedAgendaIndices = new Set(); // 選中的待辦索引
+let agendaLongPressTimer = null;   // 待辦長按計時器
+let npcMultiSelectMode = false;     // NPC多選模式
+let selectedNpcs = new Set();       // 選中的NPC名稱
+let timelineMultiSelectMode = false; // 時間線多選模式
+let selectedTimelineEvents = new Set(); // 選中的事件（"msgIndex-eventIndex"格式）
+let timelineLongPressTimer = null;  // 時間線長按計時器
 
 // ============================================
-// 工具函数
+// 工具函數
 // ============================================
 
 
-/** 自动注入配套正则到ST原生正则系统（始终置于末尾，避免与其他正则冲突） */
+/** 自動注入配套正則到ST原生正則系統（始終置於末尾，避免與其他正則衝突） */
 function ensureRegexRules() {
     if (!extension_settings.regex) extension_settings.regex = [];
 
@@ -271,7 +271,7 @@ function ensureRegexRules() {
     for (const rule of HORAE_REGEX_RULES) {
         const idx = extension_settings.regex.findIndex(r => r.id === rule.id);
         if (idx !== -1) {
-            // 保留用户的 disabled 状态，移除旧位置
+            // 保留用戶的 disabled 狀態，移除舊位置
             const userDisabled = extension_settings.regex[idx].disabled;
             extension_settings.regex.splice(idx, 1);
             extension_settings.regex.push({ ...rule, disabled: userDisabled });
@@ -284,24 +284,24 @@ function ensureRegexRules() {
 
     if (changed > 0) {
         saveSettingsDebounced();
-        console.log(`[Horae] 配套正则已同步至列表末尾（共 ${HORAE_REGEX_RULES.length} 条）`);
+        console.log(`[Horae] 配套正則已同步至列表末尾（共 ${HORAE_REGEX_RULES.length} 條）`);
     }
 }
 
-/** 获取HTML模板 */
+/** 獲取HTML模範 */
 async function getTemplate(name) {
     return await renderExtensionTemplateAsync(TEMPLATE_PATH, name);
 }
 
 /**
- * 检查是否为新版导航栏
+ * 檢查是否為新版導航欄
  */
 function isNewNavbarVersion() {
     return typeof doNavbarIconClick === 'function';
 }
 
 /**
- * 初始化导航栏点击函数
+ * 初始化導航欄點擊函數
  */
 async function initNavbarFunction() {
     try {
@@ -310,12 +310,12 @@ async function initNavbarFunction() {
             doNavbarIconClick = scriptModule.doNavbarIconClick;
         }
     } catch (error) {
-        console.warn(`[Horae] doNavbarIconClick 不可用，使用旧版抽屉模式`);
+        console.warn(`[Horae] doNavbarIconClick 不可用，使用舊版抽屜模式`);
     }
 }
 
 /**
- * 加载设置
+ * 加載設定
  */
 let _isFirstTimeUser = false;
 function loadSettings() {
@@ -328,21 +328,21 @@ function loadSettings() {
     }
 }
 
-/** 迁移旧版属性配置到 DND 六维 */
+/** 遷移舊版屬性配置到 DND 六維 */
 function _migrateAttrConfig() {
     const cfg = settings.rpgAttributeConfig;
     if (!cfg || !Array.isArray(cfg)) return;
     const oldKeys = cfg.map(a => a.key).sort().join(',');
-    // 旧版默认值（4维: con,int,spr,str）
+    // 舊版預設值（4維: con,int,spr,str）
     if (oldKeys === 'con,int,spr,str' && cfg.length === 4) {
         settings.rpgAttributeConfig = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.rpgAttributeConfig));
         saveSettings();
-        console.log('[Horae] 已自动迁移属性面板配置到 DND 六维');
+        console.log('[Horae] 已自動遷移屬性面板配置到 DND 六維');
     }
 }
 
 /**
- * 保存设置
+ * 保存設定
  */
 function saveSettings() {
     extension_settings[EXTENSION_NAME] = settings;
@@ -350,7 +350,7 @@ function saveSettings() {
 }
 
 /**
- * 显示 Toast 消息
+ * 顯示 Toast 訊息
  */
 function showToast(message, type = 'info') {
     if (window.toastr) {
@@ -360,7 +360,7 @@ function showToast(message, type = 'info') {
     }
 }
 
-/** 获取当前对话的自定义表格 */
+/** 獲取目前對話的客製化表格 */
 function getChatTables() {
     const context = getContext();
     if (!context?.chat?.length) return [];
@@ -370,7 +370,7 @@ function getChatTables() {
         return firstMessage.horae_meta.customTables;
     }
     
-    // 兼容旧版：检查chat数组属性
+    // 相容舊版：檢查chat數組屬性
     if (context.chat.horae_tables) {
         return context.chat.horae_tables;
     }
@@ -378,7 +378,7 @@ function getChatTables() {
     return [];
 }
 
-/** 设置当前对话的自定义表格 */
+/** 設定目前對話的客製化表格 */
 function setChatTables(tables) {
     const context = getContext();
     if (!context?.chat?.length) return;
@@ -387,7 +387,7 @@ function setChatTables(tables) {
         context.chat[0].horae_meta = createEmptyMeta();
     }
     
-    // 快照 baseData 用于回退
+    // 快照 baseData 用於回退
     for (const table of tables) {
         table.baseData = JSON.parse(JSON.stringify(table.data || {}));
         table.baseRows = table.rows || 2;
@@ -398,7 +398,7 @@ function setChatTables(tables) {
     getContext().saveChat();
 }
 
-/** 获取全局表格列表（返回结构+当前卡片数据的合并结果） */
+/** 獲取全域表格列表（返回結構+目前卡片數據的合併結果） */
 function getGlobalTables() {
     const templates = settings.globalTables || [];
     const chat = horaeManager.getChat();
@@ -428,7 +428,7 @@ function getGlobalTables() {
                 baseCols: overlay.baseCols ?? template.baseCols,
             };
         }
-        // 无 per-card 数据：只返回表头
+        // 無 per-card 數據：只返回表頭
         const headerData = {};
         for (const key of Object.keys(template.data || {})) {
             const [r, c] = key.split('-').map(Number);
@@ -444,17 +444,17 @@ function getGlobalTables() {
     });
 }
 
-/** 保存全局表格列表（结构存设置，数据存当前卡片） */
+/** 保存全域表格列表（結構存設定，數據存目前卡片） */
 function setGlobalTables(tables) {
     const chat = horaeManager.getChat();
 
-    // 保存 per-card 数据到当前卡片
+    // 保存 per-card 數據到目前卡片
     if (chat?.[0]) {
         if (!chat[0].horae_meta) return;
         if (!chat[0].horae_meta.globalTableData) chat[0].horae_meta.globalTableData = {};
         const perCardData = chat[0].horae_meta.globalTableData;
 
-        // 清除已被删除的表格的 per-card 数据
+        // 清除已被刪除的表格的 per-card 數據
         const currentNames = new Set(tables.map(t => (t.name || '').trim()).filter(Boolean));
         for (const key of Object.keys(perCardData)) {
             if (!currentNames.has(key)) delete perCardData[key];
@@ -474,7 +474,7 @@ function setGlobalTables(tables) {
         }
     }
 
-    // 只保存结构（表头）到全局设置
+    // 只保存結構（表頭）到全域設定
     settings.globalTables = tables.map(table => {
         const headerData = {};
         for (const key of Object.keys(table.data || {})) {
@@ -496,7 +496,7 @@ function setGlobalTables(tables) {
     saveSettings();
 }
 
-/** 获取指定scope的表格 */
+/** 獲取指定scope的表格 */
 function getTablesByScope(scope) {
     return scope === 'global' ? getGlobalTables() : getChatTables();
 }
@@ -510,17 +510,17 @@ function setTablesByScope(scope, tables) {
     }
 }
 
-/** 获取合并后的所有表格（用于提示词注入） */
+/** 獲取合併後的所有表格（用於提示詞注入） */
 function getAllTables() {
     return [...getGlobalTables(), ...getChatTables()];
 }
 
 // ============================================
-// 待办事项（Agenda）存储 — 跟随当前对话
+// 待辦事項（Agenda）存儲 — 跟隨目前對話
 // ============================================
 
 /**
- * 获取用户手动创建的待办事项（存储在 chat[0]）
+ * 獲取用戶手動建立的待辦事項（存儲在 chat[0]）
  */
 function getUserAgenda() {
     const context = getContext();
@@ -534,7 +534,7 @@ function getUserAgenda() {
 }
 
 /**
- * 设置用户手动创建的待办事项（存储在 chat[0]）
+ * 設定用戶手動建立的待辦事項（存儲在 chat[0]）
  */
 function setUserAgenda(agenda) {
     const context = getContext();
@@ -549,13 +549,13 @@ function setUserAgenda(agenda) {
 }
 
 /**
- * 获取所有待办事项（用户 + AI写入），统一格式返回
- * 每项: { text, date, source: 'user'|'ai', done, createdAt, _msgIndex? }
+ * 獲取所有待辦事項（用戶 + AI寫入），統一格式返回
+ * 每項: { text, date, source: 'user'|'ai', done, createdAt, _msgIndex? }
  */
 function getAllAgenda() {
     const all = [];
     
-    // 1. 用户手动创建的
+    // 1. 用戶手動建立的
     const userItems = getUserAgenda();
     for (const item of userItems) {
         if (item._deleted) continue;
@@ -570,7 +570,7 @@ function getAllAgenda() {
         });
     }
     
-    // 2. AI写入的（存储在各条消息的 horae_meta.agenda）
+    // 2. AI寫入的（存儲在各條訊息的 horae_meta.agenda）
     const context = getContext();
     if (context?.chat) {
         for (let i = 1; i < context.chat.length; i++) {
@@ -578,7 +578,7 @@ function getAllAgenda() {
             if (meta?.agenda?.length > 0) {
                 for (const item of meta.agenda) {
                     if (item._deleted) continue;
-                    // 去重：检查是否已存在相同内容
+                    // 去重：檢查是否已存在相同內容
                     const isDupe = all.some(a => a.text === item.text);
                     if (!isDupe) {
                         all.push({
@@ -601,7 +601,7 @@ function getAllAgenda() {
 }
 
 /**
- * 根据全局索引切换待办完成状态
+ * 根據全域索引切換待辦完成狀態
  */
 function toggleAgendaDone(agendaItem, done) {
     const context = getContext();
@@ -609,7 +609,7 @@ function toggleAgendaDone(agendaItem, done) {
     
     if (agendaItem._store === 'user') {
         const agenda = getUserAgenda();
-        // 按text查找（更可靠）
+        // 按text搜尋（更可靠）
         const found = agenda.find(a => a.text === agendaItem.text);
         if (found) {
             found.done = done;
@@ -628,14 +628,14 @@ function toggleAgendaDone(agendaItem, done) {
 }
 
 /**
- * 删除指定的待办事项
+ * 刪除指定的待辦事項
  */
 function deleteAgendaItem(agendaItem) {
     const context = getContext();
     if (!context?.chat) return;
     const targetText = agendaItem.text;
     
-    // 标记所有匹配项为 _deleted（防止其他消息中同名项复活）
+    // 標記所有配對項為 _deleted（防止其他訊息中同名項復活）
     if (context.chat[0]?.horae_meta?.agenda) {
         for (const a of context.chat[0].horae_meta.agenda) {
             if (a.text === targetText) a._deleted = true;
@@ -650,7 +650,7 @@ function deleteAgendaItem(agendaItem) {
         }
     }
     
-    // 同时记录已删除文本到 chat[0]，供 rebuild 时参考
+    // 同時記錄已刪除文字到 chat[0]，供 rebuild 時參考
     if (!context.chat[0].horae_meta) context.chat[0].horae_meta = createEmptyMeta();
     if (!context.chat[0].horae_meta._deletedAgendaTexts) context.chat[0].horae_meta._deletedAgendaTexts = [];
     if (!context.chat[0].horae_meta._deletedAgendaTexts.includes(targetText)) {
@@ -660,7 +660,7 @@ function deleteAgendaItem(agendaItem) {
 }
 
 /**
- * 导出表格为JSON
+ * 導出表格為JSON
  */
 function exportTable(tableIndex, scope = 'local') {
     const tables = getTablesByScope(scope);
@@ -677,11 +677,11 @@ function exportTable(tableIndex, scope = 'local') {
     a.click();
 
     URL.revokeObjectURL(url);
-    showToast('表格已导出', 'success');
+    showToast('表格已導出', 'success');
 }
 
 /**
- * 导入表格
+ * 導入表格
  */
 function importTable(file) {
     const reader = new FileReader();
@@ -689,24 +689,24 @@ function importTable(file) {
         try {
             const tableData = JSON.parse(e.target.result);
             if (!tableData || typeof tableData !== 'object') {
-                throw new Error('无效的表格数据');
+                throw new Error('無效的表格數據');
             }
             
             const newTable = {
                 id: Date.now().toString(),
-                name: tableData.name || '导入的表格',
+                name: tableData.name || '導入的表格',
                 rows: tableData.rows || 2,
                 cols: tableData.cols || 2,
                 data: tableData.data || {},
                 prompt: tableData.prompt || ''
             };
             
-            // 设置 baseData 为完整导入数据，防止 rebuildTableData 时丢失
+            // 設定 baseData 為完整導入數據，防止 rebuildTableData 時遺失
             newTable.baseData = JSON.parse(JSON.stringify(newTable.data));
             newTable.baseRows = newTable.rows;
             newTable.baseCols = newTable.cols;
             
-            // 清除同名表格的旧 AI 贡献记录，防止 rebuild 时旧数据回流
+            // 清除同名表格的舊 AI 貢獻記錄，防止 rebuild 時舊數據迴流
             const importName = (newTable.name || '').trim();
             if (importName) {
                 const chat = horaeManager.getChat();
@@ -730,31 +730,31 @@ function importTable(file) {
             setChatTables(tables);
             
             renderCustomTablesList();
-            showToast('表格已导入', 'success');
+            showToast('表格已導入', 'success');
         } catch (err) {
-            showToast('导入失败: ' + err.message, 'error');
+            showToast('導入失敗: ' + err.message, 'error');
         }
     };
     reader.readAsText(file);
 }
 
 // ============================================
-// UI 渲染函数
+// UI 彩現函數
 // ============================================
 
 /**
- * 更新状态页面显示
+ * 更新狀態頁面顯示
  */
 function updateStatusDisplay() {
     const state = horaeManager.getLatestState();
     
-    // 更新时间显示（标准日历显示周几）
+    // 更新時間顯示（標準日曆顯示周幾）
     const dateEl = document.getElementById('horae-current-date');
     const timeEl = document.getElementById('horae-current-time');
     if (dateEl) {
         const dateStr = state.timestamp?.story_date || '--/--';
         const parsed = parseStoryDate(dateStr);
-        // 标准日历添加周几
+        // 標準日曆添加周幾
         if (parsed && parsed.type === 'standard') {
             dateEl.textContent = formatStoryDate(parsed, true);
         } else {
@@ -763,25 +763,25 @@ function updateStatusDisplay() {
     }
     if (timeEl) timeEl.textContent = state.timestamp?.story_time || '--:--';
     
-    // 更新地点显示
+    // 更新地點顯示
     const locationEl = document.getElementById('horae-current-location');
-    if (locationEl) locationEl.textContent = state.scene?.location || '未设置';
+    if (locationEl) locationEl.textContent = state.scene?.location || '未設定';
     
-    // 更新氛围
+    // 更新氛圍
     const atmosphereEl = document.getElementById('horae-current-atmosphere');
     if (atmosphereEl) atmosphereEl.textContent = state.scene?.atmosphere || '';
     
-    // 更新服装列表（仅显示在场角色的服装）
+    // 更新服裝列表（僅顯示在場角色的服裝）
     const costumesEl = document.getElementById('horae-costumes-list');
     if (costumesEl) {
         const presentChars = state.scene?.characters_present || [];
         const allCostumes = Object.entries(state.costumes || {});
-        // 筛选：仅保留 characters_present 中的角色
+        // 篩選：僅保留 characters_present 中的角色
         const entries = presentChars.length > 0
             ? allCostumes.filter(([char]) => presentChars.some(p => p === char || char.includes(p) || p.includes(char)))
             : allCostumes;
         if (entries.length === 0) {
-            costumesEl.innerHTML = '<div class="horae-empty-hint">暂无在场角色服装记录</div>';
+            costumesEl.innerHTML = '<div class="horae-empty-hint">暫無在場角色服裝記錄</div>';
         } else {
             costumesEl.innerHTML = entries.map(([char, costume]) => `
                 <div class="horae-costume-item">
@@ -797,7 +797,7 @@ function updateStatusDisplay() {
     if (itemsEl) {
         const entries = Object.entries(state.items || {});
         if (entries.length === 0) {
-            itemsEl.innerHTML = '<div class="horae-empty-hint">暂无物品追踪</div>';
+            itemsEl.innerHTML = '<div class="horae-empty-hint">暫無物品追蹤</div>';
         } else {
             itemsEl.innerHTML = entries.map(([name, info]) => {
                 const icon = info.icon || '📦';
@@ -810,7 +810,7 @@ function updateStatusDisplay() {
 }
 
 /**
- * 更新时间线显示
+ * 更新時間線顯示
  */
 function updateTimelineDisplay() {
     const filterLevel = document.getElementById('horae-timeline-filter')?.value || 'all';
@@ -820,7 +820,7 @@ function updateTimelineDisplay() {
     
     if (!listEl) return;
     
-    // 关键字筛选
+    // 關鍵字篩選
     if (searchKeyword) {
         events = events.filter(e => {
             const summary = (e.event?.summary || '').toLowerCase();
@@ -831,12 +831,12 @@ function updateTimelineDisplay() {
     }
     
     if (events.length === 0) {
-        const filterText = filterLevel === 'all' ? '' : `「${filterLevel}」级别的`;
+        const filterText = filterLevel === 'all' ? '' : `「${filterLevel}」層級的`;
         const searchText = searchKeyword ? `含「${searchKeyword}」的` : '';
         listEl.innerHTML = `
             <div class="horae-empty-state">
                 <i class="fa-regular fa-clock"></i>
-                <span>暂无${searchText}${filterText}事件记录</span>
+                <span>暫無${searchText}${filterText}事件記錄</span>
             </div>
         `;
         return;
@@ -845,14 +845,14 @@ function updateTimelineDisplay() {
     const state = horaeManager.getLatestState();
     const currentDate = state.timestamp?.story_date || getCurrentSystemTime().date;
     
-    // 更新多选按钮状态
+    // 更新多選按鈕狀態
     const msBtn = document.getElementById('horae-btn-timeline-multiselect');
     if (msBtn) {
         msBtn.classList.toggle('active', timelineMultiSelectMode);
-        msBtn.title = timelineMultiSelectMode ? '退出多选' : '多选模式';
+        msBtn.title = timelineMultiSelectMode ? '退出多選' : '多選模式';
     }
     
-    // 获取摘要映射（summaryId → entry），用于判定压缩状态
+    // 獲取摘要映射（summaryId → entry），用於判定壓縮狀態
     const chat = horaeManager.getChat();
     const summaries = chat?.[0]?.horae_meta?.autoSummaries || [];
     const activeSummaryIds = new Set(summaries.filter(s => s.active).map(s => s.id));
@@ -862,11 +862,11 @@ function updateTimelineDisplay() {
         const compressedBy = e.event?._compressedBy;
         const summaryId = e.event?._summaryId;
         
-        // 已被压缩的事件：当对应摘要处于 active 状态时隐藏
+        // 已被壓縮的事件：當對應摘要處於 active 狀態時隱藏
         if (compressedBy && activeSummaryIds.has(compressedBy)) {
             return '';
         }
-        // 摘要事件：inactive 时渲染为折叠指示条（保留切换按钮）
+        // 摘要事件：inactive 時彩現為摺疊指示條（保留切換按鈕）
         if (summaryId && !activeSummaryIds.has(summaryId)) {
             const summaryEntry = summaries.find(s => s.id === summaryId);
             const rangeStr = summaryEntry ? `#${summaryEntry.range[0]}-#${summaryEntry.range[1]}` : '';
@@ -874,14 +874,14 @@ function updateTimelineDisplay() {
             <div class="horae-timeline-item summary horae-summary-collapsed" data-message-id="${e.messageIndex}" data-summary-id="${summaryId}">
                 <div class="horae-timeline-summary-icon"><i class="fa-solid fa-file-lines"></i></div>
                 <div class="horae-timeline-content">
-                    <div class="horae-timeline-summary"><span class="horae-level-badge summary">摘要</span>已展开为原始事件</div>
-                    <div class="horae-timeline-meta">${rangeStr} · ${summaryEntry?.auto ? '自动' : '手动'}摘要</div>
+                    <div class="horae-timeline-summary"><span class="horae-level-badge summary">摘要</span>已展開為原始事件</div>
+                    <div class="horae-timeline-meta">${rangeStr} · ${summaryEntry?.auto ? '自動' : '手動'}摘要</div>
                 </div>
                 <div class="horae-summary-actions">
-                    <button class="horae-summary-toggle-btn" data-summary-id="${summaryId}" title="切换为摘要">
+                    <button class="horae-summary-toggle-btn" data-summary-id="${summaryId}" title="切換為摘要">
                         <i class="fa-solid fa-compress"></i>
                     </button>
-                    <button class="horae-summary-delete-btn" data-summary-id="${summaryId}" title="删除摘要">
+                    <button class="horae-summary-delete-btn" data-summary-id="${summaryId}" title="刪除摘要">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>
@@ -894,7 +894,7 @@ function updateTimelineDisplay() {
         );
         const relTime = result.relative;
         const levelClass = isSummary ? 'summary' :
-                          e.event?.level === '关键' ? 'critical' : 
+                          e.event?.level === '關鍵' ? 'critical' : 
                           e.event?.level === '重要' ? 'important' : '';
         const levelBadge = e.event?.level ? `<span class="horae-level-badge ${levelClass}">${e.event.level}</span>` : '';
         
@@ -907,26 +907,26 @@ function updateTimelineDisplay() {
         const selectedClass = isSelected ? 'selected' : '';
         const checkboxDisplay = timelineMultiSelectMode ? 'flex' : 'none';
         
-        // 被标记为已压缩但摘要为 inactive 的事件，显示虚线框
+        // 被標記為已壓縮但摘要為 inactive 的事件，顯示虛線框
         const isRestoredFromCompress = compressedBy && !activeSummaryIds.has(compressedBy);
         const compressedClass = isRestoredFromCompress ? 'horae-compressed-restored' : '';
         
         if (isSummary) {
             const summaryContent = e.event?.summary || '';
-            const summaryDisplay = summaryContent || '<span class="horae-summary-hint">点击编辑添加摘要内容。</span>';
+            const summaryDisplay = summaryContent || '<span class="horae-summary-hint">點擊編輯添加摘要內容。</span>';
             const summaryEntry = summaryId ? summaries.find(s => s.id === summaryId) : null;
             const isActive = summaryEntry?.active;
             const rangeStr = summaryEntry ? `#${summaryEntry.range[0]}-#${summaryEntry.range[1]}` : '';
-            // 有 summaryId 的摘要事件带切换/删除/编辑按钮
+            // 有 summaryId 的摘要事件帶切換/刪除/編輯按鈕
             const toggleBtns = summaryId ? `
                 <div class="horae-summary-actions">
-                    <button class="horae-summary-edit-btn" data-summary-id="${summaryId}" data-message-id="${e.messageIndex}" data-event-index="${e.eventIndex || 0}" title="编辑摘要内容">
+                    <button class="horae-summary-edit-btn" data-summary-id="${summaryId}" data-message-id="${e.messageIndex}" data-event-index="${e.eventIndex || 0}" title="編輯摘要內容">
                         <i class="fa-solid fa-pen"></i>
                     </button>
-                    <button class="horae-summary-toggle-btn" data-summary-id="${summaryId}" title="${isActive ? '切换为原始时间线' : '切换为摘要'}">
+                    <button class="horae-summary-toggle-btn" data-summary-id="${summaryId}" title="${isActive ? '切換為原始時間線' : '切換為摘要'}">
                         <i class="fa-solid ${isActive ? 'fa-expand' : 'fa-compress'}"></i>
                     </button>
-                    <button class="horae-summary-delete-btn" data-summary-id="${summaryId}" title="删除摘要">
+                    <button class="horae-summary-delete-btn" data-summary-id="${summaryId}" title="刪除摘要">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>` : '';
@@ -940,10 +940,10 @@ function updateTimelineDisplay() {
                 </div>
                 <div class="horae-timeline-content">
                     <div class="horae-timeline-summary">${levelBadge}${summaryDisplay}</div>
-                    <div class="horae-timeline-meta">${rangeStr ? rangeStr + ' · ' : ''}${summaryEntry?.auto ? '自动' : ''}摘要 · 消息 #${e.messageIndex}</div>
+                    <div class="horae-timeline-meta">${rangeStr ? rangeStr + ' · ' : ''}${summaryEntry?.auto ? '自動' : ''}摘要 · 訊息 #${e.messageIndex}</div>
                 </div>
                 ${toggleBtns}
-                <button class="horae-item-edit-btn" data-edit-type="event" data-message-id="${e.messageIndex}" data-event-index="${e.eventIndex || 0}" title="编辑" style="${timelineMultiSelectMode ? 'display:none' : ''}${!summaryId ? '' : 'display:none'}">
+                <button class="horae-item-edit-btn" data-edit-type="event" data-message-id="${e.messageIndex}" data-event-index="${e.eventIndex || 0}" title="編輯" style="${timelineMultiSelectMode ? 'display:none' : ''}${!summaryId ? '' : 'display:none'}">
                     <i class="fa-solid fa-pen"></i>
                 </button>
             </div>
@@ -951,7 +951,7 @@ function updateTimelineDisplay() {
         }
         
         const restoreBtn = isRestoredFromCompress ? `
-                <button class="horae-summary-toggle-btn horae-btn-inline-toggle" data-summary-id="${compressedBy}" title="切换回摘要">
+                <button class="horae-summary-toggle-btn horae-btn-inline-toggle" data-summary-id="${compressedBy}" title="切換回摘要">
                     <i class="fa-solid fa-compress"></i>
                 </button>` : '';
         
@@ -966,17 +966,17 @@ function updateTimelineDisplay() {
                 </div>
                 <div class="horae-timeline-content">
                     <div class="horae-timeline-summary">${levelBadge}${e.event?.summary || '未记录'}</div>
-                    <div class="horae-timeline-meta">${relTime} · 消息 #${e.messageIndex}</div>
+                    <div class="horae-timeline-meta">${relTime} · 訊息 #${e.messageIndex}</div>
                 </div>
                 ${restoreBtn}
-                <button class="horae-item-edit-btn" data-edit-type="event" data-message-id="${e.messageIndex}" data-event-index="${e.eventIndex || 0}" title="编辑" style="${timelineMultiSelectMode ? 'display:none' : ''}">
+                <button class="horae-item-edit-btn" data-edit-type="event" data-message-id="${e.messageIndex}" data-event-index="${e.eventIndex || 0}" title="編輯" style="${timelineMultiSelectMode ? 'display:none' : ''}">
                     <i class="fa-solid fa-pen"></i>
                 </button>
             </div>
         `;
     }).join('');
     
-    // 绑定事件
+    // 綁定事件
     listEl.querySelectorAll('.horae-timeline-item').forEach(item => {
         const eventKey = item.dataset.eventKey;
         
@@ -1001,7 +1001,7 @@ function updateTimelineDisplay() {
         }
     });
     
-    // 摘要切换/删除按钮
+    // 摘要切換/刪除按鈕
     listEl.querySelectorAll('.horae-summary-toggle-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1024,11 +1024,11 @@ function updateTimelineDisplay() {
     bindEditButtons();
 }
 
-/** 批量隐藏/显示聊天消息楼层（调用酒馆原生 /hide /unhide） */
+/** 批量隱藏/顯示聊天訊息樓層（呼叫酒館原生 /hide /unhide） */
 async function setMessagesHidden(chat, indices, hidden) {
     if (!indices?.length) return;
 
-    // 预设内存状态：先写 is_hidden，防止竞态 saveChat 覆盖
+    // 預設主記憶體狀態：先寫 is_hidden，防止競態 saveChat 覆蓋
     for (const idx of indices) {
         if (chat[idx]) chat[idx].is_hidden = hidden;
     }
@@ -1042,14 +1042,14 @@ async function setMessagesHidden(chat, indices, hidden) {
             try {
                 await exec(`${cmd} ${idx}`);
             } catch (cmdErr) {
-                console.warn(`[Horae] ${cmd} ${idx} 失败:`, cmdErr);
+                console.warn(`[Horae] ${cmd} ${idx} 失敗:`, cmdErr);
             }
         }
     } catch (e) {
-        console.warn('[Horae] 无法加载酒馆命令模块，回退到手动设置:', e);
+        console.warn('[Horae] 無法加載酒館命令模組，回退到手動設定:', e);
     }
 
-    // 后验证 + DOM 同步 + 强制 save（不依赖 /hide 是否成功）
+    // 後驗證 + DOM 同步 + 強制 save（不依賴 /hide 是否成功）
     for (const idx of indices) {
         if (!chat[idx]) continue;
         chat[idx].is_hidden = hidden;
@@ -1060,7 +1060,7 @@ async function setMessagesHidden(chat, indices, hidden) {
     await getContext().saveChat();
 }
 
-/** 从摘要条目中取回所有关联的消息索引 */
+/** 從摘要條目中取回所有關聯的訊息索引 */
 function getSummaryMsgIndices(entry) {
     if (!entry) return [];
     const fromEvents = (entry.originalEvents || []).map(e => e.msgIdx);
@@ -1070,7 +1070,7 @@ function getSummaryMsgIndices(entry) {
     return [...new Set(fromEvents)];
 }
 
-/** 切换摘要的 active 状态（摘要视图 ↔ 原始时间线） */
+/** 切換摘要的 active 狀態（摘要視圖 ↔ 原始時間線） */
 async function toggleSummaryActive(summaryId) {
     if (!summaryId) return;
     const chat = horaeManager.getChat();
@@ -1079,22 +1079,22 @@ async function toggleSummaryActive(summaryId) {
     const entry = sums.find(s => s.id === summaryId);
     if (!entry) return;
     entry.active = !entry.active;
-    // 同步消息可见性：active=摘要模式→隐藏原消息，inactive=原始模式→显示原消息
+    // 同步訊息可見性：active=摘要模式→隱藏原訊息，inactive=原始模式→顯示原訊息
     const indices = getSummaryMsgIndices(entry);
     await setMessagesHidden(chat, indices, entry.active);
     await getContext().saveChat();
     updateTimelineDisplay();
 }
 
-/** 删除摘要并恢复原始事件的压缩标记 */
+/** 刪除摘要並恢復原始事件的壓縮標記 */
 async function deleteSummary(summaryId) {
     if (!summaryId) return;
-    if (!confirm('删除此摘要？原始事件将恢复为普通时间线。')) return;
+    if (!confirm('刪除此摘要？原始事件將恢復為普通時間線。')) return;
     
     const chat = horaeManager.getChat();
     const firstMeta = chat?.[0]?.horae_meta;
     
-    // 从 autoSummaries 中移除记录（如有）
+    // 從 autoSummaries 中移除記錄（如有）
     let removedEntry = null;
     if (firstMeta?.autoSummaries) {
         const idx = firstMeta.autoSummaries.findIndex(s => s.id === summaryId);
@@ -1103,7 +1103,7 @@ async function deleteSummary(summaryId) {
         }
     }
     
-    // 清除所有消息中对应的 _compressedBy 标记和摘要事件（无论 autoSummaries 记录是否存在）
+    // 清除所有訊息中對應的 _compressedBy 標記和摘要事件（無論 autoSummaries 記錄是否存在）
     for (let i = 0; i < chat.length; i++) {
         const meta = chat[i]?.horae_meta;
         if (!meta?.events) continue;
@@ -1113,7 +1113,7 @@ async function deleteSummary(summaryId) {
         }
     }
     
-    // 恢复被隐藏的楼层
+    // 恢復被隱藏的樓層
     if (removedEntry) {
         const indices = getSummaryMsgIndices(removedEntry);
         await setMessagesHidden(chat, indices, false);
@@ -1121,10 +1121,10 @@ async function deleteSummary(summaryId) {
     
     await getContext().saveChat();
     updateTimelineDisplay();
-    showToast('摘要已删除，原始事件已恢复', 'success');
+    showToast('摘要已刪除，原始事件已恢復', 'success');
 }
 
-/** 打开摘要编辑弹窗，允许用户手动修改摘要内容 */
+/** 打開摘要編輯彈窗，允許用戶手動修改摘要內容 */
 function openSummaryEditModal(summaryId, messageId, eventIndex) {
     closeEditModal();
     const chat = horaeManager.getChat();
@@ -1133,18 +1133,18 @@ function openSummaryEditModal(summaryId, messageId, eventIndex) {
     const meta = chat[messageId]?.horae_meta;
     const evtsArr = meta?.events || [];
     const evt = evtsArr[eventIndex];
-    if (!evt) { showToast('找不到该摘要事件', 'error'); return; }
+    if (!evt) { showToast('找不到該摘要事件', 'error'); return; }
     const currentText = evt.summary || '';
 
     const modalHtml = `
         <div id="horae-edit-modal" class="horae-modal${isLightMode() ? ' horae-light' : ''}">
             <div class="horae-modal-content">
                 <div class="horae-modal-header">
-                    <i class="fa-solid fa-pen"></i> 编辑摘要
+                    <i class="fa-solid fa-pen"></i> 編輯摘要
                 </div>
                 <div class="horae-modal-body horae-edit-modal-body">
                     <div class="horae-edit-field">
-                        <label>摘要内容</label>
+                        <label>摘要內容</label>
                         <textarea id="horae-summary-edit-text" rows="10" style="width:100%;min-height:180px;font-size:13px;line-height:1.6;">${escapeHtml(currentText)}</textarea>
                     </div>
                 </div>
@@ -1169,7 +1169,7 @@ function openSummaryEditModal(summaryId, messageId, eventIndex) {
     document.getElementById('horae-summary-edit-save').addEventListener('click', async (e) => {
         e.stopPropagation();
         const newText = document.getElementById('horae-summary-edit-text').value.trim();
-        if (!newText) { showToast('摘要内容不能为空', 'warning'); return; }
+        if (!newText) { showToast('摘要內容不能為空', 'warning'); return; }
         evt.summary = newText;
         if (summaryEntry) summaryEntry.summaryText = newText;
         await getContext().saveChat();
@@ -1182,7 +1182,7 @@ function openSummaryEditModal(summaryId, messageId, eventIndex) {
 }
 
 /**
- * 更新待办事项显示
+ * 更新待辦事項顯示
  */
 function updateAgendaDisplay() {
     const listEl = document.getElementById('horae-agenda-list');
@@ -1191,19 +1191,19 @@ function updateAgendaDisplay() {
     const agenda = getAllAgenda();
     
     if (agenda.length === 0) {
-        listEl.innerHTML = '<div class="horae-empty-hint">暂无待办事项</div>';
-        // 退出多选模式（如果所有待办被删完了）
+        listEl.innerHTML = '<div class="horae-empty-hint">暫無待辦事項</div>';
+        // 退出多選模式（如果所有待辦被刪完了）
         if (agendaMultiSelectMode) exitAgendaMultiSelect();
         return;
     }
     
     listEl.innerHTML = agenda.map((item, index) => {
         const sourceIcon = item.source === 'ai'
-            ? '<i class="fa-solid fa-robot horae-agenda-source-ai" title="AI记录"></i>'
-            : '<i class="fa-solid fa-user horae-agenda-source-user" title="用户添加"></i>';
+            ? '<i class="fa-solid fa-robot horae-agenda-source-ai" title="AI記錄"></i>'
+            : '<i class="fa-solid fa-user horae-agenda-source-user" title="用戶添加"></i>';
         const dateDisplay = item.date ? `<span class="horae-agenda-date"><i class="fa-regular fa-calendar"></i> ${escapeHtml(item.date)}</span>` : '';
         
-        // 多选模式：显示 checkbox
+        // 多選模式：顯示 checkbox
         const checkboxHtml = agendaMultiSelectMode
             ? `<label class="horae-agenda-select-check"><input type="checkbox" ${selectedAgendaIndices.has(index) ? 'checked' : ''} data-agenda-select="${index}"></label>`
             : '';
@@ -1226,20 +1226,20 @@ function updateAgendaDisplay() {
         const idx = parseInt(el.dataset.agendaIdx);
         
         if (agendaMultiSelectMode) {
-            // 多选模式：点击切换选中
+            // 多選模式：點擊切換選中
             el.addEventListener('click', (e) => {
                 e.stopPropagation();
                 toggleAgendaSelection(idx);
             });
         } else {
-            // 普通模式：点击编辑，长按进入多选
+            // 普通模式：點擊編輯，長按進入多選
             el.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const item = currentAgenda[idx];
                 if (item) openAgendaEditModal(item);
             });
             
-            // 长按进入多选模式（仅绑定在 agenda item 上）
+            // 長按進入多選模式（僅綁定在 agenda item 上）
             el.addEventListener('mousedown', (e) => startAgendaLongPress(e, idx));
             el.addEventListener('touchstart', (e) => startAgendaLongPress(e, idx), { passive: true });
             el.addEventListener('mouseup', cancelAgendaLongPress);
@@ -1251,7 +1251,7 @@ function updateAgendaDisplay() {
     });
 }
 
-// ---- 待办多选模式 ----
+// ---- 待辦多選模式 ----
 
 function startAgendaLongPress(e, agendaIdx) {
     if (agendaMultiSelectMode) return;
@@ -1277,13 +1277,13 @@ function enterAgendaMultiSelect(initialIdx) {
     const bar = document.getElementById('horae-agenda-multiselect-bar');
     if (bar) bar.style.display = 'flex';
     
-    // 隐藏添加按钮
+    // 隱藏添加按鈕
     const addBtn = document.getElementById('horae-btn-add-agenda');
     if (addBtn) addBtn.style.display = 'none';
     
     updateAgendaDisplay();
     updateAgendaSelectedCount();
-    showToast('已进入多选模式，点击选择待办事项', 'info');
+    showToast('已進入多選模式，點擊選擇待辦事項', 'info');
 }
 
 function exitAgendaMultiSelect() {
@@ -1293,7 +1293,7 @@ function exitAgendaMultiSelect() {
     const bar = document.getElementById('horae-agenda-multiselect-bar');
     if (bar) bar.style.display = 'none';
     
-    // 恢复添加按钮
+    // 恢復添加按鈕
     const addBtn = document.getElementById('horae-btn-add-agenda');
     if (addBtn) addBtn.style.display = '';
     
@@ -1307,7 +1307,7 @@ function toggleAgendaSelection(idx) {
         selectedAgendaIndices.add(idx);
     }
     
-    // 更新该条目的UI
+    // 更新該條目的UI
     const item = document.querySelector(`#horae-agenda-list .horae-agenda-item[data-agenda-idx="${idx}"]`);
     if (item) {
         const cb = item.querySelector('input[type="checkbox"]');
@@ -1335,14 +1335,14 @@ function updateAgendaSelectedCount() {
 
 async function deleteSelectedAgenda() {
     if (selectedAgendaIndices.size === 0) {
-        showToast('没有选中任何待办事项', 'warning');
+        showToast('沒有選中任何待辦事項', 'warning');
         return;
     }
     
-    const confirmed = confirm(`确定要删除选中的 ${selectedAgendaIndices.size} 条待办事项吗？\n\n此操作不可撤销。`);
+    const confirmed = confirm(`確定要刪除選中的 ${selectedAgendaIndices.size} 條待辦事項嗎？\n\n此操作不可撤銷。`);
     if (!confirmed) return;
     
-    // 获取当前完整的 agenda 列表，按索引倒序删除
+    // 獲取目前完整的 agenda 列表，按索引倒序刪除
     const agenda = getAllAgenda();
     const sortedIndices = Array.from(selectedAgendaIndices).sort((a, b) => b - a);
     
@@ -1354,16 +1354,16 @@ async function deleteSelectedAgenda() {
     }
     
     await getContext().saveChat();
-    showToast(`已删除 ${selectedAgendaIndices.size} 条待办事项`, 'success');
+    showToast(`已刪除 ${selectedAgendaIndices.size} 條待辦事項`, 'success');
     
     exitAgendaMultiSelect();
 }
 
 // ============================================
-// 时间线多选模式 & 长按插入菜单
+// 時間線多選模式 & 長按插入選單
 // ============================================
 
-/** 时间线长按开始（弹出插入菜单） */
+/** 時間線長按開始（彈出插入選單） */
 let _timelineLongPressFired = false;
 function startTimelineLongPress(e, eventKey) {
     if (timelineMultiSelectMode) return;
@@ -1375,7 +1375,7 @@ function startTimelineLongPress(e, eventKey) {
     }, 800);
 }
 
-/** 取消时间线长按 */
+/** 取消時間線長按 */
 function cancelTimelineLongPress() {
     if (timelineLongPressTimer) {
         clearTimeout(timelineLongPressTimer);
@@ -1383,7 +1383,7 @@ function cancelTimelineLongPress() {
     }
 }
 
-/** 显示时间线长按上下文菜单 */
+/** 顯示時間線長按上下文選單 */
 function showTimelineContextMenu(e, eventKey) {
     closeTimelineContextMenu();
     const [msgIdx, evtIdx] = eventKey.split('-').map(Number);
@@ -1392,28 +1392,28 @@ function showTimelineContextMenu(e, eventKey) {
     menu.id = 'horae-timeline-context-menu';
     menu.className = 'horae-context-menu';
     menu.innerHTML = `
-        <div class="horae-context-item" data-action="insert-event-above">
+        <div class="horae-context-item" data-action="IGert-event-above">
             <i class="fa-solid fa-arrow-up"></i> 在上方添加事件
         </div>
-        <div class="horae-context-item" data-action="insert-event-below">
+        <div class="horae-context-item" data-action="IGert-event-below">
             <i class="fa-solid fa-arrow-down"></i> 在下方添加事件
         </div>
         <div class="horae-context-separator"></div>
-        <div class="horae-context-item" data-action="insert-summary-above">
+        <div class="horae-context-item" data-action="IGert-summary-above">
             <i class="fa-solid fa-file-lines"></i> 在上方插入摘要
         </div>
-        <div class="horae-context-item" data-action="insert-summary-below">
+        <div class="horae-context-item" data-action="IGert-summary-below">
             <i class="fa-solid fa-file-lines"></i> 在下方插入摘要
         </div>
         <div class="horae-context-separator"></div>
         <div class="horae-context-item danger" data-action="delete">
-            <i class="fa-solid fa-trash-can"></i> 删除此事件
+            <i class="fa-solid fa-trash-can"></i> 刪除此事件
         </div>
     `;
     
     document.body.appendChild(menu);
     
-    // 阻止菜单自身的所有事件冒泡（防止移动端抽屉收回）
+    // 阻止選單自身的所有事件冒泡（防止移動端抽屜收回）
     ['click', 'mousedown', 'mouseup', 'touchstart', 'touchend'].forEach(evType => {
         menu.addEventListener(evType, (ev) => ev.stopPropagation());
     });
@@ -1433,7 +1433,7 @@ function showTimelineContextMenu(e, eventKey) {
         menu.style.left = `${(e.clientX || e.touches?.[0]?.clientX || 100)}px`;
     }
     
-    // 绑定菜单项操作（click + touchend 双绑定确保移动端可用）
+    // 綁定選單項操作（click + touchend 雙綁定確保移動端可用）
     menu.querySelectorAll('.horae-context-item').forEach(item => {
         let handled = false;
         const handler = (ev) => {
@@ -1450,7 +1450,7 @@ function showTimelineContextMenu(e, eventKey) {
         item.addEventListener('touchend', handler);
     });
     
-    // 点击菜单外区域关闭（仅用 click，不用 touchstart 避免抢占移动端触摸）
+    // 點擊選單外區域關閉（僅用 click，不用 touchstart 避免搶佔移動端觸摸）
     setTimeout(() => {
         const dismissHandler = (ev) => {
             if (menu.contains(ev.target)) return;
@@ -1461,18 +1461,18 @@ function showTimelineContextMenu(e, eventKey) {
     }, 100);
 }
 
-/** 关闭时间线上下文菜单 */
+/** 關閉時間線上下文選單 */
 function closeTimelineContextMenu() {
     const menu = document.getElementById('horae-timeline-context-menu');
     if (menu) menu.remove();
 }
 
-/** 处理时间线上下文菜单操作 */
+/** 處理時間線上下文選單操作 */
 async function handleTimelineContextAction(action, msgIdx, evtIdx, eventKey) {
     const chat = horaeManager.getChat();
     
     if (action === 'delete') {
-        if (!confirm('确定删除此事件？')) return;
+        if (!confirm('確定刪除此事件？')) return;
         const meta = chat[msgIdx]?.horae_meta;
         if (!meta) return;
         if (meta.events && evtIdx < meta.events.length) {
@@ -1481,7 +1481,7 @@ async function handleTimelineContextAction(action, msgIdx, evtIdx, eventKey) {
             delete meta.event;
         }
         await getContext().saveChat();
-        showToast('已删除事件', 'success');
+        showToast('已刪除事件', 'success');
         updateTimelineDisplay();
         updateStatusDisplay();
         return;
@@ -1497,7 +1497,7 @@ async function handleTimelineContextAction(action, msgIdx, evtIdx, eventKey) {
     }
 }
 
-/** 打开插入事件弹窗 */
+/** 打開插入事件彈窗 */
 function openTimelineInsertEventModal(refMsgIdx, refEvtIdx, isAbove) {
     const state = horaeManager.getLatestState();
     const currentDate = state.timestamp?.story_date || '';
@@ -1512,23 +1512,23 @@ function openTimelineInsertEventModal(refMsgIdx, refEvtIdx, isAbove) {
                 <div class="horae-modal-body horae-edit-modal-body">
                     <div class="horae-edit-field">
                         <label>日期</label>
-                        <input type="text" id="insert-event-date" value="${currentDate}" placeholder="如 2026/2/14">
+                        <input type="text" id="IGert-event-date" value="${currentDate}" placeholder="如 2026/2/14">
                     </div>
                     <div class="horae-edit-field">
-                        <label>时间</label>
-                        <input type="text" id="insert-event-time" value="${currentTime}" placeholder="如 15:00">
+                        <label>時間</label>
+                        <input type="text" id="IGert-event-time" value="${currentTime}" placeholder="如 15:00">
                     </div>
                     <div class="horae-edit-field">
                         <label>重要程度</label>
-                        <select id="insert-event-level" class="horae-select">
+                        <select id="IGert-event-level" class="horae-select">
                             <option value="一般">一般</option>
                             <option value="重要">重要</option>
-                            <option value="关键">关键</option>
+                            <option value="關鍵">關鍵</option>
                         </select>
                     </div>
                     <div class="horae-edit-field">
                         <label>事件摘要</label>
-                        <textarea id="insert-event-summary" rows="3" placeholder="描述此事件的摘要..."></textarea>
+                        <textarea id="IGert-event-summary" rows="3" placeholder="描述此事件的摘要..."></textarea>
                     </div>
                 </div>
                 <div class="horae-modal-footer">
@@ -1553,10 +1553,10 @@ function openTimelineInsertEventModal(refMsgIdx, refEvtIdx, isAbove) {
         const level = document.getElementById('insert-event-level').value;
         const summary = document.getElementById('insert-event-summary').value.trim();
         
-        if (!summary) { showToast('请输入事件摘要', 'warning'); return; }
+        if (!summary) { showToast('請輸入事件摘要', 'warning'); return; }
         
         const newEvent = {
-            is_important: level === '重要' || level === '关键',
+            is_important: level === '重要' || level === '關鍵',
             level: level,
             summary: summary
         };
@@ -1590,7 +1590,7 @@ function openTimelineInsertEventModal(refMsgIdx, refEvtIdx, isAbove) {
     });
 }
 
-/** 打开插入摘要弹窗 */
+/** 打開插入摘要彈窗 */
 function openTimelineSummaryModal(refMsgIdx, refEvtIdx, isAbove) {
     const modalHtml = `
         <div id="horae-edit-modal" class="horae-modal">
@@ -1600,8 +1600,8 @@ function openTimelineSummaryModal(refMsgIdx, refEvtIdx, isAbove) {
                 </div>
                 <div class="horae-modal-body horae-edit-modal-body">
                     <div class="horae-edit-field">
-                        <label>摘要内容</label>
-                        <textarea id="insert-summary-text" rows="5" placeholder="在此输入摘要内容，用于替代被删除的中间时间线...&#10;&#10;提示：请勿删除开头的时间线，否则相对时间计算和年龄自动推进功能将会失效。"></textarea>
+                        <label>摘要內容</label>
+                        <textarea id="IGert-summary-text" rows="5" placeholder="在此輸入摘要內容，用於替代被刪除的中間時間線...&#10;&#10;提示：請勿刪除開頭的時間線，否則相對時間計算和年齡自動推進功能將會失效。"></textarea>
                     </div>
                 </div>
                 <div class="horae-modal-footer">
@@ -1622,7 +1622,7 @@ function openTimelineSummaryModal(refMsgIdx, refEvtIdx, isAbove) {
     document.getElementById('edit-modal-save').addEventListener('click', async (e) => {
         e.stopPropagation();
         const summaryText = document.getElementById('insert-summary-text').value.trim();
-        if (!summaryText) { showToast('请输入摘要内容', 'warning'); return; }
+        if (!summaryText) { showToast('請輸入摘要內容', 'warning'); return; }
         
         const newEvent = {
             is_important: true,
@@ -1652,7 +1652,7 @@ function openTimelineSummaryModal(refMsgIdx, refEvtIdx, isAbove) {
     });
 }
 
-/** 进入时间线多选模式 */
+/** 進入時間線多選模式 */
 function enterTimelineMultiSelect(initialKey) {
     timelineMultiSelectMode = true;
     selectedTimelineEvents.clear();
@@ -1663,10 +1663,10 @@ function enterTimelineMultiSelect(initialKey) {
     
     updateTimelineDisplay();
     updateTimelineSelectedCount();
-    showToast('已进入多选模式，点击选择事件', 'info');
+    showToast('已進入多選模式，點擊選擇事件', 'info');
 }
 
-/** 退出时间线多选模式 */
+/** 退出時間線多選模式 */
 function exitTimelineMultiSelect() {
     timelineMultiSelectMode = false;
     selectedTimelineEvents.clear();
@@ -1677,7 +1677,7 @@ function exitTimelineMultiSelect() {
     updateTimelineDisplay();
 }
 
-/** 切换时间线事件选中状态 */
+/** 切換時間線事件選中狀態 */
 function toggleTimelineSelection(eventKey) {
     if (selectedTimelineEvents.has(eventKey)) {
         selectedTimelineEvents.delete(eventKey);
@@ -1694,7 +1694,7 @@ function toggleTimelineSelection(eventKey) {
     updateTimelineSelectedCount();
 }
 
-/** 全选时间线事件 */
+/** 全選時間線事件 */
 function selectAllTimelineEvents() {
     document.querySelectorAll('#horae-timeline-list .horae-timeline-item').forEach(item => {
         const key = item.dataset.eventKey;
@@ -1704,43 +1704,43 @@ function selectAllTimelineEvents() {
     updateTimelineSelectedCount();
 }
 
-/** 更新时间线选中计数 */
+/** 更新時間線選中計數 */
 function updateTimelineSelectedCount() {
     const el = document.getElementById('horae-timeline-selected-count');
     if (el) el.textContent = selectedTimelineEvents.size;
 }
 
-/** 选择压缩模式弹窗 */
+/** 選擇壓縮模式彈窗 */
 function showCompressModeDialog(eventCount, msgRange) {
     return new Promise(resolve => {
         const modal = document.createElement('div');
         modal.className = 'horae-modal' + (isLightMode() ? ' horae-light' : '');
         modal.innerHTML = `
             <div class="horae-modal-content" style="max-width: 420px;">
-                <div class="horae-modal-header"><span>压缩模式</span></div>
+                <div class="horae-modal-header"><span>壓縮模式</span></div>
                 <div class="horae-modal-body" style="padding: 16px;">
                     <p style="margin: 0 0 12px; color: var(--horae-text-muted); font-size: 13px;">
-                        已选中 <strong style="color: var(--horae-primary-light);">${eventCount}</strong> 条事件，
-                        涵盖消息 #${msgRange[0]} ~ #${msgRange[1]}
+                        已選中 <strong style="color: var(--horae-primary-light);">${eventCount}</strong> 條事件，
+                        涵蓋訊息 #${msgRange[0]} ~ #${msgRange[1]}
                     </p>
                     <label style="display: flex; align-items: flex-start; gap: 8px; padding: 10px; border: 1px solid var(--horae-border); border-radius: 6px; cursor: pointer; margin-bottom: 8px;">
                         <input type="radio" name="horae-compress-mode" value="event" checked style="margin-top: 3px;">
                         <div>
-                            <div style="font-size: 13px; color: var(--horae-text); font-weight: 500;">事件压缩</div>
-                            <div style="font-size: 11px; color: var(--horae-text-muted); margin-top: 2px;">从已提取的事件摘要文本压缩，速度快，但信息仅限于时间线已记录的内容</div>
+                            <div style="font-size: 13px; color: var(--horae-text); font-weight: 500;">事件壓縮</div>
+                            <div style="font-size: 11px; color: var(--horae-text-muted); margin-top: 2px;">從已提取的事件摘要文字壓縮，速度快，但資訊僅限於時間線已記錄的內容</div>
                         </div>
                     </label>
                     <label style="display: flex; align-items: flex-start; gap: 8px; padding: 10px; border: 1px solid var(--horae-border); border-radius: 6px; cursor: pointer;">
                         <input type="radio" name="horae-compress-mode" value="fulltext" style="margin-top: 3px;">
                         <div>
                             <div style="font-size: 13px; color: var(--horae-text); font-weight: 500;">全文摘要</div>
-                            <div style="font-size: 11px; color: var(--horae-text-muted); margin-top: 2px;">回读选中事件所在消息的完整正文进行摘要，细节更丰富，但消耗更多 Token</div>
+                            <div style="font-size: 11px; color: var(--horae-text-muted); margin-top: 2px;">回讀選中事件所在訊息的完整正文進行摘要，細節更豐富，但消耗更多 Token</div>
                         </div>
                     </label>
                 </div>
                 <div class="horae-modal-footer">
                     <button class="horae-btn" id="horae-compress-cancel">取消</button>
-                    <button class="horae-btn primary" id="horae-compress-confirm">继续</button>
+                    <button class="horae-btn primary" id="horae-compress-confirm">繼續</button>
                 </div>
             </div>
         `;
@@ -1755,10 +1755,10 @@ function showCompressModeDialog(eventCount, msgRange) {
     });
 }
 
-/** AI智能压缩选中的时间线事件为一条摘要 */
+/** AI智慧壓縮選中的時間線事件為一條摘要 */
 async function compressSelectedTimelineEvents() {
     if (selectedTimelineEvents.size < 2) {
-        showToast('请至少选择2条事件进行压缩', 'warning');
+        showToast('請至少選擇2條事件進行壓縮', 'warning');
         return;
     }
     
@@ -1783,7 +1783,7 @@ async function compressSelectedTimelineEvents() {
     }
     
     if (events.length < 2) {
-        showToast('有效事件不足2条', 'warning');
+        showToast('有效事件不足2條', 'warning');
         return;
     }
     
@@ -1795,7 +1795,7 @@ async function compressSelectedTimelineEvents() {
     
     let sourceText;
     if (mode === 'fulltext') {
-        // 收集涉及的消息全文
+        // 收集涉及的訊息全文
         const msgIndices = [...new Set(events.map(e => e.msgIdx))].sort((a, b) => a - b);
         const fullTexts = msgIndices.map(idx => {
             const msg = chat[idx];
@@ -1834,24 +1834,24 @@ async function compressSelectedTimelineEvents() {
     overlay.className = 'horae-progress-overlay' + (isLightMode() ? ' horae-light' : '');
     overlay.innerHTML = `
         <div class="horae-progress-container">
-            <div class="horae-progress-title">AI 压缩中...</div>
+            <div class="horae-progress-title">AI 壓縮中...</div>
             <div class="horae-progress-bar"><div class="horae-progress-fill" style="width: 50%"></div></div>
             <div class="horae-progress-text">${mode === 'fulltext' ? '正在回读全文生成摘要...' : '正在生成摘要...'}</div>
-            <button class="horae-progress-cancel"><i class="fa-solid fa-xmark"></i> 取消压缩</button>
+            <button class="horae-progress-cancel"><i class="fa-solid fa-xmark"></i> 取消壓縮</button>
         </div>
     `;
     document.body.appendChild(overlay);
 
     overlay.querySelector('.horae-progress-cancel').addEventListener('click', () => {
         if (cancelled) return;
-        if (!confirm('取消后摘要将不会保存，确定取消？')) return;
+        if (!confirm('取消後摘要將不會保存，確定取消？')) return;
         cancelled = true;
         fetchAbort.abort();
         try { getContext().stopGeneration(); } catch (_) {}
         cancelResolve();
         overlay.remove();
         window.fetch = _origFetch;
-        showToast('已取消压缩', 'info');
+        showToast('已取消壓縮', 'info');
     });
     
     try {
@@ -1895,16 +1895,16 @@ async function compressSelectedTimelineEvents() {
             .trim();
         if (!summaryText) {
             overlay.remove();
-            showToast('AI摘要内容为空', 'warning');
+            showToast('AI摘要內容為空', 'warning');
             return;
         }
         
-        // 非破坏性压缩：将原始事件和摘要存入 autoSummaries
+        // 非破壞性壓縮：將原始事件和摘要存入 autoSummaries
         const firstMsg = chat[0];
         if (!firstMsg.horae_meta) firstMsg.horae_meta = createEmptyMeta();
         if (!firstMsg.horae_meta.autoSummaries) firstMsg.horae_meta.autoSummaries = [];
         
-        // 收集被压缩的原始事件备份
+        // 收集被壓縮的原始事件備份
         const originalEvents = events.map(e => ({
             msgIdx: e.msgIdx,
             evtIdx: e.evtIdx,
@@ -1924,8 +1924,8 @@ async function compressSelectedTimelineEvents() {
         };
         firstMsg.horae_meta.autoSummaries.push(summaryEntry);
         
-        // 标记原始事件为已压缩（不删除），兼容旧 meta.event 单数格式
-        // 标记所有涉及消息的全部事件，避免同一消息中未选中的事件泄露
+        // 標記原始事件為已壓縮（不刪除），相容舊 meta.event 單數格式
+        // 標記所有涉及訊息的全部事件，避免同一訊息中未選中的事件洩露
         const compressedMsgIndices = [...new Set(events.map(e => e.msgIdx))];
         for (const msgIdx of compressedMsgIndices) {
             const meta = chat[msgIdx]?.horae_meta;
@@ -1942,7 +1942,7 @@ async function compressSelectedTimelineEvents() {
             }
         }
         
-        // 在最早的消息位置插入摘要事件
+        // 在最早的訊息位置插入摘要事件
         const firstEvent = events[0];
         const firstMeta = chat[firstEvent.msgIdx]?.horae_meta;
         if (firstMeta) {
@@ -1956,7 +1956,7 @@ async function compressSelectedTimelineEvents() {
             });
         }
         
-        // 隐藏范围内所有楼层（包括中间的 USER 消息）
+        // 隱藏範圍內所有樓層（包括中間的 USER 訊息）
         const hideMin = compressedMsgIndices[0];
         const hideMax = compressedMsgIndices[compressedMsgIndices.length - 1];
         const hideIndices = [];
@@ -1968,30 +1968,30 @@ async function compressSelectedTimelineEvents() {
         exitTimelineMultiSelect();
         updateTimelineDisplay();
         updateStatusDisplay();
-        showToast(`已将 ${events.length} 条事件${mode === 'fulltext' ? '（全文模式）' : ''}压缩为摘要`, 'success');
+        showToast(`已將 ${events.length} 條事件${mode === 'fulltext' ? '（全文模式）' : ''}壓縮為摘要`, 'success');
     } catch (err) {
         window.fetch = _origFetch;
         overlay.remove();
         if (cancelled || err?.name === 'AbortError') return;
-        console.error('[Horae] 压缩失败:', err);
-        showToast('AI压缩失败: ' + (err.message || '未知错误'), 'error');
+        console.error('[Horae] 壓縮失敗:', err);
+        showToast('AI壓縮失敗: ' + (err.message || '未知錯誤'), 'error');
     }
 }
 
-/** 删除选中的时间线事件 */
+/** 刪除選中的時間線事件 */
 async function deleteSelectedTimelineEvents() {
     if (selectedTimelineEvents.size === 0) {
-        showToast('没有选中任何事件', 'warning');
+        showToast('沒有選中任何事件', 'warning');
         return;
     }
     
-    const confirmed = confirm(`确定要删除选中的 ${selectedTimelineEvents.size} 条剧情轨迹吗？\n\n可通过「刷新」按钮旁的撤销恢复。`);
+    const confirmed = confirm(`確定要刪除選中的 ${selectedTimelineEvents.size} 條劇情軌跡嗎？\n\n可透過「重新整理」按鈕旁的撤銷恢復。`);
     if (!confirmed) return;
     
     const chat = horaeManager.getChat();
     const firstMeta = chat?.[0]?.horae_meta;
     
-    // 按消息分组，倒序删除事件索引
+    // 按訊息分組，倒序刪除事件索引
     const msgMap = new Map();
     for (const key of selectedTimelineEvents) {
         const [msgIdx, evtIdx] = key.split('-').map(Number);
@@ -1999,7 +1999,7 @@ async function deleteSelectedTimelineEvents() {
         msgMap.get(msgIdx).push(evtIdx);
     }
     
-    // 收集被删除的摘要事件的 summaryId，用于级联清理
+    // 收集被刪除的摘要事件的 summaryId，用於級聯清理
     const deletedSummaryIds = new Set();
     for (const [msgIdx, evtIndices] of msgMap) {
         const meta = chat[msgIdx]?.horae_meta;
@@ -2026,7 +2026,7 @@ async function deleteSelectedTimelineEvents() {
         }
     }
     
-    // 级联清理：删除摘要事件时同步清理 autoSummaries、_compressedBy、is_hidden
+    // 級聯清理：刪除摘要事件時同步清理 autoSummaries、_compressedBy、is_hidden
     if (deletedSummaryIds.size > 0 && firstMeta?.autoSummaries) {
         for (const summaryId of deletedSummaryIds) {
             const idx = firstMeta.autoSummaries.findIndex(s => s.id === summaryId);
@@ -2049,27 +2049,27 @@ async function deleteSelectedTimelineEvents() {
     }
     
     await getContext().saveChat();
-    showToast(`已删除 ${selectedTimelineEvents.size} 条剧情轨迹`, 'success');
+    showToast(`已刪除 ${selectedTimelineEvents.size} 條劇情軌跡`, 'success');
     exitTimelineMultiSelect();
     updateTimelineDisplay();
     updateStatusDisplay();
 }
 
 /**
- * 打开待办事项添加/编辑弹窗
- * @param {Object|null} agendaItem - 编辑时传入完整 agenda 对象，新增时传 null
+ * 打開待辦事項添加/編輯彈窗
+ * @param {Object|null} agendaItem - 編輯時傳入完整 agenda 對象，新增時傳 null
  */
 function openAgendaEditModal(agendaItem = null) {
     const isEdit = agendaItem !== null;
     const currentText = isEdit ? (agendaItem.text || '') : '';
     const currentDate = isEdit ? (agendaItem.date || '') : '';
-    const title = isEdit ? '编辑待办' : '添加待办';
+    const title = isEdit ? '編輯待辦' : '添加待辦';
     
     closeEditModal();
     
     const deleteBtn = isEdit ? `
                     <button id="agenda-modal-delete" class="horae-btn danger">
-                        <i class="fa-solid fa-trash"></i> 删除
+                        <i class="fa-solid fa-trash"></i> 刪除
                     </button>` : '';
     
     const modalHtml = `
@@ -2080,12 +2080,12 @@ function openAgendaEditModal(agendaItem = null) {
                 </div>
                 <div class="horae-modal-body horae-edit-modal-body">
                     <div class="horae-edit-field">
-                        <label>订立日期 (选填)</label>
+                        <label>訂立日期 (選填)</label>
                         <input type="text" id="agenda-edit-date" value="${escapeHtml(currentDate)}" placeholder="如 2026/02/10">
                     </div>
                     <div class="horae-edit-field">
-                        <label>内容</label>
-                        <textarea id="agenda-edit-text" rows="3" placeholder="输入待办事项，相对时间请标注绝对时间，例如：艾伦邀请艾莉絲於情人節晚上(2026/02/14 18:00)约会">${escapeHtml(currentText)}</textarea>
+                        <label>內容</label>
+                        <textarea id="agenda-edit-text" rows="3" placeholder="輸入待辦事項，相對時間請標註絕對時間，例如：艾倫邀請艾莉絲於情人節晚上(2026/02/14 18:00)約會">${escapeHtml(currentText)}</textarea>
                     </div>
                 </div>
                 <div class="horae-modal-footer">
@@ -2119,12 +2119,12 @@ function openAgendaEditModal(agendaItem = null) {
         const text = document.getElementById('agenda-edit-text').value.trim();
         const date = document.getElementById('agenda-edit-date').value.trim();
         if (!text) {
-            showToast('内容不能为空', 'warning');
+            showToast('內容不能為空', 'warning');
             return;
         }
         
         if (isEdit) {
-            // 编辑现有项
+            // 編輯現有項
             const context = getContext();
             if (agendaItem._store === 'user') {
                 const agenda = getUserAgenda();
@@ -2154,7 +2154,7 @@ function openAgendaEditModal(agendaItem = null) {
         
         closeEditModal();
         updateAgendaDisplay();
-        showToast(isEdit ? '待办已更新' : '待办已添加', 'success');
+        showToast(isEdit ? '待辦已更新' : '待辦已添加', 'success');
     });
     
     document.getElementById('agenda-modal-cancel').addEventListener('click', (e) => {
@@ -2163,40 +2163,40 @@ function openAgendaEditModal(agendaItem = null) {
         closeEditModal();
     });
     
-    // 删除按钮（仅编辑模式）
+    // 刪除按鈕（僅編輯模式）
     const deleteEl = document.getElementById('agenda-modal-delete');
     if (deleteEl && isEdit) {
         deleteEl.addEventListener('click', (e) => {
             e.stopPropagation();
             e.stopImmediatePropagation();
             
-            if (!confirm('确定要删除这条待办事项吗？此操作无法撤销。')) return;
+            if (!confirm('確定要刪除這條待辦事項嗎？此操作無法撤銷。')) return;
             
             deleteAgendaItem(agendaItem);
             closeEditModal();
             updateAgendaDisplay();
-            showToast('待办已删除', 'info');
+            showToast('待辦已刪除', 'info');
         });
     }
 }
 
 /**
- * 更新角色页面显示
+ * 更新角色頁面顯示
  */
 function updateCharactersDisplay() {
     const state = horaeManager.getLatestState();
     const presentChars = state.scene?.characters_present || [];
     const favoriteNpcs = settings.favoriteNpcs || [];
     
-    // 获取角色卡主角色名（用于置顶和特殊样式）
+    // 獲取角色卡主角色名（用於置頂和特殊樣式）
     const context = getContext();
     const mainCharName = context?.name2 || '';
     
-    // 在场角色
+    // 在場角色
     const presentEl = document.getElementById('horae-present-characters');
     if (presentEl) {
         if (presentChars.length === 0) {
-            presentEl.innerHTML = '<div class="horae-empty-hint">暂无记录</div>';
+            presentEl.innerHTML = '<div class="horae-empty-hint">暫無記錄</div>';
         } else {
             presentEl.innerHTML = presentChars.map(char => {
                 const isMainChar = mainCharName && char.includes(mainCharName);
@@ -2210,15 +2210,15 @@ function updateCharactersDisplay() {
         }
     }
     
-    // 好感度 - 分层显示：重要角色 > 在场角色 > 其他
+    // 好感度 - 分層顯示：重要角色 > 在場角色 > 其他
     const affectionEl = document.getElementById('horae-affection-list');
     const pinnedNpcsAff = settings.pinnedNpcs || [];
     if (affectionEl) {
         const entries = Object.entries(state.affection || {});
         if (entries.length === 0) {
-            affectionEl.innerHTML = '<div class="horae-empty-hint">暂无好感度记录</div>';
+            affectionEl.innerHTML = '<div class="horae-empty-hint">暫無好感度記錄</div>';
         } else {
-            // 判断是否为重要角色
+            // 判斷是否為重要角色
             const isMainCharAff = (key) => {
                 if (pinnedNpcsAff.includes(key)) return true;
                 if (mainCharName && key.includes(mainCharName)) return true;
@@ -2243,7 +2243,7 @@ function updateCharactersDisplay() {
                         <span class="horae-affection-name">${key}</span>
                         <span class="horae-affection-value ${valueClass}">${numValue > 0 ? '+' : ''}${numValue}</span>
                         <span class="horae-affection-level">${level}</span>
-                        <button class="horae-item-edit-btn horae-affection-edit-btn" data-edit-type="affection" data-char="${key}" title="编辑好感度">
+                        <button class="horae-item-edit-btn horae-affection-edit-btn" data-edit-type="affection" data-char="${key}" title="編輯好感度">
                             <i class="fa-solid fa-pen"></i>
                         </button>
                     </div>
@@ -2251,7 +2251,7 @@ function updateCharactersDisplay() {
             }).join('');
             
             let html = '';
-            // 角色卡角色置顶
+            // 角色卡角色置頂
             if (mainCharAffection.length > 0) {
                 html += renderAffection(mainCharAffection, true);
             }
@@ -2271,15 +2271,15 @@ function updateCharactersDisplay() {
         }
     }
     
-    // NPC列表 - 分层显示：重要角色 > 星标角色 > 普通角色
+    // NPC列表 - 分層顯示：重要角色 > 星標角色 > 普通角色
     const npcEl = document.getElementById('horae-npc-list');
     const pinnedNpcs = settings.pinnedNpcs || [];
     if (npcEl) {
         const entries = Object.entries(state.npcs || {});
         if (entries.length === 0) {
-            npcEl.innerHTML = '<div class="horae-empty-hint">暂无角色记录</div>';
+            npcEl.innerHTML = '<div class="horae-empty-hint">暫無角色記錄</div>';
         } else {
-            // 判断是否为重要角色（角色卡主角 或 手动标记）
+            // 判斷是否為重要角色（角色卡主角 或 手動標記）
             const isMainChar = (name) => {
                 if (pinnedNpcs.includes(name)) return true;
                 if (mainCharName && name.includes(mainCharName)) return true;
@@ -2302,16 +2302,16 @@ function updateCharactersDisplay() {
                 } else if (info.description) {
                     descHtml = `<span class="horae-npc-legacy">${info.description}</span>`;
                 } else {
-                    descHtml = '<span class="horae-npc-legacy">无描述</span>';
+                    descHtml = '<span class="horae-npc-legacy">無描述</span>';
                 }
                 
-                // 扩展信息行（年龄/种族/职业）
+                // 擴展資訊行（年齡/種族/職業）
                 const extraTags = [];
                 if (info.race) extraTags.push(info.race);
                 if (info.age) {
                     const ageResult = horaeManager.calcCurrentAge(info, state.timestamp?.story_date);
                     if (ageResult.changed) {
-                        extraTags.push(`<span class="horae-age-calc" title="原始:${ageResult.original} (已推算时间推移)">${ageResult.display}岁</span>`);
+                        extraTags.push(`<span class="horae-age-calc" title="原始:${ageResult.original} (已推算時間推移)">${ageResult.display}歲</span>`);
                     } else {
                         extraTags.push(info.age);
                     }
@@ -2331,7 +2331,7 @@ function updateCharactersDisplay() {
                 const mainClass = isMainChar ? 'main-character' : '';
                 const starIcon = isFavorite ? 'fa-solid fa-star' : 'fa-regular fa-star';
                 
-                // 性别图标映射
+                // 性別圖示映射
                 let genderIcon, genderClass;
                 if (isMainChar) {
                     genderIcon = 'fa-solid fa-crown';
@@ -2361,7 +2361,7 @@ function updateCharactersDisplay() {
                             </div>
                             <div class="horae-npc-name"><i class="${genderIcon} ${genderClass}"></i> ${name}</div>
                             <div class="horae-npc-actions">
-                                <button class="horae-item-edit-btn" data-edit-type="npc" data-edit-name="${name}" title="编辑" style="opacity:1;position:static;">
+                                <button class="horae-item-edit-btn" data-edit-type="npc" data-edit-name="${name}" title="編輯" style="opacity:1;position:static;">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 <button class="horae-npc-star" title="${isFavorite ? '取消星标' : '添加星标'}">
@@ -2374,7 +2374,7 @@ function updateCharactersDisplay() {
                 `;
             };
             
-            // 性别过滤栏
+            // 性別過濾欄
             let html = `
                 <div class="horae-gender-filter">
                     <button class="horae-gender-btn active" data-filter="all" title="全部">全部</button>
@@ -2384,7 +2384,7 @@ function updateCharactersDisplay() {
                 </div>
             `;
             
-            // 角色卡角色区域（置顶）
+            // 角色卡角色區域（置頂）
             if (mainCharEntries.length > 0) {
                 html += '<div class="horae-npc-section main-character-section">';
                 html += '<div class="horae-npc-section-title"><i class="fa-solid fa-crown"></i> 主要角色</div>';
@@ -2392,18 +2392,18 @@ function updateCharactersDisplay() {
                 html += '</div>';
             }
             
-            // 星标NPC区域
+            // 星標NPC區域
             if (favoriteEntries.length > 0) {
                 if (mainCharEntries.length > 0) {
                     html += '<div class="horae-npc-section-divider"></div>';
                 }
                 html += '<div class="horae-npc-section favorite-section">';
-                html += '<div class="horae-npc-section-title"><i class="fa-solid fa-star"></i> 星标NPC</div>';
+                html += '<div class="horae-npc-section-title"><i class="fa-solid fa-star"></i> 星標NPC</div>';
                 html += favoriteEntries.map(([name, info]) => renderNpc(name, info, true)).join('');
                 html += '</div>';
             }
             
-            // 普通NPC区域
+            // 普通NPC區域
             if (normalEntries.length > 0) {
                 if (mainCharEntries.length > 0 || favoriteEntries.length > 0) {
                     html += '<div class="horae-npc-section-divider"></div>';
@@ -2427,7 +2427,7 @@ function updateCharactersDisplay() {
                 });
             });
             
-            // NPC 多选点击
+            // NPC 多選點擊
             npcEl.querySelectorAll('.horae-npc-item').forEach(item => {
                 item.addEventListener('click', (e) => {
                     if (!npcMultiSelectMode) return;
@@ -2461,14 +2461,14 @@ function updateCharactersDisplay() {
         }
     }
     
-    // 关系网络渲染
+    // 關係網路彩現
     if (settings.sendRelationships) {
         updateRelationshipDisplay();
     }
 }
 
 /**
- * 更新关系网络显示
+ * 更新關係網路顯示
  */
 function updateRelationshipDisplay() {
     const listEl = document.getElementById('horae-relationship-list');
@@ -2477,7 +2477,7 @@ function updateRelationshipDisplay() {
     const relationships = horaeManager.getRelationships();
     
     if (relationships.length === 0) {
-        listEl.innerHTML = '<div class="horae-empty-hint">暂无关系记录，AI会在角色互动时自动记录</div>';
+        listEl.innerHTML = '<div class="horae-empty-hint">暫無關係記錄，AI會在角色互動時自動記錄</div>';
         return;
     }
     
@@ -2491,15 +2491,15 @@ function updateRelationshipDisplay() {
                 ${rel.note ? `<span class="horae-rel-note">${rel.note}</span>` : ''}
             </div>
             <div class="horae-rel-actions">
-                <button class="horae-rel-edit" title="编辑"><i class="fa-solid fa-pen"></i></button>
-                <button class="horae-rel-delete" title="删除"><i class="fa-solid fa-trash"></i></button>
+                <button class="horae-rel-edit" title="編輯"><i class="fa-solid fa-pen"></i></button>
+                <button class="horae-rel-delete" title="刪除"><i class="fa-solid fa-trash"></i></button>
             </div>
         </div>
     `).join('');
     
     listEl.innerHTML = html;
     
-    // 绑定编辑/删除事件
+    // 綁定編輯/刪除事件
     listEl.querySelectorAll('.horae-rel-edit').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const idx = parseInt(btn.closest('.horae-relationship-item').dataset.relIndex);
@@ -2512,10 +2512,10 @@ function updateRelationshipDisplay() {
             const idx = parseInt(btn.closest('.horae-relationship-item').dataset.relIndex);
             const rels = horaeManager.getRelationships();
             const rel = rels[idx];
-            if (!confirm(`确定删除 ${rel.from} → ${rel.to} 的关系？`)) return;
+            if (!confirm(`確定刪除 ${rel.from} → ${rel.to} 的關係？`)) return;
             rels.splice(idx, 1);
             horaeManager.setRelationships(rels);
-            // 同步清理各消息中的同方向关系数据，防止 rebuildRelationships 复活
+            // 同步清理各訊息中的同方向關係數據，防止 rebuildRelationships 復活
             const chat = horaeManager.getChat();
             for (let i = 1; i < chat.length; i++) {
                 const meta = chat[i]?.horae_meta;
@@ -2528,7 +2528,7 @@ function updateRelationshipDisplay() {
             }
             await getContext().saveChat();
             updateRelationshipDisplay();
-            showToast('关系已删除', 'info');
+            showToast('關係已刪除', 'info');
         });
     });
 }
@@ -2543,24 +2543,24 @@ function openRelationshipEditModal(editIndex = null) {
         <div id="horae-edit-modal" class="horae-modal">
             <div class="horae-modal-content">
                 <div class="horae-modal-header">
-                    <i class="fa-solid fa-diagram-project"></i> ${isEdit ? '编辑关系' : '添加关系'}
+                    <i class="fa-solid fa-diagram-project"></i> ${isEdit ? '編輯關係' : '添加關係'}
                 </div>
                 <div class="horae-modal-body horae-edit-modal-body">
                     <div class="horae-edit-field">
                         <label>角色A</label>
-                        <input type="text" id="horae-rel-from" value="${escapeHtml(existing.from)}" placeholder="角色名（关系发起方）">
+                        <input type="text" id="horae-rel-from" value="${escapeHtml(existing.from)}" placeholder="角色名（關係發起方）">
                     </div>
                     <div class="horae-edit-field">
                         <label>角色B</label>
-                        <input type="text" id="horae-rel-to" value="${escapeHtml(existing.to)}" placeholder="角色名（关系接收方）">
+                        <input type="text" id="horae-rel-to" value="${escapeHtml(existing.to)}" placeholder="角色名（關係接收方）">
                     </div>
                     <div class="horae-edit-field">
-                        <label>关系类型</label>
-                        <input type="text" id="horae-rel-type" value="${escapeHtml(existing.type)}" placeholder="如：朋友、恋人、上下级、师徒">
+                        <label>關係類型</label>
+                        <input type="text" id="horae-rel-type" value="${escapeHtml(existing.type)}" placeholder="如：朋友、戀人、上下級、師徒">
                     </div>
                     <div class="horae-edit-field">
-                        <label>备注（可选）</label>
-                        <input type="text" id="horae-rel-note" value="${escapeHtml(existing.note || '')}" placeholder="关系的补充说明">
+                        <label>備註（可選）</label>
+                        <input type="text" id="horae-rel-note" value="${escapeHtml(existing.note || '')}" placeholder="關係的補充說明">
                     </div>
                 </div>
                 <div class="horae-modal-footer">
@@ -2589,14 +2589,14 @@ function openRelationshipEditModal(editIndex = null) {
         const note = document.getElementById('horae-rel-note').value.trim();
         
         if (!from || !to || !type) {
-            showToast('角色名和关系类型不能为空', 'warning');
+            showToast('角色名和關係類型不能為空', 'warning');
             return;
         }
         
         if (isEdit) {
             const oldRel = rels[editIndex];
             rels[editIndex] = { from, to, type, note, _userEdited: true };
-            // 同步更新各消息中的关系数据，防止 rebuildRelationships 复原旧值
+            // 同步更新各訊息中的關係數據，防止 rebuildRelationships 復原舊值
             const chat = horaeManager.getChat();
             for (let i = 1; i < chat.length; i++) {
                 const meta = chat[i]?.horae_meta;
@@ -2619,14 +2619,14 @@ function openRelationshipEditModal(editIndex = null) {
         await getContext().saveChat();
         updateRelationshipDisplay();
         closeEditModal();
-        showToast(isEdit ? '关系已更新' : '关系已添加', 'success');
+        showToast(isEdit ? '關係已更新' : '關係已添加', 'success');
     });
     
     document.getElementById('horae-rel-modal-cancel').addEventListener('click', () => closeEditModal());
 }
 
 /**
- * 切换NPC星标状态
+ * 切換NPC星標狀態
  */
 function toggleNpcFavorite(npcName) {
     if (!settings.favoriteNpcs) {
@@ -2635,13 +2635,13 @@ function toggleNpcFavorite(npcName) {
     
     const index = settings.favoriteNpcs.indexOf(npcName);
     if (index > -1) {
-        // 取消星标
+        // 取消星標
         settings.favoriteNpcs.splice(index, 1);
-        showToast(`已取消 ${npcName} 的星标`, 'info');
+        showToast(`已取消 ${npcName} 的星標`, 'info');
     } else {
-        // 添加星标
+        // 添加星標
         settings.favoriteNpcs.push(npcName);
-        showToast(`已将 ${npcName} 添加到星标`, 'success');
+        showToast(`已將 ${npcName} 添加到星標`, 'success');
     }
     
     saveSettings();
@@ -2649,7 +2649,7 @@ function toggleNpcFavorite(npcName) {
 }
 
 /**
- * 更新物品页面显示
+ * 更新物品頁面顯示
  */
 function updateItemsDisplay() {
     const state = horaeManager.getLatestState();
@@ -2672,7 +2672,7 @@ function updateItemsDisplay() {
             if (info.holder) holders.add(info.holder);
         });
         
-        // 保留当前选项，更新选项列表
+        // 保留目前選項，更新選項列表
         const holderOptions = ['<option value="all">所有人</option>'];
         holders.forEach(holder => {
             holderOptions.push(`<option value="${holder}" ${holder === currentHolder ? 'selected' : ''}>${holder}</option>`);
@@ -2680,7 +2680,7 @@ function updateItemsDisplay() {
         holderFilterEl.innerHTML = holderOptions.join('');
     }
     
-    // 搜索物品 - 按关键字
+    // 搜索物品 - 按關鍵字
     if (searchQuery) {
         entries = entries.filter(([name, info]) => {
             const searchTarget = `${name} ${info.icon || ''} ${info.description || ''} ${info.holder || ''} ${info.location || ''}`.toLowerCase();
@@ -2688,20 +2688,20 @@ function updateItemsDisplay() {
         });
     }
     
-    // 筛选物品 - 按重要程度
+    // 篩選物品 - 按重要程度
     if (filterValue !== 'all') {
         entries = entries.filter(([name, info]) => info.importance === filterValue);
     }
     
-    // 筛选物品 - 按持有人
+    // 篩選物品 - 按持有人
     if (holderFilter !== 'all') {
         entries = entries.filter(([name, info]) => info.holder === holderFilter);
     }
     
     if (entries.length === 0) {
-        let emptyMsg = '暂无追踪的物品';
+        let emptyMsg = '暫無追蹤的物品';
         if (filterValue !== 'all' || holderFilter !== 'all' || searchQuery) {
-            emptyMsg = '没有符合筛选条件的物品';
+            emptyMsg = '沒有符合篩選條件的物品';
         }
         listEl.innerHTML = `
             <div class="horae-empty-state">
@@ -2715,22 +2715,22 @@ function updateItemsDisplay() {
     listEl.innerHTML = entries.map(([name, info]) => {
         const icon = info.icon || '📦';
         const importance = info.importance || '';
-        // 支持两种格式：""/"!"/"!!" 和 "一般"/"重要"/"关键"
-        const isCritical = importance === '!!' || importance === '关键';
+        // 支援兩種格式：""/"!"/"!!" 和 "一般"/"重要"/"關鍵"
+        const isCritical = importance === '!!' || importance === '關鍵';
         const isImportant = importance === '!' || importance === '重要';
         const importanceClass = isCritical ? 'critical' : isImportant ? 'important' : 'normal';
-        // 显示中文标签
-        const importanceLabel = isCritical ? '关键' : isImportant ? '重要' : '';
+        // 顯示中文標籤
+        const importanceLabel = isCritical ? '關鍵' : isImportant ? '重要' : '';
         const importanceBadge = importanceLabel ? `<span class="horae-item-importance ${importanceClass}">${importanceLabel}</span>` : '';
         
-        // 修复显示格式：持有者 · 位置
+        // 修復顯示格式：持有者 · 位置
         let positionStr = '';
         if (info.holder && info.location) {
             positionStr = `<span class="holder">${info.holder}</span> · ${info.location}`;
         } else if (info.holder) {
             positionStr = `<span class="holder">${info.holder}</span> 持有`;
         } else if (info.location) {
-            positionStr = `位于 ${info.location}`;
+            positionStr = `位於 ${info.location}`;
         } else {
             positionStr = '位置未知';
         }
@@ -2742,7 +2742,7 @@ function updateItemsDisplay() {
         const descHtml = description ? `<div class="horae-full-item-desc">${description}</div>` : '';
         const isLocked = !!info._locked;
         const lockIcon = isLocked ? 'fa-lock' : 'fa-lock-open';
-        const lockTitle = isLocked ? '已锁定（AI无法修改描述和重要程度）' : '点击锁定';
+        const lockTitle = isLocked ? '已鎖定（AI無法修改描述和重要程度）' : '點擊鎖定';
         
         return `
             <div class="horae-full-item horae-editable-item ${importanceClass} ${selectedClass}" data-item-name="${name}">
@@ -2761,7 +2761,7 @@ function updateItemsDisplay() {
                 <button class="horae-item-lock-btn" data-item-name="${name}" title="${lockTitle}" style="opacity:${isLocked ? '1' : '0.35'}">
                     <i class="fa-solid ${lockIcon}"></i>
                 </button>
-                <button class="horae-item-edit-btn" data-edit-type="item" data-edit-name="${name}" title="编辑">
+                <button class="horae-item-edit-btn" data-edit-type="item" data-edit-name="${name}" title="編輯">
                     <i class="fa-solid fa-pen"></i>
                 </button>
             </div>
@@ -2773,11 +2773,11 @@ function updateItemsDisplay() {
 }
 
 /**
- * 绑定编辑按钮事件
+ * 綁定編輯按鈕事件
  */
 function bindEditButtons() {
     document.querySelectorAll('.horae-item-edit-btn').forEach(btn => {
-        // 移除旧的监听器（避免重复绑定）
+        // 移除舊的監聽器（避免重複綁定）
         btn.replaceWith(btn.cloneNode(true));
     });
     
@@ -2804,13 +2804,13 @@ function bindEditButtons() {
 }
 
 /**
- * 打开物品编辑弹窗
+ * 打開物品編輯彈窗
  */
 function openItemEditModal(itemName) {
     const state = horaeManager.getLatestState();
     const item = state.items?.[itemName];
     if (!item) {
-        showToast('找不到该物品', 'error');
+        showToast('找不到該物品', 'error');
         return;
     }
     
@@ -2818,15 +2818,15 @@ function openItemEditModal(itemName) {
         <div id="horae-edit-modal" class="horae-modal">
             <div class="horae-modal-content">
                 <div class="horae-modal-header">
-                    <i class="fa-solid fa-pen"></i> 编辑物品
+                    <i class="fa-solid fa-pen"></i> 編輯物品
                 </div>
                 <div class="horae-modal-body horae-edit-modal-body">
                     <div class="horae-edit-field">
-                        <label>物品名称</label>
-                        <input type="text" id="edit-item-name" value="${itemName}" placeholder="物品名称">
+                        <label>物品名稱</label>
+                        <input type="text" id="edit-item-name" value="${itemName}" placeholder="物品名稱">
                     </div>
                     <div class="horae-edit-field">
-                        <label>图标 (emoji)</label>
+                        <label>圖示 (emoji)</label>
                         <input type="text" id="edit-item-icon" value="${item.icon || ''}" maxlength="2" placeholder="📦">
                     </div>
                     <div class="horae-edit-field">
@@ -2834,12 +2834,12 @@ function openItemEditModal(itemName) {
                         <select id="edit-item-importance">
                             <option value="" ${!item.importance || item.importance === '一般' || item.importance === '' ? 'selected' : ''}>一般</option>
                             <option value="!" ${item.importance === '!' || item.importance === '重要' ? 'selected' : ''}>重要 !</option>
-                            <option value="!!" ${item.importance === '!!' || item.importance === '关键' ? 'selected' : ''}>关键 !!</option>
+                            <option value="!!" ${item.importance === '!!' || item.importance === '关键' ? 'selected' : ''}>關鍵 !!</option>
                         </select>
                     </div>
                     <div class="horae-edit-field">
-                        <label>描述 (特殊功能/来源等)</label>
-                        <textarea id="edit-item-desc" placeholder="如：爱丽丝在约会时赠送的">${item.description || ''}</textarea>
+                        <label>描述 (特殊功能/來源等)</label>
+                        <textarea id="edit-item-desc" placeholder="如：愛麗絲在約會時贈送的">${item.description || ''}</textarea>
                     </div>
                     <div class="horae-edit-field">
                         <label>持有者</label>
@@ -2847,7 +2847,7 @@ function openItemEditModal(itemName) {
                     </div>
                     <div class="horae-edit-field">
                         <label>位置</label>
-                        <input type="text" id="edit-item-location" value="${item.location || ''}" placeholder="如：背包、口袋、家里茶几上">
+                        <input type="text" id="edit-item-location" value="${item.location || ''}" placeholder="如：揹包、口袋、家裡茶几上">
                     </div>
                 </div>
                 <div class="horae-modal-footer">
@@ -2870,7 +2870,7 @@ function openItemEditModal(itemName) {
         e.stopImmediatePropagation();
         const newName = document.getElementById('edit-item-name').value.trim();
         if (!newName) {
-            showToast('物品名称不能为空', 'error');
+            showToast('物品名稱不能為空', 'error');
             return;
         }
         
@@ -2882,7 +2882,7 @@ function openItemEditModal(itemName) {
             location: document.getElementById('edit-item-location').value
         };
         
-        // 更新所有消息中的该物品（含数量后缀变体，如 sword(3)）
+        // 更新所有訊息中的該物品（含數量後綴變體，如 sword(3)）
         const chat = horaeManager.getChat();
         const nameChanged = newName !== itemName;
         const editBaseName = getItemBaseName(itemName).toLowerCase();
@@ -2906,7 +2906,7 @@ function openItemEditModal(itemName) {
         closeEditModal();
         updateItemsDisplay();
         updateStatusDisplay();
-        showToast(nameChanged ? '物品已重命名并更新' : '物品已更新', 'success');
+        showToast(nameChanged ? '物品已重命名並更新' : '物品已更新', 'success');
     });
     
     document.getElementById('edit-modal-cancel').addEventListener('click', (e) => {
@@ -2917,7 +2917,7 @@ function openItemEditModal(itemName) {
 }
 
 /**
- * 打开好感度编辑弹窗
+ * 打開好感度編輯彈窗
  */
 function openAffectionEditModal(charName) {
     const state = horaeManager.getLatestState();
@@ -2929,15 +2929,15 @@ function openAffectionEditModal(charName) {
         <div id="horae-edit-modal" class="horae-modal">
             <div class="horae-modal-content">
                 <div class="horae-modal-header">
-                    <i class="fa-solid fa-heart"></i> 编辑好感度: ${charName}
+                    <i class="fa-solid fa-heart"></i> 編輯好感度: ${charName}
                 </div>
                 <div class="horae-modal-body horae-edit-modal-body">
                     <div class="horae-edit-field">
-                        <label>当前好感度</label>
+                        <label>目前好感度</label>
                         <input type="number" step="0.1" id="edit-affection-value" value="${numValue}" placeholder="0-100">
                     </div>
                     <div class="horae-edit-field">
-                        <label>好感等级</label>
+                        <label>好感等級</label>
                         <span class="horae-affection-level-preview">${level}</span>
                     </div>
                 </div>
@@ -2946,7 +2946,7 @@ function openAffectionEditModal(charName) {
                         <i class="fa-solid fa-check"></i> 保存
                     </button>
                     <button id="edit-modal-delete" class="horae-btn danger">
-                        <i class="fa-solid fa-trash"></i> 删除
+                        <i class="fa-solid fa-trash"></i> 刪除
                     </button>
                     <button id="edit-modal-cancel" class="horae-btn">
                         <i class="fa-solid fa-xmark"></i> 取消
@@ -2959,7 +2959,7 @@ function openAffectionEditModal(charName) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     preventModalBubble();
     
-    // 实时更新好感等级预览
+    // 即時更新好感等級預覽
     document.getElementById('edit-affection-value').addEventListener('input', (e) => {
         const val = parseFloat(e.target.value) || 0;
         const newLevel = horaeManager.getAffectionLevel(val);
@@ -3003,11 +3003,11 @@ function openAffectionEditModal(charName) {
         showToast('好感度已更新', 'success');
     });
 
-    // 删除该角色的全部好感度记录
+    // 刪除該角色的全部好感度記錄
     document.getElementById('edit-modal-delete').addEventListener('click', (e) => {
         e.stopPropagation();
         e.stopImmediatePropagation();
-        if (!confirm(`确定删除「${charName}」的好感度记录？将从所有消息中移除。`)) return;
+        if (!confirm(`確定刪除「${charName}」的好感度記錄？將從所有訊息中移除。`)) return;
         const chat = horaeManager.getChat();
         let removed = 0;
         for (let i = 0; i < chat.length; i++) {
@@ -3020,7 +3020,7 @@ function openAffectionEditModal(charName) {
         getContext().saveChat();
         closeEditModal();
         updateCharactersDisplay();
-        showToast(`已删除「${charName}」的好感度（${removed} 条记录）`, 'info');
+        showToast(`已刪除「${charName}」的好感度（${removed} 條記錄）`, 'info');
     });
     
     document.getElementById('edit-modal-cancel').addEventListener('click', (e) => {
@@ -3031,8 +3031,8 @@ function openAffectionEditModal(charName) {
 }
 
 /**
- * 完整级联删除 NPC：从所有消息中清除目标角色的 npcs/affection/relationships/mood/costumes/RPG，
- * 并记录到 chat[0]._deletedNpcs 防止 rebuild 回滚。
+ * 完整級聯刪除 NPC：從所有訊息中清除目標角色的 npcs/affection/relationships/mood/costumes/RPG，
+ * 並記錄到 chat[0]._deletedNpcs 防止 rebuild 還原。
  */
 function _cascadeDeleteNpcs(names) {
     if (!names?.length) return;
@@ -3062,7 +3062,7 @@ function _cascadeDeleteNpcs(names) {
         if (changed && i > 0) injectHoraeTagToMessage(i, meta);
     }
     
-    // RPG 数据
+    // RPG 數據
     const rpg = chat[0]?.horae_meta?.rpg;
     if (rpg) {
         for (const name of nameSet) {
@@ -3078,7 +3078,7 @@ function _cascadeDeleteNpcs(names) {
         saveSettings();
     }
     
-    // 防回滚：记录到 chat[0]
+    // 防還原：記錄到 chat[0]
     if (!chat[0].horae_meta) chat[0].horae_meta = createEmptyMeta();
     if (!chat[0].horae_meta._deletedNpcs) chat[0].horae_meta._deletedNpcs = [];
     for (const name of nameSet) {
@@ -3089,19 +3089,19 @@ function _cascadeDeleteNpcs(names) {
 }
 
 /**
- * 打开NPC编辑弹窗
+ * 打開NPC編輯彈窗
  */
 function openNpcEditModal(npcName) {
     const state = horaeManager.getLatestState();
     const npc = state.npcs?.[npcName];
     if (!npc) {
-        showToast('找不到该角色', 'error');
+        showToast('找不到該角色', 'error');
         return;
     }
     
     const isPinned = (settings.pinnedNpcs || []).includes(npcName);
     
-    // 性别选项：预设值以外的自动归入「自定义」
+    // 性別選項：預設值以外的自動歸入「客製化」
     const genderVal = npc.gender || '';
     const presetGenders = ['', '男', '女'];
     const isCustomGender = genderVal !== '' && !presetGenders.includes(genderVal);
@@ -3109,7 +3109,7 @@ function openNpcEditModal(npcName) {
         { val: '', label: '未知' },
         { val: '男', label: '男' },
         { val: '女', label: '女' },
-        { val: '__custom__', label: '自定义' }
+        { val: '__custom__', label: '客製化' }
     ].map(o => {
         const selected = isCustomGender ? o.val === '__custom__' : genderVal === o.val;
         return `<option value="${o.val}" ${selected ? 'selected' : ''}>${o.label}</option>`;
@@ -3119,66 +3119,66 @@ function openNpcEditModal(npcName) {
         <div id="horae-edit-modal" class="horae-modal">
             <div class="horae-modal-content">
                 <div class="horae-modal-header">
-                    <i class="fa-solid fa-pen"></i> 编辑角色: ${npcName}
+                    <i class="fa-solid fa-pen"></i> 編輯角色: ${npcName}
                 </div>
                 <div class="horae-modal-body horae-edit-modal-body">
                     <div class="horae-edit-field">
-                        <label>角色名称${npc._aliases?.length ? ` <span style="font-weight:normal;color:var(--horae-text-dim)">(曾用名: ${npc._aliases.join('、')})</span>` : ''}</label>
-                        <input type="text" id="edit-npc-name" value="${npcName}" placeholder="修改名称后，旧名会自动记为曾用名">
+                        <label>角色名稱${npc._aliases?.length ? ` <span style="font-weight:normal;color:var(--horae-text-dim)">(曾用名: ${npc._aliases.join('、')})</span>` : ''}</label>
+                        <input type="text" id="edit-npc-name" value="${npcName}" placeholder="修改名稱後，舊名會自動記為曾用名">
                     </div>
                     <div class="horae-edit-field">
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                             <input type="checkbox" id="edit-npc-pinned" ${isPinned ? 'checked' : ''}>
                             <i class="fa-solid fa-crown" style="color:${isPinned ? '#b388ff' : '#666'}"></i>
-                            标记为重要角色（置顶+特殊边框）
+                            標記為重要角色（置頂+特殊邊框）
                         </label>
                     </div>
                     <div class="horae-edit-field-row">
                         <div class="horae-edit-field horae-edit-field-compact">
-                            <label>性别</label>
+                            <label>性別</label>
                             <select id="edit-npc-gender">${genderOptions}</select>
-                            <input type="text" id="edit-npc-gender-custom" value="${isCustomGender ? genderVal : ''}" placeholder="输入自定义性别" style="display:${isCustomGender ? 'block' : 'none'};margin-top:4px;">
+                            <input type="text" id="edit-npc-gender-custom" value="${isCustomGender ? genderVal : ''}" placeholder="輸入客製化性別" style="display:${isCustomGender ? 'block' : 'none'};margin-top:4px;">
                         </div>
                         <div class="horae-edit-field horae-edit-field-compact">
-                            <label>年龄${(() => {
+                            <label>年齡${(() => {
                                 const ar = horaeManager.calcCurrentAge(npc, state.timestamp?.story_date);
                                 return ar.changed ? ` <span style="font-weight:normal;color:var(--horae-accent)">(当前推算:${ar.display})</span>` : '';
                             })()}</label>
-                            <input type="text" id="edit-npc-age" value="${npc.age || ''}" placeholder="如：25、约35">
+                            <input type="text" id="edit-npc-age" value="${npc.age || ''}" placeholder="如：25、約35">
                         </div>
                         <div class="horae-edit-field horae-edit-field-compact">
-                            <label>种族</label>
-                            <input type="text" id="edit-npc-race" value="${npc.race || ''}" placeholder="如：人类、精灵">
+                            <label>種族</label>
+                            <input type="text" id="edit-npc-race" value="${npc.race || ''}" placeholder="如：人類、精靈">
                         </div>
                         <div class="horae-edit-field horae-edit-field-compact">
-                            <label>职业</label>
-                            <input type="text" id="edit-npc-job" value="${npc.job || ''}" placeholder="如：佣兵、学生">
+                            <label>職業</label>
+                            <input type="text" id="edit-npc-job" value="${npc.job || ''}" placeholder="如：傭兵、學生">
                         </div>
                     </div>
                     <div class="horae-edit-field">
-                        <label>外貌特征</label>
-                        <textarea id="edit-npc-appearance" placeholder="如：金发碧眼的年轻女性">${npc.appearance || ''}</textarea>
+                        <label>外貌特徵</label>
+                        <textarea id="edit-npc-appearance" placeholder="如：金髮碧眼的年輕女性">${npc.appearance || ''}</textarea>
                     </div>
                     <div class="horae-edit-field">
-                        <label>性格</label>
-                        <input type="text" id="edit-npc-personality" value="${npc.personality || ''}" placeholder="如：开朗活泼">
+                        <label>個性</label>
+                        <input type="text" id="edit-npc-personality" value="${npc.personality || ''}" placeholder="如：開朗活潑">
                     </div>
                     <div class="horae-edit-field">
-                        <label>身份关系</label>
-                        <input type="text" id="edit-npc-relationship" value="${npc.relationship || ''}" placeholder="如：主角的邻居">
+                        <label>身份關係</label>
+                        <input type="text" id="edit-npc-relationship" value="${npc.relationship || ''}" placeholder="如：主角的鄰居">
                     </div>
                     <div class="horae-edit-field">
                         <label>生日 <span style="font-weight:normal;color:var(--horae-text-dim);font-size:11px">yyyy/mm/dd 或 mm/dd</span></label>
-                        <input type="text" id="edit-npc-birthday" value="${npc.birthday || ''}" placeholder="如：1990/03/15 或 03/15（可选）">
+                        <input type="text" id="edit-npc-birthday" value="${npc.birthday || ''}" placeholder="如：1990/03/15 或 03/15（可選）">
                     </div>
                     <div class="horae-edit-field">
-                        <label>补充说明</label>
-                        <input type="text" id="edit-npc-note" value="${npc.note || ''}" placeholder="其他重要信息（可选）">
+                        <label>補充說明</label>
+                        <input type="text" id="edit-npc-note" value="${npc.note || ''}" placeholder="其他重要資訊（可選）">
                     </div>
                 </div>
                 <div class="horae-modal-footer">
                     <button id="edit-modal-delete" class="horae-btn danger" style="background:#c62828;color:#fff;margin-right:auto;">
-                        <i class="fa-solid fa-trash"></i> 删除角色
+                        <i class="fa-solid fa-trash"></i> 刪除角色
                     </button>
                     <button id="edit-modal-save" class="horae-btn primary">
                         <i class="fa-solid fa-check"></i> 保存
@@ -3200,21 +3200,21 @@ function openNpcEditModal(npcName) {
         if (this.value !== '__custom__') customInput.value = '';
     });
     
-    // 删除NPC（完整级联：npcs/affection/relationships/mood/costumes/RPG + 防回滚）
+    // 刪除NPC（完整級聯：npcs/affection/relationships/mood/costumes/RPG + 防還原）
     document.getElementById('edit-modal-delete').addEventListener('click', async (e) => {
         e.stopPropagation();
         e.stopImmediatePropagation();
-        if (!confirm(`确定要删除角色「${npcName}」吗？\n\n将从所有消息中移除该角色的信息（含好感度、关系、RPG数据等），且无法恢复。`)) return;
+        if (!confirm(`確定要刪除角色「${npcName}」嗎？\n\n將從所有訊息中移除該角色的資訊（含好感度、關係、RPG數據等），且無法恢復。`)) return;
         
         _cascadeDeleteNpcs([npcName]);
         
         await getContext().saveChat();
         closeEditModal();
         refreshAllDisplays();
-        showToast(`角色「${npcName}」已删除`, 'success');
+        showToast(`角色「${npcName}」已刪除`, 'success');
     });
     
-    // 保存NPC编辑（支持改名 + 曾用名）
+    // 保存NPC編輯（支援改名 + 曾用名）
     document.getElementById('edit-modal-save').addEventListener('click', async (e) => {
         e.stopPropagation();
         e.stopImmediatePropagation();
@@ -3235,22 +3235,22 @@ function openNpcEditModal(npcName) {
             note: document.getElementById('edit-npc-note').value
         };
         
-        if (!newName) { showToast('角色名称不能为空', 'warning'); return; }
+        if (!newName) { showToast('角色名稱不能為空', 'warning'); return; }
         
         const currentState = horaeManager.getLatestState();
         const ageChanged = newAge !== (npc.age || '');
         if (ageChanged && newAge) {
             const ageCalc = horaeManager.calcCurrentAge(npc, currentState.timestamp?.story_date);
-            const storyDate = currentState.timestamp?.story_date || '（无剧情日期）';
+            const storyDate = currentState.timestamp?.story_date || '（無劇情日期）';
             const confirmed = confirm(
-                `⚠ 年龄推算基准点变更\n\n` +
-                `原始记录年龄：${npc.age || '无'}\n` +
-                (ageCalc.changed ? `当前推算年龄：${ageCalc.display}\n` : '') +
-                `新设定年龄：${newAge}\n` +
-                `当前剧情日期：${storyDate}\n\n` +
-                `确认后，系统会以「${newAge}岁 + ${storyDate}」作为新的推算起点。\n` +
-                `今后的年龄推进将从此处重新累积，而非从旧的注入时间点计算。\n\n` +
-                `确定更改吗？`
+                `⚠ 年齡推算基準點變更\n\n` +
+                `原始記錄年齡：${npc.age || '无'}\n` +
+                (ageCalc.changed ? `目前推算年齡：${ageCalc.display}\n` : '') +
+                `新設定年齡：${newAge}\n` +
+                `目前劇情日期：${storyDate}\n\n` +
+                `確認後，系統會以「${newAge}歲 + ${storyDate}」作為新的推算起點。\n` +
+                `今後的年齡推進將從此處重新累積，而非從舊的注入時間點計算。\n\n` +
+                `確定更改嗎？`
             );
             if (!confirmed) return;
             newData._ageRefDate = storyDate;
@@ -3258,7 +3258,7 @@ function openNpcEditModal(npcName) {
         
         const isRename = newName !== npcName;
         
-        // 改名：级联迁移所有消息中的 key + 记录曾用名
+        // 改名：級聯遷移所有訊息中的 key + 記錄曾用名
         if (isRename) {
             const aliases = npc._aliases ? [...npc._aliases] : [];
             if (!aliases.includes(npcName)) aliases.push(npcName);
@@ -3301,7 +3301,7 @@ function openNpcEditModal(npcName) {
                 if (changed && i > 0) injectHoraeTagToMessage(i, meta);
             }
             
-            // RPG 数据迁移
+            // RPG 數據遷移
             const rpg = chat[0]?.horae_meta?.rpg;
             if (rpg) {
                 for (const sub of ['bars', 'status', 'skills', 'attributes']) {
@@ -3312,13 +3312,13 @@ function openNpcEditModal(npcName) {
                 }
             }
             
-            // pinnedNpcs 迁移
+            // pinnedNpcs 遷移
             if (settings.pinnedNpcs) {
                 const idx = settings.pinnedNpcs.indexOf(npcName);
                 if (idx !== -1) settings.pinnedNpcs[idx] = newName;
             }
         } else {
-            // 未改名，只更新属性
+            // 未改名，只更新屬性
             for (let i = 0; i < chat.length; i++) {
                 const meta = chat[i].horae_meta;
                 if (meta?.npcs?.[npcName]) {
@@ -3328,7 +3328,7 @@ function openNpcEditModal(npcName) {
             }
         }
         
-        // 处理重要角色标记
+        // 處理重要角色標記
         const finalName = isRename ? newName : npcName;
         const newPinned = document.getElementById('edit-npc-pinned').checked;
         if (!settings.pinnedNpcs) settings.pinnedNpcs = [];
@@ -3343,7 +3343,7 @@ function openNpcEditModal(npcName) {
         await getContext().saveChat();
         closeEditModal();
         refreshAllDisplays();
-        showToast(isRename ? `角色已改名为「${newName}」` : '角色已更新', 'success');
+        showToast(isRename ? `角色已改名為「${newName}」` : '角色已更新', 'success');
     });
     
     document.getElementById('edit-modal-cancel').addEventListener('click', (e) => {
@@ -3353,15 +3353,15 @@ function openNpcEditModal(npcName) {
     });
 }
 
-/** 打开事件编辑弹窗 */
+/** 打開事件編輯彈窗 */
 function openEventEditModal(messageId, eventIndex = 0) {
     const meta = horaeManager.getMessageMeta(messageId);
     if (!meta) {
-        showToast('找不到该消息的元数据', 'error');
+        showToast('找不到該訊息的元數據', 'error');
         return;
     }
     
-    // 兼容新旧事件格式
+    // 相容新舊事件格式
     const eventsArr = meta.events || (meta.event ? [meta.event] : []);
     const event = eventsArr[eventIndex] || {};
     const totalEvents = eventsArr.length;
@@ -3370,26 +3370,26 @@ function openEventEditModal(messageId, eventIndex = 0) {
         <div id="horae-edit-modal" class="horae-modal">
             <div class="horae-modal-content">
                 <div class="horae-modal-header">
-                    <i class="fa-solid fa-pen"></i> 编辑事件 #${messageId}${totalEvents > 1 ? ` (${eventIndex + 1}/${totalEvents})` : ''}
+                    <i class="fa-solid fa-pen"></i> 編輯事件 #${messageId}${totalEvents > 1 ? ` (${eventIndex + 1}/${totalEvents})` : ''}
                 </div>
                 <div class="horae-modal-body horae-edit-modal-body">
                     <div class="horae-edit-field">
-                        <label>事件级别</label>
+                        <label>事件層級</label>
                         <select id="edit-event-level">
                             <option value="一般" ${event.level === '一般' || !event.level ? 'selected' : ''}>一般</option>
                             <option value="重要" ${event.level === '重要' ? 'selected' : ''}>重要</option>
-                            <option value="关键" ${event.level === '关键' ? 'selected' : ''}>关键</option>
+                            <option value="關鍵" ${event.level === '关键' ? 'selected' : ''}>關鍵</option>
                             <option value="摘要" ${event.level === '摘要' ? 'selected' : ''}>摘要</option>
                         </select>
                     </div>
                     <div class="horae-edit-field">
                         <label>事件摘要</label>
-                        <textarea id="edit-event-summary" placeholder="描述这个事件...">${event.summary || ''}</textarea>
+                        <textarea id="edit-event-summary" placeholder="描述這個事件...">${event.summary || ''}</textarea>
                     </div>
                 </div>
                 <div class="horae-modal-footer">
                     <button id="edit-modal-delete" class="horae-btn danger">
-                        <i class="fa-solid fa-trash"></i> 删除
+                        <i class="fa-solid fa-trash"></i> 刪除
                     </button>
                     <button id="edit-modal-save" class="horae-btn primary">
                         <i class="fa-solid fa-check"></i> 保存
@@ -3414,12 +3414,12 @@ function openEventEditModal(messageId, eventIndex = 0) {
             const newLevel = document.getElementById('edit-event-level').value;
             const newSummary = document.getElementById('edit-event-summary').value.trim();
             
-            // 防呆提示：摘要为空等同于删除
+            // 防呆提示：摘要為空等同於刪除
             if (!newSummary) {
-                if (!confirm('事件摘要为空！\n\n保存后此事件将被删除。\n\n确定要删除此事件吗？')) {
+                if (!confirm('事件摘要為空！\n\n保存後此事件將被刪除。\n\n確定要刪除此事件嗎？')) {
                     return;
                 }
-                // 用户确认删除，执行删除逻辑
+                // 用戶確認刪除，執行刪除邏輯
                 if (!chatMeta.events) {
                     chatMeta.events = chatMeta.event ? [chatMeta.event] : [];
                 }
@@ -3431,11 +3431,11 @@ function openEventEditModal(messageId, eventIndex = 0) {
                 await getContext().saveChat();
                 closeEditModal();
                 updateTimelineDisplay();
-                showToast('事件已删除', 'success');
+                showToast('事件已刪除', 'success');
                 return;
             }
             
-            // 确保events数组存在
+            // 確保events數組存在
             if (!chatMeta.events) {
                 chatMeta.events = chatMeta.event ? [chatMeta.event] : [];
             }
@@ -3444,21 +3444,21 @@ function openEventEditModal(messageId, eventIndex = 0) {
             const isSummaryLevel = newLevel === '摘要';
             if (chatMeta.events[eventIndex]) {
                 chatMeta.events[eventIndex] = {
-                    is_important: newLevel === '重要' || newLevel === '关键',
+                    is_important: newLevel === '重要' || newLevel === '關鍵',
                     level: newLevel,
                     summary: newSummary,
                     ...(isSummaryLevel ? { isSummary: true } : {})
                 };
             } else {
                 chatMeta.events.push({
-                    is_important: newLevel === '重要' || newLevel === '关键',
+                    is_important: newLevel === '重要' || newLevel === '關鍵',
                     level: newLevel,
                     summary: newSummary,
                     ...(isSummaryLevel ? { isSummary: true } : {})
                 });
             }
             
-            // 清除旧格式
+            // 清除舊格式
             delete chatMeta.event;
         }
         
@@ -3468,11 +3468,11 @@ function openEventEditModal(messageId, eventIndex = 0) {
         showToast('事件已更新', 'success');
     });
     
-    // 删除事件（带确认）
+    // 刪除事件（帶確認）
     document.getElementById('edit-modal-delete').addEventListener('click', (e) => {
         e.stopPropagation();
         e.stopImmediatePropagation();
-        if (confirm('确定要删除这个事件吗？\n\n⚠️ 此操作无法撤销！')) {
+        if (confirm('確定要刪除這個事件嗎？\n\n⚠️ 此操作無法撤銷！')) {
             const chat = horaeManager.getChat();
             const chatMeta = chat[messageId]?.horae_meta;
             if (chatMeta) {
@@ -3487,7 +3487,7 @@ function openEventEditModal(messageId, eventIndex = 0) {
                 getContext().saveChat();
                 closeEditModal();
                 updateTimelineDisplay();
-                showToast('事件已删除', 'success');
+                showToast('事件已刪除', 'success');
             }
         }
     });
@@ -3500,14 +3500,14 @@ function openEventEditModal(messageId, eventIndex = 0) {
 }
 
 /**
- * 关闭编辑弹窗
+ * 關閉編輯彈窗
  */
 function closeEditModal() {
     const modal = document.getElementById('horae-edit-modal');
     if (modal) modal.remove();
 }
 
-/** 阻止编辑弹窗事件冒泡 */
+/** 阻止編輯彈窗事件冒泡 */
 function preventModalBubble() {
     const targets = [
         document.getElementById('horae-edit-modal'),
@@ -3515,7 +3515,7 @@ function preventModalBubble() {
     ].filter(Boolean);
 
     targets.forEach(modal => {
-        // 继承主题模式
+        // 繼承主題模式
         if (isLightMode()) modal.classList.add('horae-light');
 
         ['click', 'mousedown', 'mouseup', 'touchstart', 'touchend'].forEach(evType => {
@@ -3527,10 +3527,10 @@ function preventModalBubble() {
 }
 
 // ============================================
-// Excel风格自定义表格功能
+// Excel風格客製化表格功能
 // ============================================
 
-// 每个表格独立的 Undo/Redo 栈，key = tableId
+// 每個表格獨立的 Undo/Redo 棧，key = tableId
 const TABLE_HISTORY_MAX = 20;
 const _perTableUndo = {};  // { tableId: [snapshot, ...] }
 const _perTableRedo = {};  // { tableId: [snapshot, ...] }
@@ -3546,7 +3546,7 @@ function _deepCopyOneTable(scope, tableIndex) {
     return JSON.parse(JSON.stringify(tables[tableIndex]));
 }
 
-/** 在修改前调用：保存指定表格的快照到其独立 undo 栈 */
+/** 在修改前呼叫：保存指定表格的快照到其獨立 undo 棧 */
 function pushTableSnapshot(scope, tableIndex) {
     if (tableIndex == null) return;
     const tid = _getTableId(scope, tableIndex);
@@ -3566,7 +3566,7 @@ function undoSingleTable(tid) {
     const snap = stack.pop();
     const tables = getTablesByScope(snap.scope);
     if (!tables[snap.tableIndex]) return;
-    // 当前状态入 redo
+    // 目前狀態入 redo
     if (!_perTableRedo[tid]) _perTableRedo[tid] = [];
     _perTableRedo[tid].push({
         scope: snap.scope,
@@ -3579,7 +3579,7 @@ function undoSingleTable(tid) {
     showToast('已撤回此表格的操作', 'info');
 }
 
-/** 复原指定表格 */
+/** 復原指定表格 */
 function redoSingleTable(tid) {
     const stack = _perTableRedo[tid];
     if (!stack?.length) return;
@@ -3595,7 +3595,7 @@ function redoSingleTable(tid) {
     tables[snap.tableIndex] = snap.table;
     setTablesByScope(snap.scope, tables);
     renderCustomTablesList();
-    showToast('已复原此表格的操作', 'info');
+    showToast('已復原此表格的操作', 'info');
 }
 
 function _updatePerTableUndoRedoButtons(tid) {
@@ -3605,7 +3605,7 @@ function _updatePerTableUndoRedoButtons(tid) {
     if (redoBtn) redoBtn.disabled = !_perTableRedo[tid]?.length;
 }
 
-/** 切换聊天时清空所有 undo/redo 栈 */
+/** 切換聊天時清空所有 undo/redo 棧 */
 function clearTableHistory() {
     for (const k of Object.keys(_perTableUndo)) delete _perTableUndo[k];
     for (const k of Object.keys(_perTableRedo)) delete _perTableRedo[k];
@@ -3614,7 +3614,7 @@ function clearTableHistory() {
 let activeContextMenu = null;
 
 /**
- * 渲染自定义表格列表
+ * 彩現客製化表格列表
  */
 function renderCustomTablesList() {
     const listEl = document.getElementById('horae-custom-tables-list');
@@ -3627,14 +3627,14 @@ function renderCustomTablesList() {
         listEl.innerHTML = `
             <div class="horae-custom-tables-empty">
                 <i class="fa-solid fa-table-cells"></i>
-                <div>暂无自定义表格</div>
-                <div style="font-size:11px;opacity:0.7;margin-top:4px;">点击下方按钮添加表格</div>
+                <div>暫無客製化表格</div>
+                <div style="font-size:11px;opacity:0.7;margin-top:4px;">點擊下方按鈕添加表格</div>
             </div>
         `;
         return;
     }
 
-    /** 渲染单个表格 */
+    /** 彩現單個表格 */
     function renderOneTable(table, idx, scope) {
         const rows = table.rows || 2;
         const cols = table.cols || 2;
@@ -3644,8 +3644,8 @@ function renderCustomTablesList() {
         const lockedCells = new Set(table.lockedCells || []);
         const isGlobal = scope === 'global';
         const scopeIcon = isGlobal ? 'fa-globe' : 'fa-bookmark';
-        const scopeLabel = isGlobal ? '全局' : '本地';
-        const scopeTitle = isGlobal ? '全局表格，所有对话共享' : '本地表格，仅当前对话';
+        const scopeLabel = isGlobal ? '全域' : '本地';
+        const scopeTitle = isGlobal ? '全域表格，所有對話共享' : '本地表格，僅目前對話';
 
         let tableHtml = '<table class="horae-excel-table">';
         for (let r = 0; r < rows; r++) {
@@ -3677,23 +3677,23 @@ function renderCustomTablesList() {
                 <div class="horae-excel-table-header">
                     <div class="horae-excel-table-title">
                         <i class="fa-solid ${scopeIcon}" title="${scopeTitle}" style="color:${isGlobal ? 'var(--horae-accent)' : 'var(--horae-primary-light)'}; cursor:pointer;" data-toggle-scope="${idx}" data-scope="${scope}"></i>
-                        <span class="horae-table-scope-label" data-toggle-scope="${idx}" data-scope="${scope}" title="点击切换全局/本地">${scopeLabel}</span>
-                        <input type="text" value="${escapeHtml(table.name || '')}" placeholder="表格名称" data-table-name="${idx}" data-scope="${scope}">
+                        <span class="horae-table-scope-label" data-toggle-scope="${idx}" data-scope="${scope}" title="點擊切換全域/本地">${scopeLabel}</span>
+                        <input type="text" value="${escapeHtml(table.name || '')}" placeholder="表格名稱" data-table-name="${idx}" data-scope="${scope}">
                     </div>
                     <div class="horae-excel-table-actions">
                         <button class="horae-table-undo-btn" title="撤回" data-table-id="${tid}" ${hasUndo ? '' : 'disabled'}>
                             <i class="fa-solid fa-rotate-left"></i>
                         </button>
-                        <button class="horae-table-redo-btn" title="复原" data-table-id="${tid}" ${hasRedo ? '' : 'disabled'}>
+                        <button class="horae-table-redo-btn" title="復原" data-table-id="${tid}" ${hasRedo ? '' : 'disabled'}>
                             <i class="fa-solid fa-rotate-right"></i>
                         </button>
-                        <button class="clear-table-data-btn" title="清空数据（保留表头）" data-table-index="${idx}" data-scope="${scope}">
+                        <button class="clear-table-data-btn" title="清空數據（保留表頭）" data-table-index="${idx}" data-scope="${scope}">
                             <i class="fa-solid fa-eraser"></i>
                         </button>
-                        <button class="export-table-btn" title="导出表格" data-table-index="${idx}" data-scope="${scope}">
+                        <button class="export-table-btn" title="導出表格" data-table-index="${idx}" data-scope="${scope}">
                             <i class="fa-solid fa-download"></i>
                         </button>
-                        <button class="delete-table-btn danger" title="删除表格" data-table-index="${idx}" data-scope="${scope}">
+                        <button class="delete-table-btn danger" title="刪除表格" data-table-index="${idx}" data-scope="${scope}">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
@@ -3702,7 +3702,7 @@ function renderCustomTablesList() {
                     ${tableHtml}
                 </div>
                 <div class="horae-table-prompt-row">
-                    <input type="text" value="${escapeHtml(table.prompt || '')}" placeholder="提示词：告诉AI如何填写此表格..." data-table-prompt="${idx}" data-scope="${scope}">
+                    <input type="text" value="${escapeHtml(table.prompt || '')}" placeholder="提示詞：告訴AI如何填寫此表格..." data-table-prompt="${idx}" data-scope="${scope}">
                 </div>
             </div>
         `;
@@ -3710,11 +3710,11 @@ function renderCustomTablesList() {
 
     let html = '';
     if (globalTables.length > 0) {
-        html += `<div class="horae-tables-group-label"><i class="fa-solid fa-globe"></i> 全局表格</div>`;
+        html += `<div class="horae-tables-group-label"><i class="fa-solid fa-globe"></i> 全域表格</div>`;
         html += globalTables.map((t, i) => renderOneTable(t, i, 'global')).join('');
     }
     if (chatTables.length > 0) {
-        html += `<div class="horae-tables-group-label"><i class="fa-solid fa-bookmark"></i> 本地表格（当前对话）</div>`;
+        html += `<div class="horae-tables-group-label"><i class="fa-solid fa-bookmark"></i> 本地表格（目前對話）</div>`;
         html += chatTables.map((t, i) => renderOneTable(t, i, 'local')).join('');
     }
     listEl.innerHTML = html;
@@ -3723,7 +3723,7 @@ function renderCustomTablesList() {
 }
 
 /**
- * HTML转义
+ * HTML轉義
  */
 function escapeHtml(str) {
     if (!str) return '';
@@ -3735,13 +3735,13 @@ function escapeHtml(str) {
 }
 
 /**
- * 绑定Excel表格事件
+ * 綁定Excel表格事件
  */
 function bindExcelTableEvents() {
-    /** 从元素属性获取scope */
+    /** 從元素屬性獲取scope */
     const getScope = (el) => el.dataset.scope || el.closest('[data-scope]')?.dataset.scope || 'local';
 
-    // 单元格输入事件 - 自动保存 + 动态调整宽度
+    // 單元格輸入事件 - 自動保存 + 動態調整寬度
     document.querySelectorAll('.horae-excel-table input').forEach(input => {
         input.addEventListener('focus', (e) => {
             e.target._horaeSnapshotPushed = false;
@@ -3778,7 +3778,7 @@ function bindExcelTableEvents() {
         });
     });
 
-    // 表格名称输入事件
+    // 表格名稱輸入事件
     document.querySelectorAll('input[data-table-name]').forEach(input => {
         input.addEventListener('change', (e) => {
             const scope = getScope(e.target);
@@ -3791,7 +3791,7 @@ function bindExcelTableEvents() {
         });
     });
 
-    // 表格提示词输入事件
+    // 表格提示詞輸入事件
     document.querySelectorAll('input[data-table-prompt]').forEach(input => {
         input.addEventListener('change', (e) => {
             const scope = getScope(e.target);
@@ -3804,7 +3804,7 @@ function bindExcelTableEvents() {
         });
     });
 
-    // 导出表格按钮
+    // 導出表格按鈕
     document.querySelectorAll('.export-table-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -3814,7 +3814,7 @@ function bindExcelTableEvents() {
         });
     });
 
-    // 删除表格按钮
+    // 刪除表格按鈕
     document.querySelectorAll('.delete-table-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const container = btn.closest('.horae-excel-table-container');
@@ -3824,7 +3824,7 @@ function bindExcelTableEvents() {
         });
     });
 
-    // 清空表格数据按钮（保留表头）
+    // 清空表格數據按鈕（保留表頭）
     document.querySelectorAll('.clear-table-data-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.stopPropagation();
@@ -3834,7 +3834,7 @@ function bindExcelTableEvents() {
         });
     });
 
-    // 全局/本地切换
+    // 全域/本地切換
     document.querySelectorAll('[data-toggle-scope]').forEach(el => {
         el.addEventListener('click', (e) => {
             const currentScope = el.dataset.scope;
@@ -3843,7 +3843,7 @@ function bindExcelTableEvents() {
         });
     });
     
-    // 所有单元格长按/右键显示菜单
+    // 所有單元格長按/右鍵顯示選單
     document.querySelectorAll('.horae-excel-table th, .horae-excel-table td').forEach(cell => {
         let pressTimer = null;
 
@@ -3881,7 +3881,7 @@ function bindExcelTableEvents() {
         });
     });
 
-    // 每个表格独立的撤回/复原按钮
+    // 每個表格獨立的撤回/復原按鈕
     document.querySelectorAll('.horae-table-undo-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -3896,7 +3896,7 @@ function bindExcelTableEvents() {
     });
 }
 
-/** 显示表格右键菜单 */
+/** 顯示錶格右鍵選單 */
 let contextMenuCloseHandler = null;
 
 function showTableContextMenu(e, tableIndex, row, col, scope = 'local') {
@@ -3917,7 +3917,7 @@ function showTableContextMenu(e, tableIndex, row, col, scope = 'local') {
 
     let menuItems = '';
 
-    // 行操作（第一列所有行 / 任何单元格都能添加行）
+    // 行操作（第一列所有行 / 任何單元格都能添加行）
     if (isCorner) {
         menuItems += `
             <div class="horae-context-menu-item" data-action="add-row-below"><i class="fa-solid fa-plus"></i> 添加行</div>
@@ -3926,12 +3926,12 @@ function showTableContextMenu(e, tableIndex, row, col, scope = 'local') {
     } else if (isColHeader) {
         const colLocked = lockedCols.has(col);
         menuItems += `
-            <div class="horae-context-menu-item" data-action="add-col-left"><i class="fa-solid fa-arrow-left"></i> 左侧添加列</div>
-            <div class="horae-context-menu-item" data-action="add-col-right"><i class="fa-solid fa-arrow-right"></i> 右侧添加列</div>
+            <div class="horae-context-menu-item" data-action="add-col-left"><i class="fa-solid fa-arrow-left"></i> 左側添加列</div>
+            <div class="horae-context-menu-item" data-action="add-col-right"><i class="fa-solid fa-arrow-right"></i> 右側添加列</div>
             <div class="horae-context-menu-divider"></div>
-            <div class="horae-context-menu-item" data-action="toggle-lock-col"><i class="fa-solid ${colLocked ? 'fa-lock-open' : 'fa-lock'}"></i> ${colLocked ? '解锁此列' : '锁定此列'}</div>
+            <div class="horae-context-menu-item" data-action="toggle-lock-col"><i class="fa-solid ${colLocked ? 'fa-lock-open' : 'fa-lock'}"></i> ${colLocked ? '解鎖此列' : '鎖定此列'}</div>
             <div class="horae-context-menu-divider"></div>
-            <div class="horae-context-menu-item danger" data-action="delete-col"><i class="fa-solid fa-trash-can"></i> 删除此列</div>
+            <div class="horae-context-menu-item danger" data-action="delete-col"><i class="fa-solid fa-trash-can"></i> 刪除此列</div>
         `;
     } else if (isRowHeader) {
         const rowLocked = lockedRows.has(row);
@@ -3939,26 +3939,26 @@ function showTableContextMenu(e, tableIndex, row, col, scope = 'local') {
             <div class="horae-context-menu-item" data-action="add-row-above"><i class="fa-solid fa-arrow-up"></i> 上方添加行</div>
             <div class="horae-context-menu-item" data-action="add-row-below"><i class="fa-solid fa-arrow-down"></i> 下方添加行</div>
             <div class="horae-context-menu-divider"></div>
-            <div class="horae-context-menu-item" data-action="toggle-lock-row"><i class="fa-solid ${rowLocked ? 'fa-lock-open' : 'fa-lock'}"></i> ${rowLocked ? '解锁此行' : '锁定此行'}</div>
+            <div class="horae-context-menu-item" data-action="toggle-lock-row"><i class="fa-solid ${rowLocked ? 'fa-lock-open' : 'fa-lock'}"></i> ${rowLocked ? '解鎖此行' : '鎖定此行'}</div>
             <div class="horae-context-menu-divider"></div>
-            <div class="horae-context-menu-item danger" data-action="delete-row"><i class="fa-solid fa-trash-can"></i> 删除此行</div>
+            <div class="horae-context-menu-item danger" data-action="delete-row"><i class="fa-solid fa-trash-can"></i> 刪除此行</div>
         `;
     } else {
-        // 普通数据单元格
+        // 普通數據單元格
         menuItems += `
             <div class="horae-context-menu-item" data-action="add-row-above"><i class="fa-solid fa-arrow-up"></i> 上方添加行</div>
             <div class="horae-context-menu-item" data-action="add-row-below"><i class="fa-solid fa-arrow-down"></i> 下方添加行</div>
-            <div class="horae-context-menu-item" data-action="add-col-left"><i class="fa-solid fa-arrow-left"></i> 左侧添加列</div>
-            <div class="horae-context-menu-item" data-action="add-col-right"><i class="fa-solid fa-arrow-right"></i> 右侧添加列</div>
+            <div class="horae-context-menu-item" data-action="add-col-left"><i class="fa-solid fa-arrow-left"></i> 左側添加列</div>
+            <div class="horae-context-menu-item" data-action="add-col-right"><i class="fa-solid fa-arrow-right"></i> 右側添加列</div>
         `;
     }
 
-    // 所有非角落单元格都可以锁定/解锁单格
+    // 所有非角落單元格都可以鎖定/解鎖單格
     if (!isCorner) {
         const cellLocked = lockedCells.has(cellKey);
         menuItems += `
             <div class="horae-context-menu-divider"></div>
-            <div class="horae-context-menu-item" data-action="toggle-lock-cell"><i class="fa-solid ${cellLocked ? 'fa-lock-open' : 'fa-lock'}"></i> ${cellLocked ? '解锁此格' : '锁定此格'}</div>
+            <div class="horae-context-menu-item" data-action="toggle-lock-cell"><i class="fa-solid ${cellLocked ? 'fa-lock-open' : 'fa-lock'}"></i> ${cellLocked ? '解鎖此格' : '鎖定此格'}</div>
         `;
     }
     
@@ -3967,7 +3967,7 @@ function showTableContextMenu(e, tableIndex, row, col, scope = 'local') {
     if (isLightMode()) menu.classList.add('horae-light');
     menu.innerHTML = menuItems;
     
-    // 获取位置
+    // 獲取位置
     const x = e.clientX || e.touches?.[0]?.clientX || 100;
     const y = e.clientY || e.touches?.[0]?.clientY || 100;
     menu.style.left = `${x}px`;
@@ -3976,7 +3976,7 @@ function showTableContextMenu(e, tableIndex, row, col, scope = 'local') {
     document.body.appendChild(menu);
     activeContextMenu = menu;
     
-    // 确保菜单不超出屏幕
+    // 確保選單不超出螢幕
     const rect = menu.getBoundingClientRect();
     if (rect.right > window.innerWidth) {
         menu.style.left = `${window.innerWidth - rect.width - 10}px`;
@@ -3985,7 +3985,7 @@ function showTableContextMenu(e, tableIndex, row, col, scope = 'local') {
         menu.style.top = `${window.innerHeight - rect.height - 10}px`;
     }
     
-    // 绑定菜单项点击 - 执行操作后关闭菜单
+    // 綁定選單項點擊 - 執行操作後關閉選單
     menu.querySelectorAll('.horae-context-menu-item').forEach(item => {
         item.addEventListener('click', (ev) => {
             ev.preventDefault();
@@ -4017,10 +4017,10 @@ function showTableContextMenu(e, tableIndex, row, col, scope = 'local') {
         });
     });
     
-    // 延迟绑定，避免当前事件触发
+    // 延遲綁定，避免目前事件觸發
     setTimeout(() => {
         contextMenuCloseHandler = (ev) => {
-            if (activeContextMenu && !activeContextMenu.contains(ev.target)) {
+            if (activeContextMenu && !activeContextMenu.contaIG(ev.target)) {
                 hideContextMenu();
             }
         };
@@ -4033,7 +4033,7 @@ function showTableContextMenu(e, tableIndex, row, col, scope = 'local') {
 }
 
 /**
- * 隐藏右键菜单
+ * 隱藏右鍵選單
  */
 function hideContextMenu() {
     if (contextMenuCloseHandler) {
@@ -4049,11 +4049,11 @@ function hideContextMenu() {
 }
 
 /**
- * 执行表格操作
+ * 執行表格操作
  */
 function executeTableAction(tableIndex, row, col, action, scope = 'local') {
     pushTableSnapshot(scope, tableIndex);
-    // 先将DOM中未提交的输入值写入data，防止正在编辑的值丢失
+    // 先將DOM中未提交的輸入值寫入data，防止正在編輯的值遺失
     const container = document.querySelector(`.horae-excel-table-container[data-table-index="${tableIndex}"][data-scope="${scope}"]`);
     if (container) {
         const tbl = getTablesByScope(scope)[tableIndex];
@@ -4142,10 +4142,10 @@ function executeTableAction(tableIndex, row, col, action, scope = 'local') {
             const idx = table.lockedRows.indexOf(row);
             if (idx >= 0) {
                 table.lockedRows.splice(idx, 1);
-                showToast(`已解锁第 ${row + 1} 行`, 'info');
+                showToast(`已解鎖第 ${row + 1} 行`, 'info');
             } else {
                 table.lockedRows.push(row);
-                showToast(`已锁定第 ${row + 1} 行（AI无法编辑）`, 'success');
+                showToast(`已鎖定第 ${row + 1} 行（AI無法編輯）`, 'success');
             }
             break;
         }
@@ -4155,10 +4155,10 @@ function executeTableAction(tableIndex, row, col, action, scope = 'local') {
             const idx = table.lockedCols.indexOf(col);
             if (idx >= 0) {
                 table.lockedCols.splice(idx, 1);
-                showToast(`已解锁第 ${col + 1} 列`, 'info');
+                showToast(`已解鎖第 ${col + 1} 列`, 'info');
             } else {
                 table.lockedCols.push(col);
-                showToast(`已锁定第 ${col + 1} 列（AI无法编辑）`, 'success');
+                showToast(`已鎖定第 ${col + 1} 列（AI無法編輯）`, 'success');
             }
             break;
         }
@@ -4169,10 +4169,10 @@ function executeTableAction(tableIndex, row, col, action, scope = 'local') {
             const idx = table.lockedCells.indexOf(cellKey);
             if (idx >= 0) {
                 table.lockedCells.splice(idx, 1);
-                showToast(`已解锁单元格 [${row},${col}]`, 'info');
+                showToast(`已解鎖單元格 [${row},${col}]`, 'info');
             } else {
                 table.lockedCells.push(cellKey);
-                showToast(`已锁定单元格 [${row},${col}]（AI无法编辑）`, 'success');
+                showToast(`已鎖定單元格 [${row},${col}]（AI無法編輯）`, 'success');
             }
             break;
         }
@@ -4205,14 +4205,14 @@ function addNewExcelTable(scope = 'local') {
 
     setTablesByScope(scope, tables);
     renderCustomTablesList();
-    showToast(scope === 'global' ? '已添加全局表格' : '已添加本地表格', 'success');
+    showToast(scope === 'global' ? '已添加全域表格' : '已添加本地表格', 'success');
 }
 
 /**
- * 删除表格
+ * 刪除表格
  */
 function deleteCustomTable(index, scope = 'local') {
-    if (!confirm('确定要删除此表格吗？')) return;
+    if (!confirm('確定要刪除此表格嗎？')) return;
     pushTableSnapshot(scope, index);
 
     const tables = getTablesByScope(scope);
@@ -4221,7 +4221,7 @@ function deleteCustomTable(index, scope = 'local') {
     tables.splice(index, 1);
     setTablesByScope(scope, tables);
 
-    // 清除所有消息中引用该表格名的 tableContributions
+    // 清除所有訊息中引用該表格名的 tableContributions
     const chat = horaeManager.getChat();
     if (deletedName) {
         for (let i = 0; i < chat.length; i++) {
@@ -4237,7 +4237,7 @@ function deleteCustomTable(index, scope = 'local') {
         }
     }
 
-    // 全局表格：清除 per-card overlay
+    // 全域表格：清除 per-card overlay
     if (scope === 'global' && deletedName && chat?.[0]?.horae_meta?.globalTableData) {
         delete chat[0].horae_meta.globalTableData[deletedName];
     }
@@ -4248,16 +4248,16 @@ function deleteCustomTable(index, scope = 'local') {
         saveSettingsDebounced.flush();
     }
     renderCustomTablesList();
-    showToast('表格已删除', 'info');
+    showToast('表格已刪除', 'info');
 }
 
-/** 清除指定表格的所有 tableContributions，将当前数据写入 baseData 作为新基准 */
+/** 清除指定表格的所有 tableContributions，將目前數據寫入 baseData 作為新基準 */
 function purgeTableContributions(tableName, scope = 'local') {
     if (!tableName) return;
     const chat = horaeManager.getChat();
     if (!chat?.length) return;
 
-    // 清除所有消息中该表格的全部 tableContributions（AI 贡献 + 旧用户快照一并清除）
+    // 清除所有訊息中該表格的全部 tableContributions（AI 貢獻 + 舊用戶快照一併清除）
     for (let i = 0; i < chat.length; i++) {
         const meta = chat[i]?.horae_meta;
         if (meta?.tableContributions) {
@@ -4270,8 +4270,8 @@ function purgeTableContributions(tableName, scope = 'local') {
         }
     }
 
-    // 将当前完整数据（含用户编辑）写入 baseData 作为新基准
-    // 这样即使消息被滑动/重新生成，rebuildTableData 也能从正确的基准恢复
+    // 將目前完整數據（含用戶編輯）寫入 baseData 作為新基準
+    // 這樣即使訊息被滑動/重新生成，rebuildTableData 也能從正確的基準恢復
     const tables = getTablesByScope(scope);
     const table = tables.find(t => (t.name || '').trim() === tableName);
     if (table) {
@@ -4287,9 +4287,9 @@ function purgeTableContributions(tableName, scope = 'local') {
     }
 }
 
-/** 清空表格数据区（保留第0行和第0列的表头） */
+/** 清空表格數據區（保留第0行和第0列的表頭） */
 function clearTableData(index, scope = 'local') {
-    if (!confirm('确定要清空此表格的数据区吗？表头将保留。\n\n将同时清除 AI 历史填写记录，防止旧数据回流。')) return;
+    if (!confirm('確定要清空此表格的數據區嗎？表頭將保留。\n\n將同時清除 AI 歷史填寫記錄，防止舊數據迴流。')) return;
     pushTableSnapshot(scope, index);
 
     const tables = getTablesByScope(scope);
@@ -4298,7 +4298,7 @@ function clearTableData(index, scope = 'local') {
     const data = table.data || {};
     const tableName = (table.name || '').trim();
 
-    // 删除所有 row>0 且 col>0 的单元格数据
+    // 刪除所有 row>0 且 col>0 的單元格數據
     for (const key of Object.keys(data)) {
         const [r, c] = key.split('-').map(Number);
         if (r > 0 && c > 0) {
@@ -4308,7 +4308,7 @@ function clearTableData(index, scope = 'local') {
 
     table.data = data;
 
-    // 同步更新 baseData（清除数据区，保留表头）
+    // 同步更新 baseData（清除數據區，保留表頭）
     if (table.baseData) {
         for (const key of Object.keys(table.baseData)) {
             const [r, c] = key.split('-').map(Number);
@@ -4318,7 +4318,7 @@ function clearTableData(index, scope = 'local') {
         }
     }
 
-    // 清除所有消息中该表格的 tableContributions（防止 rebuildTableData 回放旧数据）
+    // 清除所有訊息中該表格的 tableContributions（防止 rebuildTableData 重播舊數據）
     const chat = horaeManager.getChat();
     if (tableName) {
         for (let i = 0; i < chat.length; i++) {
@@ -4334,15 +4334,15 @@ function clearTableData(index, scope = 'local') {
         }
     }
 
-    // 全局表格：同步清除 per-card overlay 的数据区和 baseData
+    // 全域表格：同步清除 per-card overlay 的數據區和 baseData
     if (scope === 'global' && tableName && chat?.[0]?.horae_meta?.globalTableData?.[tableName]) {
         const overlay = chat[0].horae_meta.globalTableData[tableName];
-        // 清 overlay.data 数据区
+        // 清 overlay.data 數據區
         for (const key of Object.keys(overlay.data || {})) {
             const [r, c] = key.split('-').map(Number);
             if (r > 0 && c > 0) delete overlay.data[key];
         }
-        // 清 overlay.baseData 数据区
+        // 清 overlay.baseData 數據區
         if (overlay.baseData) {
             for (const key of Object.keys(overlay.baseData)) {
                 const [r, c] = key.split('-').map(Number);
@@ -4355,14 +4355,14 @@ function clearTableData(index, scope = 'local') {
     horaeManager.rebuildTableData();
     getContext().saveChat();
     renderCustomTablesList();
-    showToast('表格数据已清空', 'info');
+    showToast('表格數據已清空', 'info');
 }
 
-/** 切换表格的全局/本地属性 */
+/** 切換表格的全域/本地屬性 */
 function toggleTableScope(tableIndex, currentScope) {
     const newScope = currentScope === 'global' ? 'local' : 'global';
-    const label = newScope === 'global' ? '全局（所有对话共享，数据按角色卡独立）' : '本地（仅当前对话）';
-    if (!confirm(`将此表格转为${label}？`)) return;
+    const label = newScope === 'global' ? '全域（所有對話共享，數據按角色卡獨立）' : '本地（僅目前對話）';
+    if (!confirm(`將此表格轉為${label}？`)) return;
     pushTableSnapshot(currentScope, tableIndex);
 
     const srcTables = getTablesByScope(currentScope);
@@ -4370,7 +4370,7 @@ function toggleTableScope(tableIndex, currentScope) {
     const table = JSON.parse(JSON.stringify(srcTables[tableIndex]));
     const tableName = (table.name || '').trim();
 
-    // 从全局转本地时，清除旧的 per-card overlay
+    // 從全域轉本地時，清除舊的 per-card overlay
     if (currentScope === 'global' && tableName) {
         const chat = horaeManager.getChat();
         if (chat?.[0]?.horae_meta?.globalTableData) {
@@ -4378,23 +4378,23 @@ function toggleTableScope(tableIndex, currentScope) {
         }
     }
 
-    // 从源列表移除
+    // 從源列表移除
     srcTables.splice(tableIndex, 1);
     setTablesByScope(currentScope, srcTables);
 
-    // 加入目标列表
+    // 加入目標列表
     const dstTables = getTablesByScope(newScope);
     dstTables.push(table);
     setTablesByScope(newScope, dstTables);
 
     renderCustomTablesList();
     getContext().saveChat();
-    showToast(`表格已转为${label}`, 'success');
+    showToast(`表格已轉為${label}`, 'success');
 }
 
 
 /**
- * 绑定物品列表事件
+ * 綁定物品列表事件
  */
 function bindItemsEvents() {
     const items = document.querySelectorAll('#horae-items-full-list .horae-full-item');
@@ -4403,7 +4403,7 @@ function bindItemsEvents() {
         const itemName = item.dataset.itemName;
         if (!itemName) return;
         
-        // 长按进入多选模式
+        // 長按進入多選模式
         item.addEventListener('mousedown', (e) => startLongPress(e, itemName));
         item.addEventListener('touchstart', (e) => startLongPress(e, itemName), { passive: true });
         item.addEventListener('mouseup', cancelLongPress);
@@ -4411,7 +4411,7 @@ function bindItemsEvents() {
         item.addEventListener('touchend', cancelLongPress);
         item.addEventListener('touchcancel', cancelLongPress);
         
-        // 多选模式下点击切换选中
+        // 多選模式下點擊切換選中
         item.addEventListener('click', () => {
             if (itemsMultiSelectMode) {
                 toggleItemSelection(itemName);
@@ -4443,7 +4443,7 @@ function bindItemsEvents() {
                     meta.items[key]._locked = !meta.items[key]._locked;
                     getContext().saveChat();
                     updateItemsDisplay();
-                    showToast(meta.items[key]._locked ? `已锁定「${name}」（AI无法修改描述和重要程度）` : `已解锁「${name}」`, meta.items[key]._locked ? 'success' : 'info');
+                    showToast(meta.items[key]._locked ? `已鎖定「${name}」（AI無法修改描述和重要程度）` : `已解鎖「${name}」`, meta.items[key]._locked ? 'success' : 'info');
                     return;
                 }
             }
@@ -4453,21 +4453,21 @@ function bindItemsEvents() {
             first.horae_meta.items[name] = { ...itemInfo, _locked: true };
             getContext().saveChat();
             updateItemsDisplay();
-            showToast(`已锁定「${name}」（AI无法修改描述和重要程度）`, 'success');
+            showToast(`已鎖定「${name}」（AI無法修改描述和重要程度）`, 'success');
         });
     });
 }
 
 // ═══════════════════════════════════════════════════
-//  装备穿脱系统 — 物品栏 ↔ 装备栏 原子移动
+//  裝備穿脫系統 — 物品欄 ↔ 裝備欄 原子移動
 // ═══════════════════════════════════════════════════
 
 /**
- * 从物品栏穿戴到装备栏
+ * 從物品欄穿戴到裝備欄
  * @param {string} itemName 物品名
  * @param {string} owner    角色名
  * @param {string} slotName 格位名
- * @param {object} [replacedItem] 被替换的旧装备（自动归还物品栏）
+ * @param {object} [replacedItem] 被替換的舊裝備（自動歸還物品欄）
  */
 function _equipItemToChar(itemName, owner, slotName, replacedItem) {
     const chat = horaeManager.getChat();
@@ -4482,16 +4482,16 @@ function _equipItemToChar(itemName, owner, slotName, replacedItem) {
     const rpg = first.horae_meta.rpg;
     if (!rpg.equipment) rpg.equipment = {};
 
-    // 被替换的旧装备归还物品栏（在重建数组前执行）
+    // 被替換的舊裝備歸還物品欄（在重建數組前執行）
     if (replacedItem) {
         _unequipToItems(owner, slotName, replacedItem.name, true);
     }
 
-    // 确保目标数组存在（unequip 可能删除了空数组）
+    // 確保目標數組存在（unequip 可能刪除了空數組）
     if (!rpg.equipment[owner]) rpg.equipment[owner] = {};
     if (!rpg.equipment[owner][slotName]) rpg.equipment[owner][slotName] = [];
 
-    // 构建装备条目（携带完整物品信息）
+    // 構建裝備條目（攜帶完整物品資訊）
     const eqEntry = {
         name: itemName,
         attrs: {},
@@ -4503,20 +4503,20 @@ function _equipItemToChar(itemName, owner, slotName, replacedItem) {
             _locked: itemInfo._locked || false,
         },
     };
-    // 已有装备属性（从 eqAttrMap 等来源）
+    // 已有裝備屬性（從 eqAttrMap 等來源）
     const existingEqData = _findExistingEquipAttrs(itemName);
     if (existingEqData) eqEntry.attrs = { ...existingEqData };
 
     rpg.equipment[owner][slotName].push(eqEntry);
 
-    // 从物品栏中移除
+    // 從物品欄中移除
     _removeItemFromState(itemName);
 
     getContext().saveChat();
 }
 
 /**
- * 脱下装备归还物品栏
+ * 脫下裝備歸還物品欄
  */
 function _unequipToItems(owner, slotName, equipName, skipSave) {
     const chat = horaeManager.getChat();
@@ -4529,11 +4529,11 @@ function _unequipToItems(owner, slotName, equipName, skipSave) {
     if (idx < 0) return;
     const removed = slotArr.splice(idx, 1)[0];
 
-    // 清理空结构
+    // 清理空結構
     if (!slotArr.length) delete first.horae_meta.rpg.equipment[owner][slotName];
     if (first.horae_meta.rpg.equipment[owner] && !Object.keys(first.horae_meta.rpg.equipment[owner]).length) delete first.horae_meta.rpg.equipment[owner];
 
-    // 归还到物品栏
+    // 歸還到物品欄
     if (!first.horae_meta.items) first.horae_meta.items = {};
     const meta = removed._itemMeta || {};
     first.horae_meta.items[equipName] = {
@@ -4545,7 +4545,7 @@ function _unequipToItems(owner, slotName, equipName, skipSave) {
         _id: meta._id || '',
         _locked: meta._locked || false,
     };
-    // 恢复装备属性到描述
+    // 恢復裝備屬性到描述
     if (removed.attrs && Object.keys(removed.attrs).length > 0) {
         const attrStr = Object.entries(removed.attrs).map(([k, v]) => `${k}${v >= 0 ? '+' : ''}${v}`).join(', ');
         const desc = first.horae_meta.items[equipName].description;
@@ -4583,14 +4583,14 @@ function _findExistingEquipAttrs(itemName) {
 }
 
 /**
- * 打开装备穿戴对话框：选角色 → 选格位 → 穿戴
+ * 打開裝備穿戴對話框：選角色 → 選格位 → 穿戴
  */
 function _openEquipItemDialog(itemName) {
     const cfgMap = _getEqConfigMap();
     const perChar = cfgMap.perChar || {};
     const candidates = Object.entries(perChar).filter(([, cfg]) => cfg.slots?.length > 0);
     if (!candidates.length) {
-        showToast('还没有角色配置了装备格位，请先在 RPG 装备面板中为角色加载模板', 'warning');
+        showToast('還沒有角色配置了裝備格位，請先在 RPG 裝備面板中為角色加載模範', 'warning');
         return;
     }
     const state = horaeManager.getLatestState();
@@ -4600,17 +4600,17 @@ function _openEquipItemDialog(itemName) {
     const modal = document.createElement('div');
     modal.className = 'horae-modal-overlay';
 
-    let bodyHtml = `<div class="horae-edit-field"><label>选择角色</label><select id="horae-equip-char">`;
+    let bodyHtml = `<div class="horae-edit-field"><label>選擇角色</label><select id="horae-equip-char">`;
     for (const [owner] of candidates) {
         bodyHtml += `<option value="${escapeHtml(owner)}">${escapeHtml(owner)}</option>`;
     }
     bodyHtml += `</select></div>`;
-    bodyHtml += `<div class="horae-edit-field"><label>选择格位</label><select id="horae-equip-slot"></select></div>`;
+    bodyHtml += `<div class="horae-edit-field"><label>選擇格位</label><select id="horae-equip-slot"></select></div>`;
     bodyHtml += `<div id="horae-equip-conflict" style="color:#ef4444;font-size:.85em;margin-top:4px;display:none;"></div>`;
 
     modal.innerHTML = `
         <div class="horae-modal-content" style="max-width:400px;width:92vw;box-sizing:border-box;">
-            <div class="horae-modal-header"><h3>装备「${escapeHtml(itemName)}」</h3></div>
+            <div class="horae-modal-header"><h3>裝備「${escapeHtml(itemName)}」</h3></div>
             <div class="horae-modal-body">${bodyHtml}</div>
             <div class="horae-modal-footer">
                 <button id="horae-equip-ok" class="horae-btn primary">穿戴</button>
@@ -4627,7 +4627,7 @@ function _openEquipItemDialog(itemName) {
     const _updateSlots = () => {
         const owner = charSel.value;
         const cfg = perChar[owner];
-        if (!cfg?.slots?.length) { slotSel.innerHTML = '<option>无可用格位</option>'; return; }
+        if (!cfg?.slots?.length) { slotSel.innerHTML = '<option>無可用格位</option>'; return; }
         const eqValues = _getEqValues();
         const ownerEq = eqValues[owner] || {};
         slotSel.innerHTML = cfg.slots.map(s => {
@@ -4649,7 +4649,7 @@ function _openEquipItemDialog(itemName) {
         if (existing.length >= max) {
             const oldest = existing[0];
             conflictDiv.style.display = '';
-            conflictDiv.textContent = `⚠ ${slotName} 已满 (${max}件)，将替换「${oldest.name}」(归还物品栏)`;
+            conflictDiv.textContent = `⚠ ${slotName} 已滿 (${max}件)，將替換「${oldest.name}」(歸還物品欄)`;
         } else {
             conflictDiv.style.display = 'none';
         }
@@ -4676,25 +4676,25 @@ function _openEquipItemDialog(itemName) {
         renderEquipmentValues();
         _bindEquipmentEvents();
         updateAllRpgHuds();
-        showToast(`已将「${itemName}」装备到 ${owner} 的 ${slotName}`, 'success');
+        showToast(`已將「${itemName}」裝備到 ${owner} 的 ${slotName}`, 'success');
     };
 
     modal.querySelector('#horae-equip-cancel').onclick = () => modal.remove();
 }
 
 /**
- * 开始长按计时
+ * 開始長按計時
  */
 function startLongPress(e, itemName) {
-    if (itemsMultiSelectMode) return; // 已在多选模式
+    if (itemsMultiSelectMode) return; // 已在多選模式
     
     longPressTimer = setTimeout(() => {
         enterMultiSelectMode(itemName);
-    }, 800); // 800ms 长按触发（延长防止误触）
+    }, 800); // 800ms 長按觸發（延長防止誤觸）
 }
 
 /**
- * 取消长按
+ * 取消長按
  */
 function cancelLongPress() {
     if (longPressTimer) {
@@ -4704,7 +4704,7 @@ function cancelLongPress() {
 }
 
 /**
- * 进入多选模式
+ * 進入多選模式
  */
 function enterMultiSelectMode(initialItem) {
     itemsMultiSelectMode = true;
@@ -4713,32 +4713,32 @@ function enterMultiSelectMode(initialItem) {
         selectedItems.add(initialItem);
     }
     
-    // 显示多选工具栏
+    // 顯示多選工具欄
     const bar = document.getElementById('horae-items-multiselect-bar');
     if (bar) bar.style.display = 'flex';
     
-    // 隐藏提示
+    // 隱藏提示
     const hint = document.querySelector('#horae-tab-items .horae-items-hint');
     if (hint) hint.style.display = 'none';
     
     updateItemsDisplay();
     updateSelectedCount();
     
-    showToast('已进入多选模式', 'info');
+    showToast('已進入多選模式', 'info');
 }
 
 /**
- * 退出多选模式
+ * 退出多選模式
  */
 function exitMultiSelectMode() {
     itemsMultiSelectMode = false;
     selectedItems.clear();
     
-    // 隐藏多选工具栏
+    // 隱藏多選工具欄
     const bar = document.getElementById('horae-items-multiselect-bar');
     if (bar) bar.style.display = 'none';
     
-    // 显示提示
+    // 顯示提示
     const hint = document.querySelector('#horae-tab-items .horae-items-hint');
     if (hint) hint.style.display = 'block';
     
@@ -4746,7 +4746,7 @@ function exitMultiSelectMode() {
 }
 
 /**
- * 切换物品选中状态
+ * 切換物品選中狀態
  */
 function toggleItemSelection(itemName) {
     if (selectedItems.has(itemName)) {
@@ -4767,7 +4767,7 @@ function toggleItemSelection(itemName) {
 }
 
 /**
- * 全选物品
+ * 全選物品
  */
 function selectAllItems() {
     const items = document.querySelectorAll('#horae-items-full-list .horae-full-item');
@@ -4780,7 +4780,7 @@ function selectAllItems() {
 }
 
 /**
- * 更新选中数量显示
+ * 更新選中數量顯示
  */
 function updateSelectedCount() {
     const countEl = document.getElementById('horae-items-selected-count');
@@ -4788,19 +4788,19 @@ function updateSelectedCount() {
 }
 
 /**
- * 删除选中的物品
+ * 刪除選中的物品
  */
 async function deleteSelectedItems() {
     if (selectedItems.size === 0) {
-        showToast('没有选中任何物品', 'warning');
+        showToast('沒有選中任何物品', 'warning');
         return;
     }
     
-    // 确认对话框
-    const confirmed = confirm(`确定要删除选中的 ${selectedItems.size} 个物品吗？\n\n此操作会从所有历史记录中移除这些物品，不可撤销。`);
+    // 確認對話框
+    const confirmed = confirm(`確定要刪除選中的 ${selectedItems.size} 個物品嗎？\n\n此操作會從所有歷史記錄中移除這些物品，不可撤銷。`);
     if (!confirmed) return;
     
-    // 从所有消息的 meta 中删除这些物品
+    // 從所有訊息的 meta 中刪除這些物品
     const chat = horaeManager.getChat();
     const itemsToDelete = Array.from(selectedItems);
     
@@ -4821,14 +4821,14 @@ async function deleteSelectedItems() {
     // 保存更改
     await getContext().saveChat();
     
-    showToast(`已删除 ${itemsToDelete.length} 个物品`, 'success');
+    showToast(`已刪除 ${itemsToDelete.length} 個物品`, 'success');
     
     exitMultiSelectMode();
     updateStatusDisplay();
 }
 
 // ============================================
-// NPC 多选模式
+// NPC 多選模式
 // ============================================
 
 function enterNpcMultiSelect(initialName) {
@@ -4838,7 +4838,7 @@ function enterNpcMultiSelect(initialName) {
     const bar = document.getElementById('horae-npc-multiselect-bar');
     if (bar) bar.style.display = 'flex';
     const btn = document.getElementById('horae-btn-npc-multiselect');
-    if (btn) { btn.classList.add('active'); btn.title = '退出多选'; }
+    if (btn) { btn.classList.add('active'); btn.title = '退出多選'; }
     updateCharactersDisplay();
     _updateNpcSelectedCount();
 }
@@ -4849,7 +4849,7 @@ function exitNpcMultiSelect() {
     const bar = document.getElementById('horae-npc-multiselect-bar');
     if (bar) bar.style.display = 'none';
     const btn = document.getElementById('horae-btn-npc-multiselect');
-    if (btn) { btn.classList.remove('active'); btn.title = '多选模式'; }
+    if (btn) { btn.classList.remove('active'); btn.title = '多選模式'; }
     updateCharactersDisplay();
 }
 
@@ -4871,45 +4871,45 @@ function _updateNpcSelectedCount() {
 }
 
 async function deleteSelectedNpcs() {
-    if (selectedNpcs.size === 0) { showToast('没有选中任何角色', 'warning'); return; }
-    if (!confirm(`确定要删除选中的 ${selectedNpcs.size} 个角色吗？\n\n此操作会从所有历史记录中移除这些角色的信息（含好感度、关系、RPG数据等），不可撤销。`)) return;
+    if (selectedNpcs.size === 0) { showToast('沒有選中任何角色', 'warning'); return; }
+    if (!confirm(`確定要刪除選中的 ${selectedNpcs.size} 個角色嗎？\n\n此操作會從所有歷史記錄中移除這些角色的資訊（含好感度、關係、RPG數據等），不可撤銷。`)) return;
     
     _cascadeDeleteNpcs(Array.from(selectedNpcs));
     await getContext().saveChat();
-    showToast(`已删除 ${selectedNpcs.size} 个角色`, 'success');
+    showToast(`已刪除 ${selectedNpcs.size} 個角色`, 'success');
     exitNpcMultiSelect();
     refreshAllDisplays();
 }
 
-// 异常状态 → FontAwesome 图标映射
+// 異常狀態 → FontAwesome 圖示映射
 const RPG_STATUS_ICONS = {
-    '昏': 'fa-dizzy', '眩': 'fa-dizzy', '晕': 'fa-dizzy',
+    '昏': 'fa-dizzy', '眩': 'fa-dizzy', '暈': 'fa-dizzy',
     '流血': 'fa-droplet', '出血': 'fa-droplet', '血': 'fa-droplet',
-    '重伤': 'fa-heart-crack', '重傷': 'fa-heart-crack', '濒死': 'fa-heart-crack',
-    '冻': 'fa-snowflake', '冰': 'fa-snowflake', '寒': 'fa-snowflake',
-    '石化': 'fa-gem', '钙化': 'fa-gem', '结晶': 'fa-gem',
-    '毒': 'fa-skull-crossbones', '腐蚀': 'fa-skull-crossbones',
-    '火': 'fa-fire', '烧': 'fa-fire', '灼': 'fa-fire', '燃': 'fa-fire', '炎': 'fa-fire',
-    '慢': 'fa-hourglass-half', '减速': 'fa-hourglass-half', '迟缓': 'fa-hourglass-half',
+    '重傷': 'fa-heart-crack', '重傷': 'fa-heart-crack', '瀕死': 'fa-heart-crack',
+    '凍': 'fa-snowflake', '冰': 'fa-snowflake', '寒': 'fa-snowflake',
+    '石化': 'fa-gem', '鈣化': 'fa-gem', '結晶': 'fa-gem',
+    '毒': 'fa-skull-crossbones', '腐蝕': 'fa-skull-crossbones',
+    '火': 'fa-fire', '燒': 'fa-fire', '灼': 'fa-fire', '燃': 'fa-fire', '炎': 'fa-fire',
+    '慢': 'fa-hourglass-half', '減速': 'fa-hourglass-half', '遲緩': 'fa-hourglass-half',
     '盲': 'fa-eye-slash', '失明': 'fa-eye-slash',
     '沉默': 'fa-comment-slash', '禁言': 'fa-comment-slash', '封印': 'fa-ban',
-    '麻': 'fa-bolt', '痹': 'fa-bolt', '电': 'fa-bolt', '雷': 'fa-bolt',
-    '弱': 'fa-feather', '衰': 'fa-feather', '虚': 'fa-feather',
-    '恐': 'fa-ghost', '惧': 'fa-ghost', '惊': 'fa-ghost',
-    '乱': 'fa-shuffle', '混乱': 'fa-shuffle', '狂暴': 'fa-shuffle',
+    '麻': 'fa-bolt', '痺': 'fa-bolt', '電': 'fa-bolt', '雷': 'fa-bolt',
+    '弱': 'fa-feather', '衰': 'fa-feather', '虛': 'fa-feather',
+    '恐': 'fa-ghost', '懼': 'fa-ghost', '驚': 'fa-ghost',
+    '亂': 'fa-shuffle', '混亂': 'fa-shuffle', '狂暴': 'fa-shuffle',
     '眠': 'fa-moon', '睡': 'fa-moon', '催眠': 'fa-moon',
-    '缚': 'fa-link', '禁锢': 'fa-link', '束': 'fa-link',
-    '饥': 'fa-utensils', '饿': 'fa-utensils', '饥饿': 'fa-utensils',
-    '渴': 'fa-glass-water', '脱水': 'fa-glass-water',
+    '縛': 'fa-link', '禁錮': 'fa-link', '束': 'fa-link',
+    '飢': 'fa-utensils', '餓': 'fa-utensils', '飢餓': 'fa-utensils',
+    '渴': 'fa-glass-water', '脫水': 'fa-glass-water',
     '疲': 'fa-battery-quarter', '累': 'fa-battery-quarter', '倦': 'fa-battery-quarter', '乏': 'fa-battery-quarter',
-    '伤': 'fa-bandage', '创': 'fa-bandage',
-    '愈': 'fa-heart-pulse', '恢复': 'fa-heart-pulse', '再生': 'fa-heart-pulse',
-    '隐': 'fa-user-secret', '伪装': 'fa-user-secret', '潜行': 'fa-user-secret',
-    '护盾': 'fa-shield', '防御': 'fa-shield', '铁壁': 'fa-shield',
+    '傷': 'fa-bandage', '創': 'fa-bandage',
+    '愈': 'fa-heart-pulse', '恢復': 'fa-heart-pulse', '再生': 'fa-heart-pulse',
+    '隱': 'fa-user-secret', '偽裝': 'fa-user-secret', '潛行': 'fa-user-secret',
+    '護盾': 'fa-shield', '防禦': 'fa-shield', '鐵壁': 'fa-shield',
     '正常': 'fa-circle-check',
 };
 
-/** 根据异常状态文本匹配图标 */
+/** 根據異常狀態文字配對圖示 */
 function getStatusIcon(text) {
     for (const [kw, icon] of Object.entries(RPG_STATUS_ICONS)) {
         if (text.includes(kw)) return icon;
@@ -4917,13 +4917,13 @@ function getStatusIcon(text) {
     return 'fa-triangle-exclamation';
 }
 
-/** 根据配置获取属性条颜色 */
+/** 根據配置獲取屬性條顏色 */
 function getRpgBarColor(key) {
     const cfg = (settings.rpgBarConfig || []).find(b => b.key === key);
     return cfg?.color || '#6366f1';
 }
 
-/** 根据配置获取属性条显示名（用户自定义名 > AI标签 > 默认key大写） */
+/** 根據配置獲取屬性條顯示名（用戶客製化名 > AI標籤 > 預設key大寫） */
 function getRpgBarName(key, aiLabel) {
     const cfg = (settings.rpgBarConfig || []).find(b => b.key === key);
     const cfgName = cfg?.name;
@@ -4932,7 +4932,7 @@ function getRpgBarName(key, aiLabel) {
 }
 
 // ============================================
-// RPG 骰子系统
+// RPG 骰子系統
 // ============================================
 
 const RPG_DICE_TYPES = [
@@ -4983,18 +4983,18 @@ function renderDicePanel() {
 
     const html = `
         <div id="horae-rpg-dice-panel" class="horae-rpg-dice-panel">
-            <div class="horae-rpg-dice-toggle" title="骰子面板（可拖拽移动）">
+            <div class="horae-rpg-dice-toggle" title="骰子面板（可拖曳移動）">
                 <i class="fa-solid fa-dice-d20"></i>
             </div>
             <div class="horae-rpg-dice-body" style="display:none;">
                 <div class="horae-rpg-dice-types">${btns}</div>
                 <div class="horae-rpg-dice-config">
-                    <label>数量<input type="number" id="horae-dice-count" value="1" min="1" max="20" class="horae-rpg-dice-input"></label>
+                    <label>數量<input type="number" id="horae-dice-count" value="1" min="1" max="20" class="horae-rpg-dice-input"></label>
                     <label>加值<input type="number" id="horae-dice-mod" value="0" min="-99" max="99" class="horae-rpg-dice-input"></label>
                 </div>
                 <div class="horae-rpg-dice-result" id="horae-dice-result"></div>
                 <button id="horae-dice-inject" class="horae-rpg-dice-inject" style="display:none;">
-                    <i class="fa-solid fa-paper-plane"></i> 注入聊天栏
+                    <i class="fa-solid fa-paper-plane"></i> 注入聊天欄
                 </button>
             </div>
         </div>
@@ -5012,7 +5012,7 @@ function renderDicePanel() {
     let lastResult = null;
     let selectedFaces = 20;
 
-    // ---- 拖拽逻辑（mouse + touch 双端通用） ----
+    // ---- 拖拽邏輯（mouse + touch 雙端通用） ----
     const toggle = panel.querySelector('.horae-rpg-dice-toggle');
     let dragging = false, dragMoved = false, startX = 0, startY = 0, origLeft = 0, origTop = 0;
 
@@ -5030,8 +5030,8 @@ function renderDicePanel() {
         const dx = ev.clientX - startX, dy = ev.clientY - startY;
         if (!dragMoved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
             dragMoved = true;
-            // 首次移动时移除居中 transform，切换为绝对像素定位
-            if (!panel.classList.contains('horae-dice-placed')) {
+            // 首次移動時移除居中 transform，切換為絕對像素定位
+            if (!panel.classList.contaIG('horae-dice-placed')) {
                 panel.style.left = origLeft + 'px';
                 panel.style.top = origTop + 'px';
                 panel.classList.add('horae-dice-placed');
@@ -5065,7 +5065,7 @@ function renderDicePanel() {
     document.addEventListener('touchmove', onDragMove, { passive: false, signal: sig });
     document.addEventListener('touchend', onDragEnd, { signal: sig });
 
-    // 点击展开/收起（仅无拖拽时触发）
+    // 點擊展開/收起（僅無拖拽時觸發）
     toggle.addEventListener('click', () => {
         if (dragMoved) return;
         const body = panel.querySelector('.horae-rpg-dice-body');
@@ -5091,12 +5091,12 @@ function renderDicePanel() {
     document.getElementById('horae-dice-inject')?.addEventListener('click', () => {
         if (lastResult) {
             injectDiceToChat(lastResult.display);
-            showToast('骰子结果已注入聊天栏', 'success');
+            showToast('骰子結果已注入聊天欄', 'success');
         }
     }, { signal: sig });
 }
 
-/** 应用骰子面板保存的位置；坐标超出当前视口则自动重置 */
+/** 應用骰子面板保存的位置；座標超出目前視口則自動重置 */
 function _applyDicePos(panel) {
     if (settings.dicePosX != null && settings.dicePosY != null) {
         const vw = window.innerWidth, vh = window.innerHeight;
@@ -5114,7 +5114,7 @@ function _applyDicePos(panel) {
     }
 }
 
-/** 渲染属性条配置列表 */
+/** 彩現屬性條配置列表 */
 function renderBarConfig() {
     const list = document.getElementById('horae-rpg-bar-config-list');
     if (!list) return;
@@ -5124,12 +5124,12 @@ function renderBarConfig() {
             <input class="horae-rpg-config-key" value="${escapeHtml(b.key)}" maxlength="10" data-idx="${i}" />
             <input class="horae-rpg-config-name" value="${escapeHtml(b.name)}" maxlength="8" data-idx="${i}" />
             <input type="color" class="horae-rpg-config-color" value="${b.color}" data-idx="${i}" />
-            <button class="horae-rpg-config-del" data-idx="${i}" title="删除"><i class="fa-solid fa-xmark"></i></button>
+            <button class="horae-rpg-config-del" data-idx="${i}" title="刪除"><i class="fa-solid fa-xmark"></i></button>
         </div>
     `).join('');
 }
 
-/** 构建角色下拉选项（{{user}} + NPC列表） */
+/** 構建角色下拉選項（{{user}} + NPC列表） */
 function buildCharacterOptions() {
     const userName = getContext().name1 || '{{user}}';
     let html = `<option value="__user__">${escapeHtml(userName)}</option>`;
@@ -5141,13 +5141,13 @@ function buildCharacterOptions() {
     return html;
 }
 
-/** 在 Canvas 上绘制雷达图（自适应 DPI + 动态尺寸 + 跟随主题色） */
+/** 在 Canvas 上繪製雷達圖（自適應 DPI + 動態尺寸 + 跟隨主題色） */
 function drawRadarChart(canvas, values, config, maxVal = 100) {
     const n = config.length;
     if (n < 3) return;
     const dpr = window.devicePixelRatio || 1;
 
-    // 从 CSS 变量读取颜色，自动跟随美化主题
+    // 從 CSS 變數讀取顏色，自動跟隨美化主題
     const themeRoot = canvas.closest('#horae_drawer') || canvas.closest('.horae-rpg-char-detail-body') || document.getElementById('horae_drawer') || document.body;
     const cs = getComputedStyle(themeRoot);
     const radarHex = cs.getPropertyValue('--horae-radar-color').trim() || cs.getPropertyValue('--horae-primary').trim() || '#7c3aed';
@@ -5157,7 +5157,7 @@ function drawRadarChart(canvas, values, config, maxVal = 100) {
     const rg = parseInt(radarHex.slice(3, 5), 16) || 58;
     const rb = parseInt(radarHex.slice(5, 7), 16) || 237;
 
-    // 根据最长属性名动态选字号
+    // 根據最長屬性名動態選字號
     const maxNameLen = Math.max(...config.map(c => c.name.length));
     const fontSize = maxNameLen > 3 ? 11 : 12;
 
@@ -5169,7 +5169,7 @@ function drawRadarChart(canvas, values, config, maxVal = 100) {
         if (w > maxLabelW) maxLabelW = w;
     }
 
-    // 动态布局：保证侧面标签不超出画布
+    // 動態格局：保證側面標籤不超出畫布
     const labelGap = 18;
     const labelMargin = 4;
     const pad = Math.max(38, Math.ceil(maxLabelW) + labelGap + labelMargin);
@@ -5188,7 +5188,7 @@ function drawRadarChart(canvas, values, config, maxVal = 100) {
 
     const angle = i => -Math.PI / 2 + (2 * Math.PI * i) / n;
 
-    // 底层网格
+    // 底層網格
     ctx.strokeStyle = gridColor;
     ctx.lineWidth = 1;
     for (let lv = 1; lv <= 4; lv++) {
@@ -5201,7 +5201,7 @@ function drawRadarChart(canvas, values, config, maxVal = 100) {
         }
         ctx.stroke();
     }
-    // 辐射线
+    // 輻射線
     for (let i = 0; i < n; i++) {
         const a = angle(i);
         ctx.beginPath();
@@ -5209,7 +5209,7 @@ function drawRadarChart(canvas, values, config, maxVal = 100) {
         ctx.lineTo(cx + actualR * Math.cos(a), cy + actualR * Math.sin(a));
         ctx.stroke();
     }
-    // 数据区
+    // 數據區
     ctx.beginPath();
     for (let i = 0; i <= n; i++) {
         const a = angle(i % n);
@@ -5223,7 +5223,7 @@ function drawRadarChart(canvas, values, config, maxVal = 100) {
     ctx.strokeStyle = `rgba(${rr},${rg},${rb},0.8)`;
     ctx.lineWidth = 2;
     ctx.stroke();
-    // 顶点圆点 + 标签
+    // 頂點圓點 + 標籤
     ctx.font = `${fontSize}px sans-serif`;
     ctx.textAlign = 'center';
     for (let i = 0; i < n; i++) {
@@ -5245,7 +5245,7 @@ function drawRadarChart(canvas, values, config, maxVal = 100) {
     }
 }
 
-/** 同步 RPG 分页可见性及各子区段显隐 */
+/** 同步 RPG 分頁可見性及各子區段顯隱 */
 function _syncRpgTabVisibility() {
     const sendBars = settings.rpgMode && settings.sendRpgBars !== false;
     const sendAttrs = settings.rpgMode && settings.sendRpgAttributes !== false;
@@ -5268,7 +5268,7 @@ function _syncRpgTabVisibility() {
     $('#horae-rpg-stronghold-area').toggle(sendSh);
 }
 
-/** 更新 RPG 分页（角色卡模式，按当前消息位置快照） */
+/** 更新 RPG 分頁（角色卡模式，按目前訊息位置快照） */
 function updateRpgDisplay() {
     if (!settings.rpgMode) return;
     const rpg = horaeManager.getRpgStateAt(0);
@@ -5290,7 +5290,7 @@ function updateRpgDisplay() {
     const moduleCount = [sendBars, hasAttrModule, sendSkills, sendEq, sendRep, sendLvl, sendCur, sendSh].filter(Boolean).length;
     const useCardLayout = detailModules >= 1 || moduleCount >= 2;
 
-    // 配置区始终渲染
+    // 配置區始終彩現
     renderBarConfig();
     renderAttrConfig();
     if (sendRep) {
@@ -5322,7 +5322,7 @@ function updateRpgDisplay() {
         ...Object.keys(rpg.currency || {}),
     ]);
 
-    /** 构建单个角色的分页标签 HTML */
+    /** 構建單個角色的分頁標籤 HTML */
     function _buildCharTabs(name) {
         const tabs = [];
         const panels = [];
@@ -5336,11 +5336,11 @@ function updateRpgDisplay() {
         const charXp = rpg.xp?.[name];
 
         if (hasAttrModule) {
-            tabs.push({ id: `attr_${eid}`, label: '属性' });
+            tabs.push({ id: `attr_${eid}`, label: '屬性' });
             const hasAttrs = Object.keys(attrs).length > 0;
             const viewMode = settings.rpgAttrViewMode || 'radar';
             let html = '<div class="horae-rpg-attr-section">';
-            html += `<div class="horae-rpg-attr-header"><span>属性</span><button class="horae-rpg-charattr-edit" data-char="${escapeHtml(name)}" title="编辑属性"><i class="fa-solid fa-pen-to-square"></i></button></div>`;
+            html += `<div class="horae-rpg-attr-header"><span>屬性</span><button class="horae-rpg-charattr-edit" data-char="${escapeHtml(name)}" title="編輯屬性"><i class="fa-solid fa-pen-to-square"></i></button></div>`;
             if (hasAttrs) {
                 if (viewMode === 'radar') {
                     html += `<canvas class="horae-rpg-radar" data-char="${escapeHtml(name)}"></canvas>`;
@@ -5350,7 +5350,7 @@ function updateRpgDisplay() {
                     html += '</div>';
                 }
             } else {
-                html += '<div class="horae-rpg-skills-empty">暂无属性数据，点击 ✎ 手动填写</div>';
+                html += '<div class="horae-rpg-skills-empty">暫無屬性數據，點擊 ✎ 手動填寫</div>';
             }
             html += '</div>';
             panels.push(html);
@@ -5363,18 +5363,18 @@ function updateRpgDisplay() {
                 for (const sk of skills) {
                     html += `<details class="horae-rpg-skill-detail"><summary class="horae-rpg-skill-summary">${escapeHtml(sk.name)}`;
                     if (sk.level) html += ` <span class="horae-rpg-skill-lv">${escapeHtml(sk.level)}</span>`;
-                    html += `<button class="horae-rpg-skill-del" data-owner="${escapeHtml(name)}" data-skill="${escapeHtml(sk.name)}" title="删除"><i class="fa-solid fa-xmark"></i></button></summary>`;
+                    html += `<button class="horae-rpg-skill-del" data-owner="${escapeHtml(name)}" data-skill="${escapeHtml(sk.name)}" title="刪除"><i class="fa-solid fa-xmark"></i></button></summary>`;
                     if (sk.desc) html += `<div class="horae-rpg-skill-desc">${escapeHtml(sk.desc)}</div>`;
                     html += '</details>';
                 }
                 html += '</div>';
             } else {
-                html += '<div class="horae-rpg-skills-empty">暂无技能</div>';
+                html += '<div class="horae-rpg-skills-empty">暫無技能</div>';
             }
             panels.push(html);
         }
         if (sendEq) {
-            tabs.push({ id: `eq_${eid}`, label: '装备' });
+            tabs.push({ id: `eq_${eid}`, label: '裝備' });
             let html = '';
             const slotEntries = Object.entries(charEq);
             if (slotEntries.length > 0) {
@@ -5389,12 +5389,12 @@ function updateRpgDisplay() {
                 }
                 html += '</div>';
             } else {
-                html += '<div class="horae-rpg-skills-empty">无装备</div>';
+                html += '<div class="horae-rpg-skills-empty">無裝備</div>';
             }
             panels.push(html);
         }
         if (sendRep) {
-            tabs.push({ id: `rep_${eid}`, label: '声望' });
+            tabs.push({ id: `rep_${eid}`, label: '聲望' });
             let html = '';
             const catEntries = Object.entries(charRep);
             if (catEntries.length > 0) {
@@ -5404,13 +5404,13 @@ function updateRpgDisplay() {
                 }
                 html += '</div>';
             } else {
-                html += '<div class="horae-rpg-skills-empty">无声望数据</div>';
+                html += '<div class="horae-rpg-skills-empty">無聲望數據</div>';
             }
             panels.push(html);
         }
-        // 等级/XP 现在直接显示在状态条上方，不再作为独立标签
+        // 等級/XP 現在直接顯示在狀態條上方，不再作為獨立標籤
         if (sendCur) {
-            tabs.push({ id: `cur_${eid}`, label: '货币' });
+            tabs.push({ id: `cur_${eid}`, label: '貨幣' });
             const denomConfig = rpg.currencyConfig?.denominations || [];
             let html = '<div class="horae-rpg-card-cur">';
             const hasCur = denomConfig.some(d => charCur[d.name] != null);
@@ -5421,7 +5421,7 @@ function updateRpgDisplay() {
                     html += `<div class="horae-rpg-card-cur-row"><span>${emojiStr}${escapeHtml(d.name)}</span><span>${val}</span></div>`;
                 }
             } else {
-                html += '<div class="horae-rpg-skills-empty">无货币数据</div>';
+                html += '<div class="horae-rpg-skills-empty">無貨幣數據</div>';
             }
             html += '</div>';
             panels.push(html);
@@ -5475,7 +5475,7 @@ function updateRpgDisplay() {
 
             if (sendBars) {
                 barsHtml += '<div class="horae-rpg-char-card horae-rpg-bar-card">';
-                // 角色名行: 名称 + 等级 + 状态图标 ...... 货币（右端）
+                // 角色名行: 名稱 + 等級 + 狀態圖示 ...... 貨幣（右端）
                 barsHtml += '<div class="horae-rpg-bar-card-header">';
                 barsHtml += `<span class="horae-rpg-char-name">${escapeHtml(name)}</span>`;
                 if (sendLvl && charLv != null) barsHtml += `<span class="horae-rpg-lv-badge">Lv.${charLv}</span>`;
@@ -5493,7 +5493,7 @@ function updateRpgDisplay() {
                 }
                 if (curRightHtml) barsHtml += `<span class="horae-rpg-bar-card-right">${curRightHtml}</span>`;
                 barsHtml += '</div>';
-                // XP 条
+                // XP 條
                 const charXpTop = rpg.xp?.[name];
                 if (sendLvl && charXpTop && charXpTop[1] > 0) {
                     const xpPct = Math.min(100, Math.round(charXpTop[0] / charXpTop[1] * 100));
@@ -5509,7 +5509,7 @@ function updateRpgDisplay() {
                     }
                 }
                 if (effects.length > 0) {
-                    barsHtml += '<div class="horae-rpg-status-label">状态列表</div><div class="horae-rpg-status-detail">';
+                    barsHtml += '<div class="horae-rpg-status-label">狀態列表</div><div class="horae-rpg-status-detail">';
                     for (const e of effects) barsHtml += `<div class="horae-rpg-status-item"><i class="fa-solid ${getStatusIcon(e)} horae-rpg-status-icon"></i><span>${escapeHtml(e)}</span></div>`;
                     barsHtml += '</div>';
                 }
@@ -5529,7 +5529,7 @@ function updateRpgDisplay() {
         charCardsSection.innerHTML = '';
         charCardsSection.style.display = 'none';
 
-        // 分页标签点击事件
+        // 分頁標籤點擊事件
         barsSection.querySelectorAll('.horae-rpg-card-tab-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const tabs = this.closest('.horae-rpg-card-tabs');
@@ -5555,7 +5555,7 @@ function updateRpgDisplay() {
                 h += `<div class="horae-rpg-bar"><span class="horae-rpg-bar-label">${escapeHtml(label)}</span><div class="horae-rpg-bar-track"><div class="horae-rpg-bar-fill" style="width:${pct}%;background:${color};"></div></div><span class="horae-rpg-bar-val">${cur}/${max}</span></div>`;
             }
             if (effects.length > 0) {
-                h += '<div class="horae-rpg-status-label">状态列表</div><div class="horae-rpg-status-detail">';
+                h += '<div class="horae-rpg-status-label">狀態列表</div><div class="horae-rpg-status-detail">';
                 for (const e of effects) h += `<div class="horae-rpg-status-item"><i class="fa-solid ${getStatusIcon(e)} horae-rpg-status-icon"></i><span>${escapeHtml(e)}</span></div>`;
                 h += '</div>';
             }
@@ -5565,11 +5565,11 @@ function updateRpgDisplay() {
         barsSection.innerHTML = barsHtml;
     }
 
-    // 技能平铺列表：角色卡模式下隐藏
+    // 技能平鋪列表：角色卡模式下隱藏
     const skillsSection = document.getElementById('horae-rpg-skills-section');
     if (skillsSection) {
         if (useCardLayout && sendSkills) {
-            skillsSection.innerHTML = '<div class="horae-rpg-skills-empty">技能已在上方角色卡中折叠显示，点击 + 可手动添加</div>';
+            skillsSection.innerHTML = '<div class="horae-rpg-skills-empty">技能已在上方角色卡中摺疊顯示，點擊 + 可手動添加</div>';
         } else {
             const hasSkills = Object.values(rpg.skills).some(arr => arr?.length > 0);
             let skillsHtml = '';
@@ -5580,18 +5580,18 @@ function updateRpgDisplay() {
                     for (const sk of skills) {
                         const lv = sk.level ? `<span class="horae-rpg-skill-lv">${escapeHtml(sk.level)}</span>` : '';
                         const desc = sk.desc ? `<div class="horae-rpg-skill-desc">${escapeHtml(sk.desc)}</div>` : '';
-                        skillsHtml += `<div class="horae-rpg-skill-card"><div class="horae-rpg-skill-header"><span class="horae-rpg-skill-name">${escapeHtml(sk.name)}</span>${lv}<button class="horae-rpg-skill-del" data-owner="${escapeHtml(name)}" data-skill="${escapeHtml(sk.name)}" title="删除"><i class="fa-solid fa-xmark"></i></button></div>${desc}</div>`;
+                        skillsHtml += `<div class="horae-rpg-skill-card"><div class="horae-rpg-skill-header"><span class="horae-rpg-skill-name">${escapeHtml(sk.name)}</span>${lv}<button class="horae-rpg-skill-del" data-owner="${escapeHtml(name)}" data-skill="${escapeHtml(sk.name)}" title="刪除"><i class="fa-solid fa-xmark"></i></button></div>${desc}</div>`;
                     }
                     skillsHtml += '</div>';
                 }
             } else {
-                skillsHtml = '<div class="horae-rpg-skills-empty">暂无技能，点击 + 手动添加</div>';
+                skillsHtml = '<div class="horae-rpg-skills-empty">暫無技能，點擊 + 手動添加</div>';
             }
             skillsSection.innerHTML = skillsHtml;
         }
     }
 
-    // 绘制雷达图
+    // 繪製雷達圖
     document.querySelectorAll('.horae-rpg-radar').forEach(canvas => {
         const charName = canvas.dataset.char;
         const vals = rpg.attributes?.[charName] || {};
@@ -5601,7 +5601,7 @@ function updateRpgDisplay() {
     updateAllRpgHuds();
 }
 
-/** 渲染属性面板配置列表 */
+/** 彩現屬性面板配置列表 */
 function renderAttrConfig() {
     const list = document.getElementById('horae-rpg-attr-config-list');
     if (!list) return;
@@ -5611,13 +5611,13 @@ function renderAttrConfig() {
             <input class="horae-rpg-config-key" value="${escapeHtml(a.key)}" maxlength="10" data-idx="${i}" data-type="attr" />
             <input class="horae-rpg-config-name" value="${escapeHtml(a.name)}" maxlength="8" data-idx="${i}" data-type="attr" />
             <input class="horae-rpg-attr-desc" value="${escapeHtml(a.desc || '')}" placeholder="描述" data-idx="${i}" />
-            <button class="horae-rpg-attr-del" data-idx="${i}" title="删除"><i class="fa-solid fa-xmark"></i></button>
+            <button class="horae-rpg-attr-del" data-idx="${i}" title="刪除"><i class="fa-solid fa-xmark"></i></button>
         </div>
     `).join('');
 }
 
 // ============================================
-// 声望系统 UI
+// 聲望系統 UI
 // ============================================
 
 function _getRepConfig() {
@@ -5642,13 +5642,13 @@ function _saveRepData() {
     getContext().saveChat();
 }
 
-/** 渲染声望分类配置列表 */
+/** 彩現聲望分類配置列表 */
 function renderReputationConfig() {
     const list = document.getElementById('horae-rpg-rep-config-list');
     if (!list) return;
     const config = _getRepConfig();
     if (!config.categories.length) {
-        list.innerHTML = '<div class="horae-rpg-skills-empty">暂无声望分类，点击 + 添加</div>';
+        list.innerHTML = '<div class="horae-rpg-skills-empty">暫無聲望分類，點擊 + 添加</div>';
         return;
     }
     list.innerHTML = config.categories.map((cat, i) => `
@@ -5657,13 +5657,13 @@ function renderReputationConfig() {
             <input class="horae-rpg-rep-range" value="${cat.min}" type="number" style="width:48px" title="最小值" data-idx="${i}" data-field="min" />
             <span style="opacity:.5">~</span>
             <input class="horae-rpg-rep-range" value="${cat.max}" type="number" style="width:48px" title="最大值" data-idx="${i}" data-field="max" />
-            <button class="horae-rpg-btn-sm horae-rpg-rep-subitems" data-idx="${i}" title="编辑细项"><i class="fa-solid fa-list-ul"></i></button>
-            <button class="horae-rpg-rep-del" data-idx="${i}" title="删除"><i class="fa-solid fa-xmark"></i></button>
+            <button class="horae-rpg-btn-sm horae-rpg-rep-subitems" data-idx="${i}" title="編輯細項"><i class="fa-solid fa-list-ul"></i></button>
+            <button class="horae-rpg-rep-del" data-idx="${i}" title="刪除"><i class="fa-solid fa-xmark"></i></button>
         </div>
     `).join('');
 }
 
-/** 渲染声望数值（每个角色的声望列表） */
+/** 彩現聲望數值（每個角色的聲望列表） */
 function renderReputationValues() {
     const section = document.getElementById('horae-rpg-rep-values-section');
     if (!section) return;
@@ -5676,14 +5676,14 @@ function renderReputationValues() {
     for (const name of Object.keys(rpg.bars || {})) allOwners.add(name);
 
     if (!allOwners.size) {
-        section.innerHTML = '<div class="horae-rpg-skills-empty">暂无声望数据（AI回复后自动更新）</div>';
+        section.innerHTML = '<div class="horae-rpg-skills-empty">暫無聲望數據（AI回覆後自動更新）</div>';
         return;
     }
 
     let html = '';
     for (const owner of allOwners) {
         const ownerData = repValues[owner] || {};
-        html += `<details class="horae-rpg-char-detail"><summary class="horae-rpg-char-summary"><span class="horae-rpg-char-detail-name">${escapeHtml(owner)} 声望</span></summary><div class="horae-rpg-char-detail-body">`;
+        html += `<details class="horae-rpg-char-detail"><summary class="horae-rpg-char-summary"><span class="horae-rpg-char-detail-name">${escapeHtml(owner)} 聲望</span></summary><div class="horae-rpg-char-detail-body">`;
         for (const cat of config.categories) {
             const data = ownerData[cat.name] || { value: cat.default ?? 0, subItems: {} };
             const range = (cat.max ?? 100) - (cat.min ?? -100);
@@ -5693,7 +5693,7 @@ function renderReputationValues() {
             html += `<div class="horae-rpg-bar">
                 <span class="horae-rpg-bar-label">${escapeHtml(cat.name)}</span>
                 <div class="horae-rpg-bar-track"><div class="horae-rpg-bar-fill" style="width:${pct}%;background:${color};"></div></div>
-                <span class="horae-rpg-bar-val horae-rpg-rep-val-edit" data-owner="${escapeHtml(owner)}" data-cat="${escapeHtml(cat.name)}" title="点击编辑">${data.value}</span>
+                <span class="horae-rpg-bar-val horae-rpg-rep-val-edit" data-owner="${escapeHtml(owner)}" data-cat="${escapeHtml(cat.name)}" title="點擊編輯">${data.value}</span>
             </div>`;
             if (Object.keys(data.subItems || {}).length > 0) {
                 html += '<div style="padding-left:16px;opacity:.8;font-size:.85em;">';
@@ -5708,7 +5708,7 @@ function renderReputationValues() {
     section.innerHTML = html;
 }
 
-/** 阻止弹窗事件冒泡到 document，避免新版导航「点击外部」误收合 Horae 顶部抽屉 */
+/** 阻止彈窗事件冒泡到 document，避免新版導航「點擊外部」誤收合 Horae 頂部抽屜 */
 function _horaeModalStopDrawerCollapse(modalEl) {
     if (!modalEl) return;
     const block = (e) => { e.stopPropagation(); };
@@ -5717,7 +5717,7 @@ function _horaeModalStopDrawerCollapse(modalEl) {
     }
 }
 
-/** 弹出编辑声望分类细项的对话框 */
+/** 彈出編輯聲望分類細項的對話框 */
 function _openRepSubItemsDialog(catIndex) {
     const config = _getRepConfig();
     const cat = config.categories[catIndex];
@@ -5727,14 +5727,14 @@ function _openRepSubItemsDialog(catIndex) {
     modal.className = 'horae-modal-overlay';
     modal.innerHTML = `
         <div class="horae-modal" style="max-width:400px;">
-            <div class="horae-modal-header"><h3>「${escapeHtml(cat.name)}」细项设置</h3></div>
+            <div class="horae-modal-header"><h3>「${escapeHtml(cat.name)}」細項設定</h3></div>
             <div class="horae-modal-body">
-                <p style="margin-bottom:8px;opacity:.7;font-size:.9em;">细项名称（留空=AI自行发挥）。用于在声望面板下方显示更详细的声望组成。</p>
+                <p style="margin-bottom:8px;opacity:.7;font-size:.9em;">細項名稱（留空=AI自行發揮）。用於在聲望面板下方顯示更詳細的聲望組成。</p>
                 <div id="horae-rep-subitems-list"></div>
-                <button id="horae-rep-subitems-add" class="horae-icon-btn" style="margin-top:6px;"><i class="fa-solid fa-plus"></i> 添加细项</button>
+                <button id="horae-rep-subitems-add" class="horae-icon-btn" style="margin-top:6px;"><i class="fa-solid fa-plus"></i> 添加細項</button>
             </div>
             <div class="horae-modal-footer">
-                <button id="horae-rep-subitems-ok" class="horae-btn primary">确定</button>
+                <button id="horae-rep-subitems-ok" class="horae-btn primary">確定</button>
                 <button id="horae-rep-subitems-cancel" class="horae-btn">取消</button>
             </div>
         </div>
@@ -5747,7 +5747,7 @@ function _openRepSubItemsDialog(catIndex) {
         list.innerHTML = subItems.map((s, i) => `
             <div style="display:flex;gap:4px;margin-bottom:4px;align-items:center;">
                 <input class="horae-rpg-rep-subitem-input" value="${escapeHtml(s)}" data-idx="${i}" style="flex:1;" placeholder="细项名称" />
-                <button class="horae-rpg-rep-subitem-del" data-idx="${i}" title="删除"><i class="fa-solid fa-xmark"></i></button>
+                <button class="horae-rpg-rep-subitem-del" data-idx="${i}" title="刪除"><i class="fa-solid fa-xmark"></i></button>
             </div>
         `).join('');
     }
@@ -5775,27 +5775,27 @@ function _openRepSubItemsDialog(catIndex) {
     modal.querySelector('#horae-rep-subitems-cancel').onclick = () => modal.remove();
 }
 
-/** 声望分类配置事件绑定 */
+/** 聲望分類配置事件綁定 */
 function _bindReputationConfigEvents() {
     const container = document.getElementById('horae-tab-rpg');
     if (!container) return;
 
-    // 添加声望分类
+    // 添加聲望分類
     $('#horae-rpg-rep-add').off('click').on('click', () => {
         const config = _getRepConfig();
-        config.categories.push({ name: '新声望', min: -100, max: 100, default: 0, subItems: [] });
+        config.categories.push({ name: '新聲望', min: -100, max: 100, default: 0, subItems: [] });
         _saveRepData();
         renderReputationConfig();
         renderReputationValues();
     });
 
-    // 名称/范围编辑
+    // 名稱/範圍編輯
     $(container).off('input.repconfig').on('input.repconfig', '.horae-rpg-rep-name, .horae-rpg-rep-range', function() {
         const idx = parseInt(this.dataset.idx);
         const config = _getRepConfig();
         const cat = config.categories[idx];
         if (!cat) return;
-        if (this.classList.contains('horae-rpg-rep-name')) {
+        if (this.classList.contaIG('horae-rpg-rep-name')) {
             cat.name = this.value.trim();
         } else {
             const field = this.dataset.field;
@@ -5804,21 +5804,21 @@ function _bindReputationConfigEvents() {
         _saveRepData();
     });
 
-    // 细项编辑按钮
+    // 細項編輯按鈕
     $(container).off('click.repsubitems').on('click.repsubitems', '.horae-rpg-rep-subitems', function() {
         _openRepSubItemsDialog(parseInt(this.dataset.idx));
     });
 
-    // 删除声望分类
+    // 刪除聲望分類
     $(container).off('click.repdel').on('click.repdel', '.horae-rpg-rep-del', function() {
-        if (!confirm('确定删除此声望分类？')) return;
+        if (!confirm('確定刪除此聲望分類？')) return;
         const idx = parseInt(this.dataset.idx);
         const config = _getRepConfig();
         const deleted = config.categories.splice(idx, 1)[0];
         if (deleted?.name) {
             if (!config._deletedCategories) config._deletedCategories = [];
             config._deletedCategories.push(deleted.name);
-            // 清除所有角色该分类的数值
+            // 清除所有角色該分類的數值
             const repValues = _getRepValues();
             for (const owner of Object.keys(repValues)) {
                 delete repValues[owner][deleted.name];
@@ -5830,7 +5830,7 @@ function _bindReputationConfigEvents() {
         renderReputationValues();
     });
 
-    // 手动编辑声望数值
+    // 手動編輯聲望數值
     $(container).off('click.repvaledit').on('click.repvaledit', '.horae-rpg-rep-val-edit', function() {
         const owner = this.dataset.owner;
         const catName = this.dataset.cat;
@@ -5841,7 +5841,7 @@ function _bindReputationConfigEvents() {
         if (!repValues[owner]) repValues[owner] = {};
         if (!repValues[owner][catName]) repValues[owner][catName] = { value: cat.default ?? 0, subItems: {} };
         const current = repValues[owner][catName].value;
-        const newVal = prompt(`设置 ${owner} 的 ${catName} 数值 (${cat.min}~${cat.max}):`, current);
+        const newVal = prompt(`設定 ${owner} 的 ${catName} 數值 (${cat.min}~${cat.max}):`, current);
         if (newVal === null) return;
         const parsed = parseInt(newVal);
         if (isNaN(parsed)) return;
@@ -5850,7 +5850,7 @@ function _bindReputationConfigEvents() {
         renderReputationValues();
     });
 
-    // 导出声望配置
+    // 導出聲望配置
     $('#horae-rpg-rep-export').off('click').on('click', () => {
         const config = _getRepConfig();
         const data = { horae_reputation_config: { version: 1, categories: config.categories } };
@@ -5860,10 +5860,10 @@ function _bindReputationConfigEvents() {
         a.download = 'horae-reputation-config.json';
         a.click();
         URL.revokeObjectURL(a.href);
-        showToast('声望配置已导出', 'success');
+        showToast('聲望配置已導出', 'success');
     });
 
-    // 导入声望配置
+    // 導入聲望配置
     $('#horae-rpg-rep-import').off('click').on('click', () => {
         document.getElementById('horae-rpg-rep-import-file')?.click();
     });
@@ -5876,10 +5876,10 @@ function _bindReputationConfigEvents() {
                 const data = JSON.parse(e.target.result);
                 const imported = data?.horae_reputation_config;
                 if (!imported?.categories?.length) {
-                    showToast('无效的声望配置文件', 'error');
+                    showToast('無效的聲望配置資料', 'error');
                     return;
                 }
-                if (!confirm(`将导入 ${imported.categories.length} 个声望分类，是否继续？`)) return;
+                if (!confirm(`將導入 ${imported.categories.length} 個聲望分類，是否繼續？`)) return;
                 const config = _getRepConfig();
                 const existingNames = new Set(config.categories.map(c => c.name));
                 let added = 0;
@@ -5892,7 +5892,7 @@ function _bindReputationConfigEvents() {
                         default: cat.default ?? 0,
                         subItems: cat.subItems || [],
                     });
-                    // 从删除黑名单中移除（如果之前删过同名的）
+                    // 從刪除黑名單中移除（如果之前刪過同名的）
                     if (config._deletedCategories) {
                         config._deletedCategories = config._deletedCategories.filter(n => n !== cat.name);
                     }
@@ -5901,9 +5901,9 @@ function _bindReputationConfigEvents() {
                 _saveRepData();
                 renderReputationConfig();
                 renderReputationValues();
-                showToast(`已导入 ${added} 个新声望分类`, 'success');
+                showToast(`已導入 ${added} 個新聲望分類`, 'success');
             } catch (err) {
-                showToast('导入失败: ' + err.message, 'error');
+                showToast('導入失敗: ' + err.message, 'error');
             }
         };
         reader.readAsText(file);
@@ -5912,10 +5912,10 @@ function _bindReputationConfigEvents() {
 }
 
 // ============================================
-// 装备栏 UI
+// 裝備欄 UI
 // ============================================
 
-/** 获取装备配置根对象 { locked, perChar: { name: { slots, _deletedSlots } } } */
+/** 獲取裝備配置根對象 { locked, perChar: { name: { slots, _deletedSlots } } } */
 function _getEqConfigMap() {
     const chat = horaeManager.getChat();
     if (!chat?.length) return { locked: false, perChar: {} };
@@ -5926,7 +5926,7 @@ function _getEqConfigMap() {
         chat[0].horae_meta.rpg.equipmentConfig = { locked: false, perChar: {} };
         return chat[0].horae_meta.rpg.equipmentConfig;
     }
-    // 旧格式迁移：{ slots: [...] } → { perChar: { owner: { slots } } }
+    // 舊格式遷移：{ slots: [...] } → { perChar: { owner: { slots } } }
     if (Array.isArray(cfg.slots)) {
         const oldSlots = cfg.slots;
         const locked = !!cfg.locked;
@@ -5943,7 +5943,7 @@ function _getEqConfigMap() {
     return cfg;
 }
 
-/** 获取某角色的装备格位配置 */
+/** 獲取某角色的裝備格位配置 */
 function _getCharEqConfig(owner) {
     const map = _getEqConfigMap();
     if (!map.perChar[owner]) map.perChar[owner] = { slots: [], _deletedSlots: [] };
@@ -5963,10 +5963,10 @@ function _saveEqData() {
     getContext().saveChat();
 }
 
-/** renderEquipmentSlotConfig 已废弃，格位配置合并到角色装备面板 */
+/** renderEquipmentSlotConfig 已廢棄，格位配置合併到角色裝備面板 */
 function renderEquipmentSlotConfig() { /* noop - per-char config in renderEquipmentValues */ }
 
-/** 渲染统一装备面板（每角色独立格位 + 装备） */
+/** 彩現統一裝備面板（每角色獨立格位 + 裝備） */
 function renderEquipmentValues() {
     const section = document.getElementById('horae-rpg-eq-values-section');
     if (!section) return;
@@ -5975,13 +5975,13 @@ function renderEquipmentValues() {
     const lockBtn = document.getElementById('horae-rpg-eq-lock');
     if (lockBtn) {
         lockBtn.querySelector('i').className = cfgMap.locked ? 'fa-solid fa-lock' : 'fa-solid fa-lock-open';
-        lockBtn.title = cfgMap.locked ? '已锁定（AI不可建议新格位）' : '未锁定（AI可建议新格位）';
+        lockBtn.title = cfgMap.locked ? '已鎖定（AI不可建議新格位）' : '未鎖定（AI可建議新格位）';
     }
     const rpg = horaeManager.getRpgStateAt(0);
     const allOwners = new Set([...Object.keys(eqValues), ...Object.keys(cfgMap.perChar), ...Object.keys(rpg.bars || {})]);
 
     if (!allOwners.size) {
-        section.innerHTML = '<div class="horae-rpg-skills-empty">暂无角色数据（AI 回复后自动更新，或手动添加）</div>';
+        section.innerHTML = '<div class="horae-rpg-skills-empty">暫無角色數據（AI 回覆後自動更新，或手動添加）</div>';
         return;
     }
 
@@ -6006,7 +6006,7 @@ function renderEquipmentValues() {
                     itemsHtml += `<div class="horae-rpg-eq-item">
                         <div class="horae-rpg-eq-item-header">
                             ${iconHtml}<span class="horae-rpg-eq-item-name">${escapeHtml(item.name)}</span> ${attrStr}
-                            <button class="horae-rpg-eq-item-del" data-owner="${escapeHtml(owner)}" data-slot="${escapeHtml(slot.name)}" data-item="${escapeHtml(item.name)}" title="卸下归还物品栏"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+                            <button class="horae-rpg-eq-item-del" data-owner="${escapeHtml(owner)}" data-slot="${escapeHtml(slot.name)}" data-item="${escapeHtml(item.name)}" title="卸下歸還物品欄"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
                         </div>
                         ${descHtml}
                     </div>`;
@@ -6018,32 +6018,32 @@ function renderEquipmentValues() {
         }
         html += `<details class="horae-rpg-char-detail"${hasItems ? ' open' : ''}>
             <summary class="horae-rpg-char-summary">
-                <span class="horae-rpg-char-detail-name">${escapeHtml(owner)} 装备</span>
+                <span class="horae-rpg-char-detail-name">${escapeHtml(owner)} 裝備</span>
                 <span style="flex:1;"></span>
-                <button class="horae-rpg-btn-sm horae-rpg-eq-char-tpl" data-owner="${escapeHtml(owner)}" title="为此角色加载模板"><i class="fa-solid fa-shapes"></i></button>
+                <button class="horae-rpg-btn-sm horae-rpg-eq-char-tpl" data-owner="${escapeHtml(owner)}" title="為此角色載入模板"><i class="fa-solid fa-shapes"></i></button>
                 <button class="horae-rpg-btn-sm horae-rpg-eq-char-add-slot" data-owner="${escapeHtml(owner)}" title="添加格位"><i class="fa-solid fa-plus"></i></button>
-                <button class="horae-rpg-btn-sm horae-rpg-eq-char-del-slot" data-owner="${escapeHtml(owner)}" title="删除格位"><i class="fa-solid fa-minus"></i></button>
+                <button class="horae-rpg-btn-sm horae-rpg-eq-char-del-slot" data-owner="${escapeHtml(owner)}" title="刪除格位"><i class="fa-solid fa-minus"></i></button>
             </summary>
             <div class="horae-rpg-char-detail-body">${itemsHtml}
-                <button class="horae-rpg-btn-sm horae-rpg-eq-add-item" data-owner="${escapeHtml(owner)}" style="margin-top:6px;width:100%;"><i class="fa-solid fa-plus"></i> 手动添加装备</button>
+                <button class="horae-rpg-btn-sm horae-rpg-eq-add-item" data-owner="${escapeHtml(owner)}" style="margin-top:6px;width:100%;"><i class="fa-solid fa-plus"></i> 手動添加裝備</button>
             </div>
         </details>`;
     }
     section.innerHTML = html;
-    // 隐藏旧的全局格位列表
+    // 隱藏舊的全域格位列表
     const oldList = document.getElementById('horae-rpg-eq-slot-list');
     if (oldList) oldList.innerHTML = '';
 }
 
-/** 手动添加装备对话框 */
+/** 手動添加裝備對話框 */
 function _openAddEquipDialog(owner) {
     const charCfg = _getCharEqConfig(owner);
-    if (!charCfg.slots.length) { showToast(`${owner} 还没有格位，请先加载模板或手动添加格位`, 'warning'); return; }
+    if (!charCfg.slots.length) { showToast(`${owner} 還沒有格位，請先加載模範或手動添加格位`, 'warning'); return; }
     const modal = document.createElement('div');
     modal.className = 'horae-modal-overlay';
     modal.innerHTML = `
         <div class="horae-modal-content" style="max-width:420px;width:92vw;box-sizing:border-box;">
-            <div class="horae-modal-header"><h3>为 ${escapeHtml(owner)} 添加装备</h3></div>
+            <div class="horae-modal-header"><h3>為 ${escapeHtml(owner)} 添加裝備</h3></div>
             <div class="horae-modal-body">
                 <div class="horae-edit-field">
                     <label>格位</label>
@@ -6052,16 +6052,16 @@ function _openAddEquipDialog(owner) {
                     </select>
                 </div>
                 <div class="horae-edit-field">
-                    <label>装备名称</label>
+                    <label>裝備名稱</label>
                     <input id="horae-eq-add-name" type="text" placeholder="输入装备名称" />
                 </div>
                 <div class="horae-edit-field">
-                    <label>属性 (每行一个，格式: 属性名=数值)</label>
+                    <label>屬性 (每行一個，格式: 屬性名=數值)</label>
                     <textarea id="horae-eq-add-attrs" rows="4" placeholder="物理防御=10&#10;火系防御=3"></textarea>
                 </div>
             </div>
             <div class="horae-modal-footer">
-                <button id="horae-eq-add-ok" class="horae-btn primary">确定</button>
+                <button id="horae-eq-add-ok" class="horae-btn primary">確定</button>
                 <button id="horae-eq-add-cancel" class="horae-btn">取消</button>
             </div>
         </div>`;
@@ -6070,7 +6070,7 @@ function _openAddEquipDialog(owner) {
     modal.querySelector('#horae-eq-add-ok').onclick = () => {
         const slotName = modal.querySelector('#horae-eq-add-slot').value;
         const itemName = modal.querySelector('#horae-eq-add-name').value.trim();
-        if (!itemName) { showToast('请输入装备名称', 'warning'); return; }
+        if (!itemName) { showToast('請輸入裝備名稱', 'warning'); return; }
         const attrsText = modal.querySelector('#horae-eq-add-attrs').value;
         const attrs = {};
         for (const line of attrsText.split('\n')) {
@@ -6083,7 +6083,7 @@ function _openAddEquipDialog(owner) {
         const slotCfg = charCfg.slots.find(s => s.name === slotName);
         const maxCount = slotCfg?.maxCount ?? 1;
         if (eqValues[owner][slotName].length >= maxCount) {
-            if (!confirm(`${slotName} 已满(${maxCount}件)，将替换最旧装备并归还物品栏，继续？`)) return;
+            if (!confirm(`${slotName} 已滿(${maxCount}件)，將替換最舊裝備並歸還物品欄，繼續？`)) return;
             const bumped = eqValues[owner][slotName].shift();
             if (bumped) _unequipToItems(owner, slotName, bumped.name, true);
         }
@@ -6096,17 +6096,17 @@ function _openAddEquipDialog(owner) {
     modal.querySelector('#horae-eq-add-cancel').onclick = () => modal.remove();
 }
 
-/** 装备栏事件绑定 */
+/** 裝備欄事件綁定 */
 function _bindEquipmentEvents() {
     const container = document.getElementById('horae-tab-rpg');
     if (!container) return;
 
-    // 为角色加载模板
+    // 為角色加載模範
     $(container).off('click.eqchartpl').on('click.eqchartpl', '.horae-rpg-eq-char-tpl', function(e) {
         e.stopPropagation();
         const owner = this.dataset.owner;
         const tpls = settings.equipmentTemplates || [];
-        if (!tpls.length) { showToast('没有可用模板', 'warning'); return; }
+        if (!tpls.length) { showToast('沒有可用模範', 'warning'); return; }
         const modal = document.createElement('div');
         modal.className = 'horae-modal-overlay';
         let listHtml = tpls.map((t, i) => {
@@ -6118,15 +6118,15 @@ function _bindEquipmentEvents() {
         }).join('');
         modal.innerHTML = `
             <div class="horae-modal-content" style="max-width:400px;width:90vw;box-sizing:border-box;">
-                <div class="horae-modal-header"><h3>为 ${escapeHtml(owner)} 选择模板</h3></div>
+                <div class="horae-modal-header"><h3>為 ${escapeHtml(owner)} 選擇模範</h3></div>
                 <div class="horae-modal-body" style="max-height:50vh;overflow-y:auto;">
                     <div style="margin-bottom:8px;font-size:11px;color:var(--horae-text-muted);">
-                        加载后会<b>替换</b>该角色的格位配置，加载后仍可增减单个格位。
+                        加載後會<b>替換</b>該角色的格位配置，加載後仍可增減單個格位。
                     </div>
                     ${listHtml}
                 </div>
                 <div class="horae-modal-footer">
-                    <button class="horae-btn primary" id="horae-eq-tpl-save"><i class="fa-solid fa-floppy-disk"></i> 存为新模板</button>
+                    <button class="horae-btn primary" id="horae-eq-tpl-save"><i class="fa-solid fa-floppy-disk"></i> 存為新模範</button>
                     <button class="horae-btn" id="horae-eq-tpl-close">取消</button>
                 </div>
             </div>`;
@@ -6135,8 +6135,8 @@ function _bindEquipmentEvents() {
         modal.querySelector('#horae-eq-tpl-close').onclick = () => modal.remove();
         modal.querySelector('#horae-eq-tpl-save').onclick = () => {
             const charCfg = _getCharEqConfig(owner);
-            if (!charCfg.slots.length) { showToast(`${owner} 没有格位可保存`, 'warning'); return; }
-            const name = prompt('模板名称:', '');
+            if (!charCfg.slots.length) { showToast(`${owner} 沒有格位可保存`, 'warning'); return; }
+            const name = prompt('模範名稱:', '');
             if (!name?.trim()) return;
             settings.equipmentTemplates.push({
                 name: name.trim(),
@@ -6144,7 +6144,7 @@ function _bindEquipmentEvents() {
             });
             saveSettingsDebounced();
             modal.remove();
-            showToast(`模板「${name.trim()}」已保存`, 'success');
+            showToast(`模範「${name.trim()}」已保存`, 'success');
         };
         modal.querySelectorAll('.horae-rpg-tpl-item').forEach(item => {
             item.onclick = () => {
@@ -6162,21 +6162,21 @@ function _bindEquipmentEvents() {
                 _refreshSystemPromptDisplay();
                 updateTokenCounter();
                 modal.remove();
-                showToast(`${owner} 已加载「${tpl.name}」模板`, 'success');
+                showToast(`${owner} 已加載「${tpl.name}」模範`, 'success');
             };
         });
     });
 
-    // 为角色添加格位
+    // 為角色添加格位
     $(container).off('click.eqcharaddslot').on('click.eqcharaddslot', '.horae-rpg-eq-char-add-slot', function(e) {
         e.stopPropagation();
         const owner = this.dataset.owner;
-        const name = prompt('新格位名称:', '');
+        const name = prompt('新格位名稱:', '');
         if (!name?.trim()) return;
-        const maxStr = prompt('数量上限:', '1');
+        const maxStr = prompt('數量上限:', '1');
         const maxCount = Math.max(1, parseInt(maxStr) || 1);
         const charCfg = _getCharEqConfig(owner);
-        if (charCfg.slots.some(s => s.name === name.trim())) { showToast('该格位已存在', 'warning'); return; }
+        if (charCfg.slots.some(s => s.name === name.trim())) { showToast('該格位已存在', 'warning'); return; }
         charCfg.slots.push({ name: name.trim(), maxCount });
         if (charCfg._deletedSlots) charCfg._deletedSlots = charCfg._deletedSlots.filter(n => n !== name.trim());
         _saveEqData();
@@ -6187,18 +6187,18 @@ function _bindEquipmentEvents() {
         updateTokenCounter();
     });
 
-    // 为角色删除格位
+    // 為角色刪除格位
     $(container).off('click.eqchardelslot').on('click.eqchardelslot', '.horae-rpg-eq-char-del-slot', function(e) {
         e.stopPropagation();
         const owner = this.dataset.owner;
         const charCfg = _getCharEqConfig(owner);
-        if (!charCfg.slots.length) { showToast('该角色没有格位', 'warning'); return; }
+        if (!charCfg.slots.length) { showToast('該角色沒有格位', 'warning'); return; }
         const names = charCfg.slots.map(s => s.name);
-        const name = prompt(`要删除哪个格位？\n当前: ${names.join('、')}`, '');
+        const name = prompt(`要刪除哪個格位？\n目前: ${names.join('、')}`, '');
         if (!name?.trim()) return;
         const idx = charCfg.slots.findIndex(s => s.name === name.trim());
-        if (idx < 0) { showToast('未找到该格位', 'warning'); return; }
-        if (!confirm(`确定删除 ${owner} 的「${name.trim()}」格位？该格位下的装备也会被清除。`)) return;
+        if (idx < 0) { showToast('未找到該格位', 'warning'); return; }
+        if (!confirm(`確定刪除 ${owner} 的「${name.trim()}」格位？該格位下的裝備也會被清除。`)) return;
         const deleted = charCfg.slots.splice(idx, 1)[0];
         if (!charCfg._deletedSlots) charCfg._deletedSlots = [];
         charCfg._deletedSlots.push(deleted.name);
@@ -6215,7 +6215,7 @@ function _bindEquipmentEvents() {
         updateTokenCounter();
     });
 
-    // 锁定/解锁
+    // 鎖定/解鎖
     $('#horae-rpg-eq-lock').off('click').on('click', () => {
         const cfgMap = _getEqConfigMap();
         cfgMap.locked = !cfgMap.locked;
@@ -6223,11 +6223,11 @@ function _bindEquipmentEvents() {
         const lockBtn = document.getElementById('horae-rpg-eq-lock');
         if (lockBtn) {
             lockBtn.querySelector('i').className = cfgMap.locked ? 'fa-solid fa-lock' : 'fa-solid fa-lock-open';
-            lockBtn.title = cfgMap.locked ? '已锁定' : '未锁定';
+            lockBtn.title = cfgMap.locked ? '已鎖定' : '未鎖定';
         }
     });
 
-    // 卸下装备
+    // 卸下裝備
     $(container).off('click.eqitemdel').on('click.eqitemdel', '.horae-rpg-eq-item-del', function() {
         const owner = this.dataset.owner;
         const slotName = this.dataset.slot;
@@ -6237,24 +6237,24 @@ function _bindEquipmentEvents() {
         _bindEquipmentEvents();
         updateItemsDisplay();
         updateAllRpgHuds();
-        showToast(`已将「${itemName}」从 ${owner} 的 ${slotName} 卸下，归还物品栏`, 'info');
+        showToast(`已將「${itemName}」從 ${owner} 的 ${slotName} 卸下，歸還物品欄`, 'info');
     });
 
-    // 手动添加装备
+    // 手動添加裝備
     $(container).off('click.eqadditem').on('click.eqadditem', '.horae-rpg-eq-add-item', function() {
         _openAddEquipDialog(this.dataset.owner);
     });
 
-    // 导出全部装备配置
+    // 導出全部裝備配置
     $('#horae-rpg-eq-export').off('click').on('click', () => {
         const cfgMap = _getEqConfigMap();
         const blob = new Blob([JSON.stringify({ horae_equipment_config: { version: 2, perChar: cfgMap.perChar, locked: cfgMap.locked } }, null, 2)], { type: 'application/json' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
         a.download = 'horae-equipment-config.json'; a.click();
-        showToast('装备配置已导出', 'success');
+        showToast('裝備配置已導出', 'success');
     });
 
-    // 导入装备配置
+    // 導入裝備配置
     $('#horae-rpg-eq-import').off('click').on('click', () => {
         document.getElementById('horae-rpg-eq-import-file')?.click();
     });
@@ -6265,16 +6265,16 @@ function _bindEquipmentEvents() {
             try {
                 const data = JSON.parse(e.target.result);
                 const imported = data?.horae_equipment_config;
-                if (!imported) { showToast('无效文件', 'error'); return; }
+                if (!imported) { showToast('無效資料', 'error'); return; }
                 if (imported.version === 2 && imported.perChar) {
-                    if (!confirm('将导入按角色的装备配置，是否继续？')) return;
+                    if (!confirm('將導入按角色的裝備配置，是否繼續？')) return;
                     const cfgMap = _getEqConfigMap();
                     for (const [owner, cfg] of Object.entries(imported.perChar)) {
                         cfgMap.perChar[owner] = JSON.parse(JSON.stringify(cfg));
                     }
                     if (imported.locked !== undefined) cfgMap.locked = imported.locked;
                 } else if (imported.slots?.length) {
-                    if (!confirm(`将导入旧格式 ${imported.slots.length} 个格位到所有现有角色，是否继续？`)) return;
+                    if (!confirm(`將導入舊格式 ${imported.slots.length} 個格位到所有現有角色，是否繼續？`)) return;
                     const cfgMap = _getEqConfigMap();
                     const eqValues = _getEqValues();
                     for (const owner of Object.keys(eqValues)) {
@@ -6284,27 +6284,27 @@ function _bindEquipmentEvents() {
                             if (!existing.has(slot.name)) charCfg.slots.push({ name: slot.name, maxCount: slot.maxCount ?? 1 });
                         }
                     }
-                } else { showToast('无效文件', 'error'); return; }
+                } else { showToast('無效資料', 'error'); return; }
                 _saveEqData();
                 renderEquipmentValues();
                 _bindEquipmentEvents();
                 horaeManager.init(getContext(), settings);
                 _refreshSystemPromptDisplay();
                 updateTokenCounter();
-                showToast('装备配置已导入', 'success');
-            } catch (err) { showToast('导入失败: ' + err.message, 'error'); }
+                showToast('裝備配置已導入', 'success');
+            } catch (err) { showToast('導入失敗: ' + err.message, 'error'); }
         };
         reader.readAsText(file);
         this.value = '';
     });
 
-    // 管理模板（全局模板增删）
+    // 管理模範（全域模範增刪）
     $('#horae-rpg-eq-preset').off('click').on('click', () => {
         _openEquipTemplateManageModal();
     });
 }
 
-/** 全局模板管理（增删模板，不加载到角色） */
+/** 全域模範管理（增刪模範，不加載到角色） */
 function _openEquipTemplateManageModal() {
     const modal = document.createElement('div');
     modal.className = 'horae-modal-overlay';
@@ -6314,24 +6314,24 @@ function _openEquipTemplateManageModal() {
             const slotsStr = t.slots.map(s => s.name).join('、');
             return `<div class="horae-rpg-tpl-item"><div class="horae-rpg-tpl-name">${escapeHtml(t.name)}</div>
                 <div class="horae-rpg-tpl-slots">${escapeHtml(slotsStr)}</div>
-                <button class="horae-rpg-btn-sm horae-rpg-tpl-del" data-idx="${i}" title="删除"><i class="fa-solid fa-trash"></i></button>
+                <button class="horae-rpg-btn-sm horae-rpg-tpl-del" data-idx="${i}" title="刪除"><i class="fa-solid fa-trash"></i></button>
             </div>`;
         }).join('');
-        if (!tpls.length) listHtml = '<div class="horae-rpg-skills-empty">暂无自定义模板（内置模板不可删除）</div>';
+        if (!tpls.length) listHtml = '<div class="horae-rpg-skills-empty">暫無客製化模範（內置模範不可刪除）</div>';
         modal.innerHTML = `<div class="horae-modal-content" style="max-width:460px;width:90vw;box-sizing:border-box;">
-            <div class="horae-modal-header"><h3>管理装备模板</h3></div>
+            <div class="horae-modal-header"><h3>管理裝備模範</h3></div>
             <div class="horae-modal-body" style="max-height:55vh;overflow-y:auto;">
-                <div style="margin-bottom:6px;font-size:11px;color:var(--horae-text-muted);">内置模板（人类/兽人/翼族/马人/拉弥亚/恶魔）不在此列表中，无需管理。以下为用户自存的模板。</div>
+                <div style="margin-bottom:6px;font-size:11px;color:var(--horae-text-muted);">內置模範（人類/獸人/翼族/馬人/拉彌亞/惡魔）不在此列表中，無需管理。以下為用戶自存的模範。</div>
                 ${listHtml}
             </div>
-            <div class="horae-modal-footer"><button class="horae-btn" id="horae-tpl-mgmt-close">关闭</button></div>
+            <div class="horae-modal-footer"><button class="horae-btn" id="horae-tpl-mgmt-close">關閉</button></div>
         </div>`;
         modal.querySelector('#horae-tpl-mgmt-close').onclick = () => modal.remove();
         modal.querySelectorAll('.horae-rpg-tpl-del').forEach(btn => {
             btn.onclick = () => {
                 const idx = parseInt(btn.dataset.idx);
                 const tpl = settings.equipmentTemplates[idx];
-                if (!confirm(`删除模板「${tpl.name}」？`)) return;
+                if (!confirm(`刪除模範「${tpl.name}」？`)) return;
                 settings.equipmentTemplates.splice(idx, 1);
                 saveSettingsDebounced();
                 _render();
@@ -6343,7 +6343,7 @@ function _openEquipTemplateManageModal() {
     _render();
 }
 
-// ============ 货币系统配置 ============
+// ============ 貨幣系統配置 ============
 
 function _getCurConfig() {
     const chat = horaeManager.getChat();
@@ -6364,16 +6364,16 @@ function renderCurrencyConfig() {
     if (!list) return;
     const config = _getCurConfig();
     if (!config.denominations.length) {
-        list.innerHTML = '<div class="horae-rpg-skills-empty">暂无币种，点击 + 添加</div>';
+        list.innerHTML = '<div class="horae-rpg-skills-empty">暫無幣種，點擊 + 添加</div>';
         return;
     }
     list.innerHTML = config.denominations.map((d, i) => `
         <div class="horae-rpg-config-row" data-idx="${i}">
             <input class="horae-rpg-cur-emoji" value="${escapeHtml(d.emoji || '')}" placeholder="💰" maxlength="2" data-idx="${i}" title="显示用 emoji" />
             <input class="horae-rpg-cur-name" value="${escapeHtml(d.name)}" placeholder="币种名称" data-idx="${i}" />
-            <span style="opacity:.5;font-size:11px">兑换率</span>
+            <span style="opacity:.5;font-size:11px">兌換率</span>
             <input class="horae-rpg-cur-rate" value="${d.rate}" type="number" min="1" style="width:60px" title="兑换率（越高面值越小，如铜=1000）" data-idx="${i}" />
-            <button class="horae-rpg-cur-del" data-idx="${i}" title="删除"><i class="fa-solid fa-xmark"></i></button>
+            <button class="horae-rpg-cur-del" data-idx="${i}" title="刪除"><i class="fa-solid fa-xmark"></i></button>
         </div>
     `).join('');
     _renderCurrencyHint(config);
@@ -6387,14 +6387,14 @@ function _renderCurrencyHint(config) {
     const sorted = [...denoms].sort((a, b) => a.rate - b.rate);
     const base = sorted[0];
     const parts = sorted.map(d => `${d.rate / base.rate}${d.name}`).join(' = ');
-    section.innerHTML = `<div class="horae-rpg-skills-empty" style="font-size:11px;opacity:.7">兑换关系: ${escapeHtml(parts)}</div>`;
+    section.innerHTML = `<div class="horae-rpg-skills-empty" style="font-size:11px;opacity:.7">兌換關係: ${escapeHtml(parts)}</div>`;
 }
 
 function _bindCurrencyEvents() {
-    // 添加币种
+    // 添加幣種
     $('#horae-rpg-cur-add').off('click').on('click', () => {
         const config = _getCurConfig();
-        config.denominations.push({ name: '新币种', rate: 1, emoji: '💰' });
+        config.denominations.push({ name: '新幣種', rate: 1, emoji: '💰' });
         _saveCurData();
         renderCurrencyConfig();
         horaeManager.init(getContext(), settings);
@@ -6402,7 +6402,7 @@ function _bindCurrencyEvents() {
         updateTokenCounter();
     });
 
-    // 编辑币种 emoji
+    // 編輯幣種 emoji
     $(document).off('change', '.horae-rpg-cur-emoji').on('change', '.horae-rpg-cur-emoji', function() {
         const config = _getCurConfig();
         const idx = parseInt(this.dataset.idx);
@@ -6410,7 +6410,7 @@ function _bindCurrencyEvents() {
         _saveCurData();
     });
 
-    // 编辑币种名称
+    // 編輯幣種名稱
     $(document).off('change', '.horae-rpg-cur-name').on('change', '.horae-rpg-cur-name', function() {
         const config = _getCurConfig();
         const idx = parseInt(this.dataset.idx);
@@ -6426,7 +6426,7 @@ function _bindCurrencyEvents() {
         }
     });
 
-    // 编辑兑换率
+    // 編輯兌換率
     $(document).off('change', '.horae-rpg-cur-rate').on('change', '.horae-rpg-cur-rate', function() {
         const config = _getCurConfig();
         const idx = parseInt(this.dataset.idx);
@@ -6439,14 +6439,14 @@ function _bindCurrencyEvents() {
         updateTokenCounter();
     });
 
-    // 删除币种
+    // 刪除幣種
     $(document).off('click', '.horae-rpg-cur-del').on('click', '.horae-rpg-cur-del', function() {
         const config = _getCurConfig();
         const idx = parseInt(this.dataset.idx);
         const name = config.denominations[idx].name;
-        if (!confirm(`确定删除币种「${name}」？该币种在所有角色下的金额数据也会被清除。`)) return;
+        if (!confirm(`確定刪除幣種「${name}」？該幣種在所有角色下的金額數據也會被清除。`)) return;
         config.denominations.splice(idx, 1);
-        // 清除所有角色该币种的数值
+        // 清除所有角色該幣種的數值
         const chat = horaeManager.getChat();
         const curData = chat?.[0]?.horae_meta?.rpg?.currency;
         if (curData) {
@@ -6462,7 +6462,7 @@ function _bindCurrencyEvents() {
         updateTokenCounter();
     });
 
-    // 导出
+    // 導出
     $('#horae-rpg-cur-export').off('click').on('click', () => {
         const config = _getCurConfig();
         const blob = new Blob([JSON.stringify({ denominations: config.denominations }, null, 2)], { type: 'application/json' });
@@ -6473,7 +6473,7 @@ function _bindCurrencyEvents() {
         URL.revokeObjectURL(a.href);
     });
 
-    // 导入
+    // 導入
     $('#horae-rpg-cur-import').off('click').on('click', () => {
         document.getElementById('horae-rpg-cur-import-file')?.click();
     });
@@ -6484,8 +6484,8 @@ function _bindCurrencyEvents() {
         reader.onload = (e) => {
             try {
                 const imported = JSON.parse(e.target.result);
-                if (!imported.denominations?.length) { showToast('文件格式不正确', 'error'); return; }
-                if (!confirm(`将导入 ${imported.denominations.length} 个币种，是否继续？`)) return;
+                if (!imported.denominations?.length) { showToast('資料格式不正確', 'error'); return; }
+                if (!confirm(`將導入 ${imported.denominations.length} 個幣種，是否繼續？`)) return;
                 const config = _getCurConfig();
                 const existingNames = new Set(config.denominations.map(d => d.name));
                 let added = 0;
@@ -6499,9 +6499,9 @@ function _bindCurrencyEvents() {
                 horaeManager.init(getContext(), settings);
                 _refreshSystemPromptDisplay();
                 updateTokenCounter();
-                showToast(`已导入 ${added} 个新币种`, 'success');
+                showToast(`已導入 ${added} 個新幣種`, 'success');
             } catch (err) {
-                showToast('导入失败: ' + err.message, 'error');
+                showToast('導入失敗: ' + err.message, 'error');
             }
         };
         reader.readAsText(file);
@@ -6509,7 +6509,7 @@ function _bindCurrencyEvents() {
     });
 }
 
-// ══════════════ 据点/基地系统 ══════════════
+// ══════════════ 據點/基地系統 ══════════════
 
 function _getStrongholdData() {
     const chat = horaeManager.getChat();
@@ -6523,20 +6523,20 @@ function _saveStrongholdData() { getContext().saveChat(); }
 
 function _genShId() { return 'sh_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
-/** 构建子节点树 */
+/** 構建子節點樹 */
 function _buildShTree(nodes, parentId) {
     return nodes
         .filter(n => (n.parent || null) === parentId)
         .map(n => ({ ...n, children: _buildShTree(nodes, n.id) }));
 }
 
-/** 渲染据点树形 UI */
+/** 彩現據點樹形 UI */
 function renderStrongholdTree() {
     const container = document.getElementById('horae-rpg-sh-tree');
     if (!container) return;
     const nodes = _getStrongholdData();
     if (!nodes.length) {
-        container.innerHTML = '<div class="horae-rpg-skills-empty">暂无据点（点击 + 添加，或由AI在 &lt;horae&gt; 中写入 base: 标签自动创建）</div>';
+        container.innerHTML = '<div class="horae-rpg-skills-empty">暫無據點（點擊 + 添加，或由AI在 &lt;horae&gt; 中寫入 base: 標籤自動建立）</div>';
         return;
     }
     const tree = _buildShTree(nodes, null);
@@ -6555,8 +6555,8 @@ function _renderShNodes(nodes, depth) {
         html += lvBadge;
         html += `<div class="horae-rpg-sh-node-actions">`;
         html += `<button class="horae-rpg-btn-sm horae-rpg-sh-add-child" data-id="${escapeHtml(n.id)}" title="添加子节点"><i class="fa-solid fa-plus"></i></button>`;
-        html += `<button class="horae-rpg-btn-sm horae-rpg-sh-edit" data-id="${escapeHtml(n.id)}" title="编辑"><i class="fa-solid fa-pen"></i></button>`;
-        html += `<button class="horae-rpg-btn-sm horae-rpg-sh-del" data-id="${escapeHtml(n.id)}" title="删除"><i class="fa-solid fa-trash"></i></button>`;
+        html += `<button class="horae-rpg-btn-sm horae-rpg-sh-edit" data-id="${escapeHtml(n.id)}" title="編輯"><i class="fa-solid fa-pen"></i></button>`;
+        html += `<button class="horae-rpg-btn-sm horae-rpg-sh-del" data-id="${escapeHtml(n.id)}" title="刪除"><i class="fa-solid fa-trash"></i></button>`;
         html += `</div></div>`;
         if (n.desc) {
             html += `<div class="horae-rpg-sh-node-desc" style="padding-left:${indent + 12}px;">${escapeHtml(n.desc)}</div>`;
@@ -6575,14 +6575,14 @@ function _openShEditDialog(nodeId) {
     modal.className = 'horae-modal-overlay';
     modal.innerHTML = `
         <div class="horae-modal-content" style="max-width:400px;width:90vw;box-sizing:border-box;">
-            <div class="horae-modal-header"><h3>${isNew ? '添加据点' : '编辑据点'}</h3></div>
+            <div class="horae-modal-header"><h3>${isNew ? '添加據點' : '編輯據點'}</h3></div>
             <div class="horae-modal-body">
                 <div class="horae-edit-field">
-                    <label>名称</label>
+                    <label>名稱</label>
                     <input id="horae-sh-name" type="text" value="${escapeHtml(node?.name || '')}" placeholder="据点名称" />
                 </div>
                 <div class="horae-edit-field">
-                    <label>等级（可选）</label>
+                    <label>等級（可選）</label>
                     <input id="horae-sh-level" type="number" min="0" max="999" value="${node?.level ?? ''}" placeholder="不填则不显示" />
                 </div>
                 <div class="horae-edit-field">
@@ -6599,7 +6599,7 @@ function _openShEditDialog(nodeId) {
     _horaeModalStopDrawerCollapse(modal);
     modal.querySelector('#horae-sh-ok').onclick = () => {
         const name = modal.querySelector('#horae-sh-name').value.trim();
-        if (!name) { showToast('请输入据点名称', 'warning'); return; }
+        if (!name) { showToast('請輸入據點名稱', 'warning'); return; }
         const lvRaw = modal.querySelector('#horae-sh-level').value;
         const level = lvRaw !== '' ? parseInt(lvRaw) : null;
         const desc = modal.querySelector('#horae-sh-desc').value.trim();
@@ -6624,13 +6624,13 @@ function _bindStrongholdEvents() {
     const container = document.getElementById('horae-rpg-sh-tree');
     if (!container) return;
 
-    // 添加根据点
+    // 添加根據點
     $('#horae-rpg-sh-add').off('click').on('click', () => {
         const nodes = _getStrongholdData();
         const modal = _openShEditDialog(null);
         modal.querySelector('#horae-sh-ok').onclick = () => {
             const name = modal.querySelector('#horae-sh-name').value.trim();
-            if (!name) { showToast('请输入据点名称', 'warning'); return; }
+            if (!name) { showToast('請輸入據點名稱', 'warning'); return; }
             const lvRaw = modal.querySelector('#horae-sh-level').value;
             const level = lvRaw !== '' ? parseInt(lvRaw) : null;
             const desc = modal.querySelector('#horae-sh-desc').value.trim();
@@ -6645,7 +6645,7 @@ function _bindStrongholdEvents() {
         };
     });
 
-    // 添加子节点
+    // 添加子節點
     container.querySelectorAll('.horae-rpg-sh-add-child').forEach(btn => {
         btn.onclick = () => {
             const parentId = btn.dataset.id;
@@ -6653,7 +6653,7 @@ function _bindStrongholdEvents() {
             const modal = _openShEditDialog(null);
             modal.querySelector('#horae-sh-ok').onclick = () => {
                 const name = modal.querySelector('#horae-sh-name').value.trim();
-                if (!name) { showToast('请输入名称', 'warning'); return; }
+                if (!name) { showToast('請輸入名稱', 'warning'); return; }
                 const lvRaw = modal.querySelector('#horae-sh-level').value;
                 const level = lvRaw !== '' ? parseInt(lvRaw) : null;
                 const desc = modal.querySelector('#horae-sh-desc').value.trim();
@@ -6667,12 +6667,12 @@ function _bindStrongholdEvents() {
         };
     });
 
-    // 编辑
+    // 編輯
     container.querySelectorAll('.horae-rpg-sh-edit').forEach(btn => {
         btn.onclick = () => { _openShEditDialog(btn.dataset.id); };
     });
 
-    // 删除（递归删除子节点）
+    // 刪除（遞歸刪除子節點）
     container.querySelectorAll('.horae-rpg-sh-del').forEach(btn => {
         btn.onclick = () => {
             const nodes = _getStrongholdData();
@@ -6685,8 +6685,8 @@ function _bindStrongholdEvents() {
             }
             const desc = countDescendants(id);
             const msg = desc > 0
-                ? `删除「${node.name}」及其 ${desc} 个子节点？此操作不可撤销。`
-                : `删除「${node.name}」？`;
+                ? `刪除「${node.name}」及其 ${desc} 個子節點？此操作不可撤銷。`
+                : `刪除「${node.name}」？`;
             if (!confirm(msg)) return;
             function removeRecursive(pid) {
                 const kids = nodes.filter(n => n.parent === pid);
@@ -6704,14 +6704,14 @@ function _bindStrongholdEvents() {
         };
     });
 
-    // 导出
+    // 導出
     $('#horae-rpg-sh-export').off('click').on('click', () => {
         const data = _getStrongholdData();
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
         a.download = 'horae_strongholds.json'; a.click();
     });
-    // 导入
+    // 導入
     $('#horae-rpg-sh-import').off('click').on('click', () => {
         document.getElementById('horae-rpg-sh-import-file')?.click();
     });
@@ -6722,7 +6722,7 @@ function _bindStrongholdEvents() {
         reader.onload = (e) => {
             try {
                 const imported = JSON.parse(e.target.result);
-                if (!Array.isArray(imported)) throw new Error('格式错误');
+                if (!Array.isArray(imported)) throw new Error('格式錯誤');
                 const nodes = _getStrongholdData();
                 const existingNames = new Set(nodes.map(n => n.name));
                 let added = 0;
@@ -6735,15 +6735,15 @@ function _bindStrongholdEvents() {
                 _saveStrongholdData();
                 renderStrongholdTree();
                 _bindStrongholdEvents();
-                showToast(`导入 ${added} 个据点节点`, 'success');
-            } catch (err) { showToast('导入失败: ' + err.message, 'error'); }
+                showToast(`導入 ${added} 個據點節點`, 'success');
+            } catch (err) { showToast('導入失敗: ' + err.message, 'error'); }
         };
         reader.readAsText(file);
         this.value = '';
     });
 }
 
-/** 渲染等级/经验值数据（配置面板） */
+/** 彩現等級/經驗值數據（配置面板） */
 function renderLevelValues() {
     const section = document.getElementById('horae-rpg-level-values-section');
     if (!section) return;
@@ -6755,7 +6755,7 @@ function renderLevelValues() {
     const allNames = new Set([...Object.keys(mergedLevels), ...Object.keys(mergedXp), ...Object.keys(snapshot.bars || {})]);
     let html = '<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button class="horae-rpg-btn-sm horae-rpg-lv-add" title="手动添加角色等级"><i class="fa-solid fa-plus"></i> 添加角色</button></div>';
     if (!allNames.size) {
-        html += '<div class="horae-rpg-skills-empty">暂无等级数据（AI 回复后自动更新，或点击上方按钮手动添加）</div>';
+        html += '<div class="horae-rpg-skills-empty">暫無等級數據（AI 回覆後自動更新，或點擊上方按鈕手動添加）</div>';
     }
     for (const name of allNames) {
         const lv = mergedLevels[name];
@@ -6767,7 +6767,7 @@ function renderLevelValues() {
         html += `<div class="horae-rpg-lv-entry-header">`;
         html += `<span class="horae-rpg-lv-entry-name">${escapeHtml(name)}</span>`;
         html += `<span class="horae-rpg-hud-lv-badge">${lv != null ? 'Lv.' + lv : '--'}</span>`;
-        html += `<button class="horae-rpg-btn-sm horae-rpg-lv-edit" data-char="${escapeHtml(name)}" title="手动编辑等级/经验"><i class="fa-solid fa-pen-to-square"></i></button>`;
+        html += `<button class="horae-rpg-btn-sm horae-rpg-lv-edit" data-char="${escapeHtml(name)}" title="手動編輯等級/經驗"><i class="fa-solid fa-pen-to-square"></i></button>`;
         html += `</div>`;
         if (xpMax > 0) {
             html += `<div class="horae-rpg-lv-xp-row"><div class="horae-rpg-bar-track"><div class="horae-rpg-bar-fill" style="width:${pct}%;background:#a78bfa;"></div></div><span class="horae-rpg-lv-xp-label">${xpCur}/${xpMax} (${pct}%)</span></div>`;
@@ -6783,10 +6783,10 @@ function renderLevelValues() {
         if (!chat2[0].horae_meta.rpg) chat2[0].horae_meta.rpg = {};
         const rpgData = chat2[0].horae_meta.rpg;
         const curLv = rpgData.levels?.[charName] ?? '';
-        const newLv = prompt(`${charName} 等级:`, curLv);
+        const newLv = prompt(`${charName} 等級:`, curLv);
         if (newLv === null) return;
         const lvVal = parseInt(newLv);
-        if (isNaN(lvVal) || lvVal < 0) { showToast('请输入有效等级数字', 'warning'); return; }
+        if (isNaN(lvVal) || lvVal < 0) { showToast('請輸入有效等級數字', 'warning'); return; }
         if (!rpgData.levels) rpgData.levels = {};
         if (!rpgData.xp) rpgData.xp = {};
         rpgData.levels[charName] = lvVal;
@@ -6800,7 +6800,7 @@ function renderLevelValues() {
         getContext().saveChat();
         renderLevelValues();
         updateAllRpgHuds();
-        showToast(`${charName} → Lv.${lvVal}（升级需 ${xpMax} XP）`, 'success');
+        showToast(`${charName} → Lv.${lvVal}（更新需 ${xpMax} XP）`, 'success');
     };
 
     section.querySelectorAll('.horae-rpg-lv-edit').forEach(btn => {
@@ -6810,7 +6810,7 @@ function renderLevelValues() {
     const addBtn = section.querySelector('.horae-rpg-lv-add');
     if (addBtn) {
         addBtn.addEventListener('click', () => {
-            const charName = prompt('输入角色名称:');
+            const charName = prompt('輸入角色名稱:');
             if (!charName?.trim()) return;
             _lvEditHandler(charName.trim());
         });
@@ -6818,8 +6818,8 @@ function renderLevelValues() {
 }
 
 /**
- * 构建单个角色在 HUD 中的 HTML
- * 布局: 角色名(+状态图标) | Lv.X 💵999 | XP条 | 属性条
+ * 構建單個角色在 HUD 中的 HTML
+ * 格局: 角色名(+狀態圖示) | Lv.X 💵999 | XP條 | 屬性條
  */
 function _buildCharHudHtml(name, rpg) {
     const bars = rpg.bars[name] || {};
@@ -6833,14 +6833,14 @@ function _buildCharHudHtml(name, rpg) {
 
     let html = '<div class="horae-rpg-hud-row">';
 
-    // 第一行: 角色名 + 等级 + 状态图标 ....... 货币(右端)
+    // 第一行: 角色名 + 等級 + 狀態圖示 ....... 貨幣(右端)
     html += '<div class="horae-rpg-hud-header">';
     html += `<span class="horae-rpg-hud-name">${escapeHtml(name)}</span>`;
     if (sendLvl && charLv != null) html += `<span class="horae-rpg-hud-lv-badge">Lv.${charLv}</span>`;
     for (const e of effects) {
         html += `<i class="fa-solid ${getStatusIcon(e)} horae-rpg-hud-effect" title="${escapeHtml(e)}"></i>`;
     }
-    // 货币：推到最右
+    // 貨幣：推到最右
     if (sendCur && denomCfg.length > 0) {
         let curHtml = '';
         for (const d of denomCfg) {
@@ -6852,13 +6852,13 @@ function _buildCharHudHtml(name, rpg) {
     }
     html += '</div>';
 
-    // XP 条（如果有）
+    // XP 條（如果有）
     if (sendLvl && charXp && charXp[1] > 0) {
         const pct = Math.min(100, Math.round(charXp[0] / charXp[1] * 100));
         html += `<div class="horae-rpg-hud-bar horae-rpg-hud-xp"><span class="horae-rpg-hud-lbl">XP</span><div class="horae-rpg-hud-track"><div class="horae-rpg-hud-fill" style="width:${pct}%;background:#a78bfa;"></div></div><span class="horae-rpg-hud-val">${charXp[0]}/${charXp[1]}</span></div>`;
     }
 
-    // 属性条
+    // 屬性條
     for (const [type, val] of Object.entries(bars)) {
         const label = getRpgBarName(type, val[2]);
         const cur = val[0], max = val[1];
@@ -6872,7 +6872,7 @@ function _buildCharHudHtml(name, rpg) {
 }
 
 /**
- * 从 present 列表与 RPG 数据中匹配在场角色
+ * 從 present 列表與 RPG 數據中配對在場角色
  */
 function _matchPresentChars(present, rpg) {
     const userName = getContext().name1 || '';
@@ -6898,7 +6898,7 @@ function _matchPresentChars(present, rpg) {
     return chars;
 }
 
-/** 为单个消息面板渲染 RPG HUD（简易状态条） */
+/** 為單個訊息面板彩現 RPG HUD（簡易狀態條） */
 function renderRpgHud(messageEl, messageIndex) {
     const old = messageEl.querySelector('.horae-rpg-hud');
     if (old) old.remove();
@@ -6921,7 +6921,7 @@ function renderRpgHud(messageEl, messageIndex) {
 
     const panel = messageEl.querySelector('.horae-message-panel');
     if (panel) {
-        panel.insertAdjacentHTML('beforebegin', html);
+        panel.IGertAdjacentHTML('beforebegin', html);
         const hudEl = messageEl.querySelector('.horae-rpg-hud');
         if (hudEl) {
             const w = Math.max(50, Math.min(100, settings.panelWidth || 100));
@@ -6933,10 +6933,10 @@ function renderRpgHud(messageEl, messageIndex) {
     }
 }
 
-/** 刷新所有可见面板的 RPG HUD */
+/** 重新整理所有可見面板的 RPG HUD */
 function updateAllRpgHuds() {
     if (!settings.rpgMode || settings.sendRpgBars === false) return;
-    // 单次前向遍历构建每条消息的 RPG 累积快照
+    // 單次前向遍歷構建每條訊息的 RPG 累積快照
     const chat = horaeManager.getChat();
     if (!chat?.length) return;
     const snapMap = _buildRpgSnapshotMap(chat);
@@ -6946,7 +6946,7 @@ function updateAllRpgHuds() {
     });
 }
 
-/** 单次遍历构建消息→RPG快照的映射 */
+/** 單次遍歷構建訊息→RPG快照的映射 */
 function _buildRpgSnapshotMap(chat) {
     const map = new Map();
     const baseRpg = chat[0]?.horae_meta?.rpg || {};
@@ -7010,7 +7010,7 @@ function _buildRpgSnapshotMap(chat) {
     return map;
 }
 
-/** 用预构建的快照渲染单条消息的 RPG HUD */
+/** 用預構建的快照彩現單條訊息的 RPG HUD */
 function _renderRpgHudFromSnapshot(messageEl, messageIndex, rpg) {
     const old = messageEl.querySelector('.horae-rpg-hud');
     if (old) old.remove();
@@ -7029,7 +7029,7 @@ function _renderRpgHudFromSnapshot(messageEl, messageIndex, rpg) {
 
     const panel = messageEl.querySelector('.horae-message-panel');
     if (panel) {
-        panel.insertAdjacentHTML('beforebegin', html);
+        panel.IGertAdjacentHTML('beforebegin', html);
         const hudEl = messageEl.querySelector('.horae-rpg-hud');
         if (hudEl) {
             const w = Math.max(50, Math.min(100, settings.panelWidth || 100));
@@ -7042,7 +7042,7 @@ function _renderRpgHudFromSnapshot(messageEl, messageIndex, rpg) {
 }
 
 /**
- * 刷新所有显示
+ * 重新整理所有顯示
  */
 function refreshAllDisplays() {
     buildPanelContent._affCache = null;
@@ -7057,7 +7057,7 @@ function refreshAllDisplays() {
     enforceHiddenState();
 }
 
-/** chat[0] 上的全局键——无法由 rebuild 系列函数重建，需在 meta 重置时保留 */
+/** chat[0] 上的全域鍵——無法由 rebuild 系列函數重建，需在 meta 重置時保留 */
 const _GLOBAL_META_KEYS = [
     'autoSummaries', '_deletedNpcs', '_deletedAgendaTexts',
     'locationMemory', 'relationships', 'rpg',
@@ -7082,8 +7082,8 @@ function _restoreGlobalMeta(meta, saved) {
 }
 
 /**
- * 提取消息事件上的摘要压缩标记（_compressedBy / _summaryId），
- * 用于在 createEmptyMeta() 重置后恢复，防止摘要事件从时间线中逃逸
+ * 提取訊息事件上的摘要壓縮標記（_compressedBy / _summaryId），
+ * 用於在 createEmptyMeta() 重置後恢復，防止摘要事件從時間線中逃逸
  */
 function _saveCompressedFlags(meta) {
     if (!meta?.events?.length) return null;
@@ -7102,8 +7102,8 @@ function _saveCompressedFlags(meta) {
 }
 
 /**
- * 将保存的压缩标记恢复到重新解析后的事件上；
- * 若新事件数量少于保存的标记，则将多出的摘要事件追加回去
+ * 將保存的壓縮標記恢復到重新解析後的事件上；
+ * 若新事件數量少於保存的標記，則將多出的摘要事件追加回去
  */
 function _restoreCompressedFlags(meta, saved) {
     if (!saved?.length || !meta) return;
@@ -7117,7 +7117,7 @@ function _restoreCompressedFlags(meta, saved) {
             evt._compressedBy = nonSummaryFlags[i]._compressedBy;
         }
     }
-    // 如果非摘要事件数量不匹配，按 summaryId 暴力匹配
+    // 如果非摘要事件數量不配對，按 summaryId 暴力配對
     if (nonSummaryFlags.length > 0 && meta.events.length > 0) {
         const chat = horaeManager.getChat();
         const sums = chat?.[0]?.horae_meta?.autoSummaries || [];
@@ -7128,7 +7128,7 @@ function _restoreCompressedFlags(meta, saved) {
             if (matchFlag) evt._compressedBy = matchFlag._compressedBy;
         }
     }
-    // 将摘要卡片事件追加回去（processAIResponse 不会从原文解析出摘要卡片）
+    // 將摘要卡片事件追加回去（processAIResponse 不會從原文解析出摘要卡片）
     for (const sf of summaryFlags) {
         const alreadyExists = meta.events.some(e => e._summaryId === sf._summaryId);
         if (!alreadyExists && sf._summaryId) {
@@ -7143,8 +7143,8 @@ function _restoreCompressedFlags(meta, saved) {
 }
 
 /**
- * 校验并修复摘要范围内消息的 is_hidden 和 _compressedBy 状态，
- * 防止 SillyTavern 重渲染或 saveChat 竞态导致隐藏/压缩标记丢失
+ * 校驗並修復摘要範圍內訊息的 is_hidden 和 _compressedBy 狀態，
+ * 防止 SillyTavern 重彩現或 saveChat 競態導致隱藏/壓縮標記遺失
  */
 async function enforceHiddenState() {
     const chat = horaeManager.getChat();
@@ -7176,14 +7176,14 @@ async function enforceHiddenState() {
         }
     }
     if (fixed > 0) {
-        console.log(`[Horae] enforceHiddenState: 修复了 ${fixed} 处摘要状态`);
+        console.log(`[Horae] enforceHiddenState: 修復了 ${fixed} 處摘要狀態`);
         await getContext().saveChat();
     }
 }
 
 /**
- * 手动一键修复：遍历所有活跃摘要，强制恢复 is_hidden + _compressedBy，
- * 并同步 DOM 属性。返回修复的条目数。
+ * 手動一鍵修復：遍歷所有活躍摘要，強制恢復 is_hidden + _compressedBy，
+ * 並同步 DOM 屬性。返回修復的條目數。
  */
 function repairAllSummaryStates() {
     const chat = horaeManager.getChat();
@@ -7197,14 +7197,14 @@ function repairAllSummaryStates() {
         const summaryId = s.id;
         for (let i = s.range[0]; i <= s.range[1]; i++) {
             if (i === 0 || !chat[i]) continue;
-            // 强制 is_hidden
+            // 強制 is_hidden
             if (!chat[i].is_hidden) {
                 chat[i].is_hidden = true;
                 fixed++;
             }
             const $el = $(`.mes[mesid="${i}"]`);
             if ($el.length) $el.attr('is_hidden', 'true');
-            // 强制 _compressedBy
+            // 強制 _compressedBy
             const events = chat[i].horae_meta?.events;
             if (events) {
                 for (const evt of events) {
@@ -7217,13 +7217,13 @@ function repairAllSummaryStates() {
         }
     }
     if (fixed > 0) {
-        console.log(`[Horae] repairAllSummaryStates: 修复了 ${fixed} 处`);
+        console.log(`[Horae] repairAllSummaryStates: 修復了 ${fixed} 處`);
         getContext().saveChat();
     }
     return fixed;
 }
 
-/** 刷新所有已展开的底部面板 */
+/** 重新整理所有已展開的底部面板 */
 function refreshVisiblePanels() {
     document.querySelectorAll('.horae-message-panel').forEach(panelEl => {
         const msgEl = panelEl.closest('.mes');
@@ -7242,7 +7242,7 @@ function refreshVisiblePanels() {
 }
 
 /**
- * 更新场景记忆列表显示
+ * 更新場景記憶列表顯示
  */
 function updateLocationMemoryDisplay() {
     const listEl = document.getElementById('horae-location-list');
@@ -7256,16 +7256,16 @@ function updateLocationMemoryDisplay() {
         listEl.innerHTML = `
             <div class="horae-empty-state">
                 <i class="fa-solid fa-map-location-dot"></i>
-                <span>暂无场景记忆</span>
-                <span style="font-size:11px;opacity:0.6;margin-top:4px;">开启「设置 → 场景记忆」后，AI会在首次到达新地点时自动记录</span>
+                <span>暫無場景記憶</span>
+                <span style="font-size:11px;opacity:0.6;margin-top:4px;">開啟「設定 → 場景記憶」後，AI會在首次到達新地點時自動記錄</span>
             </div>`;
         return;
     }
     
-    // 按父级分组：「酒馆·大厅」→ parent=酒馆, child=大厅
+    // 按父級分組：「酒館·大廳」→ parent=酒館, child=大廳
     const SEP = /[·・\-\/\|]/;
     const groups = {};   // { parentName: { info?, children: [{name,info}] } }
-    const standalone = []; // 无子级的独立条目
+    const standalone = []; // 無子級的獨立條目
     
     for (const [name, info] of entries) {
         const sepMatch = name.match(SEP);
@@ -7273,12 +7273,12 @@ function updateLocationMemoryDisplay() {
             const parent = name.substring(0, sepMatch.index).trim();
             if (!groups[parent]) groups[parent] = { children: [] };
             groups[parent].children.push({ name, info });
-            // 如果恰好也存在同名的父级条目，关联
+            // 如果恰好也存在同名的父級條目，關聯
             if (locMem[parent]) groups[parent].info = locMem[parent];
         } else if (groups[name]) {
             groups[name].info = info;
         } else {
-            // 检查是否已有子级引用
+            // 檢查是否已有子級引用
             const hasChildren = entries.some(([n]) => n !== name && n.startsWith(name) && SEP.test(n.charAt(name.length)));
             if (hasChildren) {
                 if (!groups[name]) groups[name] = { children: [] };
@@ -7292,7 +7292,7 @@ function updateLocationMemoryDisplay() {
     const buildCard = (name, info, indent = false) => {
         const isCurrent = name === currentLoc || currentLoc.includes(name) || name.includes(currentLoc);
         const currentClass = isCurrent ? 'horae-location-current' : '';
-        const currentBadge = isCurrent ? '<span class="horae-loc-current-badge">当前</span>' : '';
+        const currentBadge = isCurrent ? '<span class="horae-loc-current-badge">目前</span>' : '';
         const dateStr = info.lastUpdated ? new Date(info.lastUpdated).toLocaleDateString() : '';
         const indentClass = indent ? ' horae-loc-child' : '';
         const displayName = indent ? name.split(SEP).pop().trim() : name;
@@ -7301,17 +7301,17 @@ function updateLocationMemoryDisplay() {
                 <div class="horae-loc-header">
                     <div class="horae-loc-name"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(displayName)} ${currentBadge}</div>
                     <div class="horae-loc-actions">
-                        <button class="horae-loc-edit" title="编辑"><i class="fa-solid fa-pen"></i></button>
-                        <button class="horae-loc-delete" title="删除"><i class="fa-solid fa-trash"></i></button>
+                        <button class="horae-loc-edit" title="編輯"><i class="fa-solid fa-pen"></i></button>
+                        <button class="horae-loc-delete" title="刪除"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
-                <div class="horae-loc-desc">${info.desc || '<span class="horae-empty-hint">暂无描述</span>'}</div>
-                ${dateStr ? `<div class="horae-loc-date">更新于 ${dateStr}</div>` : ''}
+                <div class="horae-loc-desc">${info.desc || '<span class="horae-empty-hint">暫無描述</span>'}</div>
+                ${dateStr ? `<div class="horae-loc-date">更新於 ${dateStr}</div>` : ''}
             </div>`;
     };
     
     let html = '';
-    // 渲染有子级的分组
+    // 彩現有子級的分組
     for (const [parentName, group] of Object.entries(groups)) {
         const isParentCurrent = currentLoc.startsWith(parentName);
         html += `<div class="horae-loc-group${isParentCurrent ? ' horae-loc-group-active' : ''}">
@@ -7325,12 +7325,12 @@ function updateLocationMemoryDisplay() {
         for (const child of group.children) html += buildCard(child.name, child.info, true);
         html += '</div></div>';
     }
-    // 渲染独立条目
+    // 彩現獨立條目
     for (const { name, info } of standalone) html += buildCard(name, info, false);
     
     listEl.innerHTML = html;
     
-    // 折叠切换
+    // 摺疊切換
     listEl.querySelectorAll('.horae-loc-group-header').forEach(header => {
         header.addEventListener('click', () => {
             const body = header.nextElementSibling;
@@ -7351,24 +7351,24 @@ function updateLocationMemoryDisplay() {
     listEl.querySelectorAll('.horae-loc-delete').forEach(btn => {
         btn.addEventListener('click', async () => {
             const name = btn.closest('.horae-location-card').dataset.locationName;
-            if (!confirm(`确定删除场景「${name}」的记忆？`)) return;
+            if (!confirm(`確定刪除場景「${name}」的記憶？`)) return;
             const chat = horaeManager.getChat();
             if (chat?.[0]?.horae_meta?.locationMemory) {
-                // 标记为已删除而非直接delete，防止rebuildLocationMemory从历史消息重建
+                // 標記為已刪除而非直接delete，防止rebuildLocationMemory從歷史訊息重建
                 chat[0].horae_meta.locationMemory[name] = {
                     ...chat[0].horae_meta.locationMemory[name],
                     _deleted: true
                 };
                 await getContext().saveChat();
                 updateLocationMemoryDisplay();
-                showToast(`场景「${name}」已删除`, 'info');
+                showToast(`場景「${name}」已刪除`, 'info');
             }
         });
     });
 }
 
 /**
- * 打开场景记忆编辑弹窗
+ * 打開場景記憶編輯彈窗
  */
 function openLocationEditModal(locationName) {
     closeEditModal();
@@ -7380,15 +7380,15 @@ function openLocationEditModal(locationName) {
         <div id="horae-edit-modal" class="horae-modal">
             <div class="horae-modal-content">
                 <div class="horae-modal-header">
-                    <i class="fa-solid fa-map-location-dot"></i> ${isNew ? '添加地点' : '编辑场景记忆'}
+                    <i class="fa-solid fa-map-location-dot"></i> ${isNew ? '添加地點' : '編輯場景記憶'}
                 </div>
                 <div class="horae-modal-body horae-edit-modal-body">
                     <div class="horae-edit-field">
-                        <label>地点名称</label>
+                        <label>地點名稱</label>
                         <input type="text" id="horae-loc-edit-name" value="${escapeHtml(locationName || '')}" placeholder="如：无名酒馆·大厅">
                     </div>
                     <div class="horae-edit-field">
-                        <label>场景描述</label>
+                        <label>場景描述</label>
                         <textarea id="horae-loc-edit-desc" rows="5" placeholder="描述该地点的固定物理特征...">${escapeHtml(existing.desc || '')}</textarea>
                     </div>
                 </div>
@@ -7403,7 +7403,7 @@ function openLocationEditModal(locationName) {
             </div>
         </div>
     `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.IGertAdjacentHTML('beforeend', modalHtml);
     preventModalBubble();
     
     document.getElementById('horae-edit-modal').addEventListener('click', (e) => {
@@ -7414,7 +7414,7 @@ function openLocationEditModal(locationName) {
         e.stopPropagation();
         const name = document.getElementById('horae-loc-edit-name').value.trim();
         const desc = document.getElementById('horae-loc-edit-desc').value.trim();
-        if (!name) { showToast('地点名称不能为空', 'warning'); return; }
+        if (!name) { showToast('地點名稱不能為空', 'warning'); return; }
         
         const chat = horaeManager.getChat();
         if (!chat?.length) return;
@@ -7426,14 +7426,14 @@ function openLocationEditModal(locationName) {
         if (isNew) {
             mem[name] = { desc, firstSeen: now, lastUpdated: now, _userEdited: true };
         } else if (locationName !== name) {
-            // 改名：级联更新子级 + 记录曾用名
+            // 改名：級聯更新子級 + 記錄曾用名
             const SEP = /[·・\-\/\|]/;
             const oldEntry = mem[locationName] || {};
             const aliases = oldEntry._aliases || [];
             if (!aliases.includes(locationName)) aliases.push(locationName);
             delete mem[locationName];
             mem[name] = { ...oldEntry, desc, lastUpdated: now, _userEdited: true, _aliases: aliases };
-            // 检测是否为父级改名，级联所有子级
+            // 檢測是否為父級改名，級聯所有子級
             const childKeys = Object.keys(mem).filter(k => {
                 const sepMatch = k.match(SEP);
                 return sepMatch && k.substring(0, sepMatch.index).trim() === locationName;
@@ -7455,14 +7455,14 @@ function openLocationEditModal(locationName) {
         await getContext().saveChat();
         closeEditModal();
         updateLocationMemoryDisplay();
-        showToast(isNew ? '地点已添加' : (locationName !== name ? `已改名：${locationName} → ${name}` : '场景记忆已更新'), 'success');
+        showToast(isNew ? '地點已添加' : (locationName !== name ? `已改名：${locationName} → ${name}` : '場景記憶已更新'), 'success');
     });
     
     document.getElementById('horae-loc-cancel').addEventListener('click', () => closeEditModal());
 }
 
 /**
- * 合并两个地点的场景记忆
+ * 合併兩個地點的場景記憶
  */
 function openLocationMergeModal() {
     closeEditModal();
@@ -7470,7 +7470,7 @@ function openLocationMergeModal() {
     const entries = Object.entries(locMem).filter(([, info]) => !info._deleted);
     
     if (entries.length < 2) {
-        showToast('至少需要2个地点才能合并', 'warning');
+        showToast('至少需要2個地點才能合併', 'warning');
         return;
     }
     
@@ -7480,28 +7480,28 @@ function openLocationMergeModal() {
         <div id="horae-edit-modal" class="horae-modal">
             <div class="horae-modal-content">
                 <div class="horae-modal-header">
-                    <i class="fa-solid fa-code-merge"></i> 合并地点
+                    <i class="fa-solid fa-code-merge"></i> 合併地點
                 </div>
                 <div class="horae-modal-body horae-edit-modal-body">
                     <div class="horae-setting-hint" style="margin-bottom: 12px;">
                         <i class="fa-solid fa-circle-info"></i>
-                        选择两个地点合并为一个。被合并地点的描述将追加到目标地点。
+                        選擇兩個地點合併為一個。被合併地點的描述將追加到目標地點。
                     </div>
                     <div class="horae-edit-field">
-                        <label>来源地点（将被删除）</label>
+                        <label>來源地點（將被刪除）</label>
                         <select id="horae-merge-source">${options}</select>
                     </div>
                     <div class="horae-edit-field">
-                        <label>目标地点（保留）</label>
+                        <label>目標地點（保留）</label>
                         <select id="horae-merge-target">${options}</select>
                     </div>
                     <div id="horae-merge-preview" class="horae-merge-preview" style="display:none;">
-                        <strong>合并预览：</strong><br><span id="horae-merge-preview-text"></span>
+                        <strong>合併預覽：</strong><br><span id="horae-merge-preview-text"></span>
                     </div>
                 </div>
                 <div class="horae-modal-footer">
                     <button id="horae-merge-confirm" class="horae-btn primary">
-                        <i class="fa-solid fa-check"></i> 合并
+                        <i class="fa-solid fa-check"></i> 合併
                     </button>
                     <button id="horae-merge-cancel" class="horae-btn">
                         <i class="fa-solid fa-xmark"></i> 取消
@@ -7510,7 +7510,7 @@ function openLocationMergeModal() {
             </div>
         </div>
     `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.IGertAdjacentHTML('beforeend', modalHtml);
     preventModalBubble();
     
     if (entries.length >= 2) {
@@ -7529,7 +7529,7 @@ function openLocationMergeModal() {
         
         if (source === target) {
             previewEl.style.display = 'block';
-            textEl.textContent = '来源和目标不能相同';
+            textEl.textContent = '來源和目標不能相同';
             return;
         }
         
@@ -7537,7 +7537,7 @@ function openLocationMergeModal() {
         const targetDesc = locMem[target]?.desc || '';
         const merged = targetDesc + (targetDesc && sourceDesc ? '\n' : '') + sourceDesc;
         previewEl.style.display = 'block';
-        textEl.textContent = `「${source}」→「${target}」\n合并后描述: ${merged.substring(0, 100)}${merged.length > 100 ? '...' : ''}`;
+        textEl.textContent = `「${source}」→「${target}」\n合併後描述: ${merged.substring(0, 100)}${merged.length > 100 ? '...' : ''}`;
     };
     
     document.getElementById('horae-merge-source').addEventListener('change', updatePreview);
@@ -7550,11 +7550,11 @@ function openLocationMergeModal() {
         const target = document.getElementById('horae-merge-target').value;
         
         if (source === target) {
-            showToast('来源和目标不能相同', 'warning');
+            showToast('來源和目標不能相同', 'warning');
             return;
         }
         
-        if (!confirm(`确定将「${source}」合并到「${target}」？\n「${source}」将被删除。`)) return;
+        if (!confirm(`確定將「${source}」合併到「${target}」？\n「${source}」將被刪除。`)) return;
         
         const chat = horaeManager.getChat();
         const mem = chat?.[0]?.horae_meta?.locationMemory;
@@ -7569,7 +7569,7 @@ function openLocationMergeModal() {
         await getContext().saveChat();
         closeEditModal();
         updateLocationMemoryDisplay();
-        showToast(`已将「${source}」合并到「${target}」`, 'success');
+        showToast(`已將「${source}」合併到「${target}」`, 'success');
     });
     
     document.getElementById('horae-merge-cancel').addEventListener('click', () => closeEditModal());
@@ -7585,13 +7585,13 @@ function updateTokenCounter() {
         const tokens = estimateTokens(combined);
         el.textContent = `≈ ${tokens.toLocaleString()}`;
     } catch (err) {
-        console.warn('[Horae] Token 计数失败:', err);
+        console.warn('[Horae] Token 計數失敗:', err);
         el.textContent = '--';
     }
 }
 
 /**
- * 滚动到指定消息（支持折叠/懒加载的消息展开跳转）
+ * 滾動到指定訊息（支援摺疊/懶加載的訊息展開跳轉）
  */
 async function scrollToMessage(messageId) {
     let messageEl = document.querySelector(`.mes[mesid="${messageId}"]`);
@@ -7601,8 +7601,8 @@ async function scrollToMessage(messageId) {
         setTimeout(() => messageEl.classList.remove('horae-highlight'), 2000);
         return;
     }
-    // 消息不在 DOM 中（被酒馆折叠/懒加载），提示用户展开
-    if (!confirm(`目标消息 #${messageId} 距离较远，已被折叠无法直接跳转。\n是否展开并跳转到该消息？`)) return;
+    // 訊息不在 DOM 中（被酒館摺疊/懶加載），提示用戶展開
+    if (!confirm(`目標訊息 #${messageId} 距離較遠，已被摺疊無法直接跳轉。\n是否展開並跳轉到該訊息？`)) return;
     try {
         const slashModule = await import('/scripts/slash-commands.js');
         const exec = slashModule.executeSlashCommandsWithOptions;
@@ -7614,33 +7614,33 @@ async function scrollToMessage(messageId) {
             messageEl.classList.add('horae-highlight');
             setTimeout(() => messageEl.classList.remove('horae-highlight'), 2000);
         } else {
-            showToast(`无法展开消息 #${messageId}，请手动滚动查找`, 'warning');
+            showToast(`無法展開訊息 #${messageId}，請手動滾動搜尋`, 'warning');
         }
     } catch (err) {
-        console.warn('[Horae] 跳转失败:', err);
-        showToast(`跳转失败: ${err.message || '未知错误'}`, 'error');
+        console.warn('[Horae] 跳轉失敗:', err);
+        showToast(`跳轉失敗: ${err.message || '未知錯誤'}`, 'error');
     }
 }
 
-/** 应用顶部图标可见性 */
+/** 應用頂部圖示可見性 */
 function applyTopIconVisibility() {
     const show = settings.showTopIcon !== false;
     if (show) {
         $('#horae_drawer').show();
     } else {
-        // 先关闭抽屉再隐藏
+        // 先關閉抽屜再隱藏
         if ($('#horae_drawer_icon').hasClass('openIcon')) {
             $('#horae_drawer_icon').toggleClass('openIcon closedIcon');
             $('#horae_drawer_content').toggleClass('openDrawer closedDrawer').hide();
         }
         $('#horae_drawer').hide();
     }
-    // 同步两处开关
+    // 同步兩處開關
     $('#horae-setting-show-top-icon').prop('checked', show);
     $('#horae-ext-show-top-icon').prop('checked', show);
 }
 
-/** 应用消息面板宽度和偏移设置（底部栏 + RPG HUD 统一跟随） */
+/** 應用訊息面板寬度和偏移設定（底部欄 + RPG HUD 統一跟隨） */
 function applyPanelWidth() {
     const width = Math.max(50, Math.min(100, settings.panelWidth || 100));
     const offset = Math.max(0, settings.panelOffset || 0);
@@ -7652,10 +7652,10 @@ function applyPanelWidth() {
     });
 }
 
-/** 内置预设主题 */
+/** 內置預設主題 */
 const BUILTIN_THEMES = {
     'sakura': {
-        name: '樱花粉',
+        name: '櫻花粉',
         variables: {
             '--horae-primary': '#ec4899', '--horae-primary-light': '#f472b6', '--horae-primary-dark': '#be185d',
             '--horae-accent': '#fb923c', '--horae-success': '#34d399', '--horae-warning': '#fbbf24',
@@ -7666,7 +7666,7 @@ const BUILTIN_THEMES = {
         }
     },
     'forest': {
-        name: '森林绿',
+        name: '森林綠',
         variables: {
             '--horae-primary': '#059669', '--horae-primary-light': '#34d399', '--horae-primary-dark': '#047857',
             '--horae-accent': '#fbbf24', '--horae-success': '#10b981', '--horae-warning': '#f59e0b',
@@ -7677,7 +7677,7 @@ const BUILTIN_THEMES = {
         }
     },
     'ocean': {
-        name: '海洋蓝',
+        name: '海洋藍',
         variables: {
             '--horae-primary': '#3b82f6', '--horae-primary-light': '#60a5fa', '--horae-primary-dark': '#1d4ed8',
             '--horae-accent': '#f59e0b', '--horae-success': '#10b981', '--horae-warning': '#f59e0b',
@@ -7689,7 +7689,7 @@ const BUILTIN_THEMES = {
     }
 };
 
-/** 获取当前主题对象（内置或自定义） */
+/** 獲取目前主題對象（內置或客製化） */
 function resolveTheme(mode) {
     if (BUILTIN_THEMES[mode]) return BUILTIN_THEMES[mode];
     if (mode.startsWith('custom-')) {
@@ -7706,14 +7706,14 @@ function isLightMode() {
     return !!(theme && theme.isLight);
 }
 
-/** 应用主题模式（dark / light / 内置预设 / custom-{index}） */
+/** 應用主題模式（dark / light / 內置預設 / custom-{index}） */
 function applyThemeMode() {
     const mode = settings.themeMode || 'dark';
     const theme = resolveTheme(mode);
     const isLight = mode === 'light' || !!(theme && theme.isLight);
     const hasCustomVars = !!(theme && theme.variables);
 
-    // 切换 horae-light 类（日间模式需要此类激活 UI 细节样式如 checkbox 边框等）
+    // 切換 horae-light 類（日間模式需要此類打開 UI 細節樣式如 checkbox 邊框等）
     const targets = [
         document.getElementById('horae_drawer'),
         ...document.querySelectorAll('.horae-message-panel'),
@@ -7722,7 +7722,7 @@ function applyThemeMode() {
     ].filter(Boolean);
     targets.forEach(el => el.classList.toggle('horae-light', isLight));
 
-    // 注入主题变量
+    // 注入主題變數
     let themeStyleEl = document.getElementById('horae-theme-vars');
     if (hasCustomVars) {
         if (!themeStyleEl) {
@@ -7733,7 +7733,7 @@ function applyThemeMode() {
         const vars = Object.entries(theme.variables)
             .map(([k, v]) => `  ${k}: ${v};`)
             .join('\n');
-        // 日间自定义主题：必须追加 .horae-light 选择器以覆盖 style.css 中同名类的默认变量
+        // 日間客製化主題：必須追加 .horae-light 選擇器以覆蓋 style.css 中同名類的預設變數
         const needsLightOverride = isLight && mode !== 'light';
         const selectors = needsLightOverride
             ? '#horae_drawer,\n#horae_drawer.horae-light,\n.horae-message-panel,\n.horae-message-panel.horae-light,\n.horae-modal,\n.horae-modal.horae-light,\n.horae-context-menu,\n.horae-context-menu.horae-light,\n.horae-rpg-hud,\n.horae-rpg-hud.horae-light,\n.horae-rpg-dice-panel,\n.horae-rpg-dice-panel.horae-light,\n.horae-progress-overlay,\n.horae-progress-overlay.horae-light'
@@ -7743,7 +7743,7 @@ function applyThemeMode() {
         if (themeStyleEl) themeStyleEl.remove();
     }
 
-    // 注入主题附带CSS
+    // 注入主題附帶CSS
     let themeCssEl = document.getElementById('horae-theme-css');
     if (theme && theme.css) {
         if (!themeCssEl) {
@@ -7757,7 +7757,7 @@ function applyThemeMode() {
     }
 }
 
-/** 注入用户自定义CSS */
+/** 注入用戶客製化CSS */
 function applyCustomCSS() {
     let styleEl = document.getElementById('horae-custom-style');
     const css = (settings.customCSS || '').trim();
@@ -7773,7 +7773,7 @@ function applyCustomCSS() {
     styleEl.textContent = css;
 }
 
-/** 导出当前美化为JSON文件 */
+/** 導出目前美化為JSON資料 */
 function exportTheme() {
     const theme = {
         name: '我的Horae美化',
@@ -7782,7 +7782,7 @@ function exportTheme() {
         variables: {},
         css: settings.customCSS || ''
     };
-    // 读取当前主题变量
+    // 讀取目前主題變數
     const root = document.getElementById('horae_drawer');
     if (root) {
         const style = getComputedStyle(root);
@@ -7805,10 +7805,10 @@ function exportTheme() {
     a.download = 'horae-theme.json';
     a.click();
     URL.revokeObjectURL(url);
-    showToast('美化已导出', 'info');
+    showToast('美化已導出', 'info');
 }
 
-/** 导入美化JSON文件 */
+/** 導入美化JSON資料 */
 function importTheme() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -7820,7 +7820,7 @@ function importTheme() {
             const text = await file.text();
             const theme = JSON.parse(text);
             if (!theme.variables || typeof theme.variables !== 'object') {
-                showToast('无效的美化文件：缺少 variables 字段', 'error');
+                showToast('無效的美化資料：缺少 variables 資料欄', 'error');
                 return;
             }
             theme.name = theme.name || file.name.replace('.json', '');
@@ -7828,29 +7828,29 @@ function importTheme() {
             settings.customThemes.push(theme);
             saveSettings();
             refreshThemeSelector();
-            showToast(`已导入美化「${theme.name}」`, 'success');
+            showToast(`已導入美化「${theme.name}」`, 'success');
         } catch (err) {
-            showToast('美化文件解析失败', 'error');
-            console.error('[Horae] 导入美化失败:', err);
+            showToast('美化資料解析失敗', 'error');
+            console.error('[Horae] 導入美化失敗:', err);
         }
     });
     input.click();
 }
 
-/** 刷新主题选择器下拉选项 */
+/** 重新整理主題選擇器下拉選項 */
 function refreshThemeSelector() {
     const sel = document.getElementById('horae-setting-theme-mode');
     if (!sel) return;
-    // 清除动态选项（内置预设 + 用户导入）
+    // 清除動態選項（內置預設 + 用戶導入）
     sel.querySelectorAll('option:not([value="dark"]):not([value="light"])').forEach(o => o.remove());
-    // 内置预设主题
+    // 內置預設主題
     for (const [key, t] of Object.entries(BUILTIN_THEMES)) {
         const opt = document.createElement('option');
         opt.value = key;
         opt.textContent = `🎨 ${t.name}`;
         sel.appendChild(opt);
     }
-    // 用户导入的主题
+    // 用戶導入的主題
     const themes = settings.customThemes || [];
     themes.forEach((t, i) => {
         const opt = document.createElement('option');
@@ -7861,22 +7861,22 @@ function refreshThemeSelector() {
     sel.value = settings.themeMode || 'dark';
 }
 
-/** 删除已导入的自定义主题 */
+/** 刪除已導入的客製化主題 */
 function deleteCustomTheme(index) {
     const themes = settings.customThemes || [];
     if (!themes[index]) return;
-    if (!confirm(`确定删除美化「${themes[index].name}」？`)) return;
+    if (!confirm(`確定刪除美化「${themes[index].name}」？`)) return;
     const currentMode = settings.themeMode || 'dark';
     themes.splice(index, 1);
     settings.customThemes = themes;
-    // 如果删除的是当前使用的主题，回退暗色
+    // 如果刪除的是目前使用的主題，回退暗色
     if (currentMode === `custom-${index}` || (currentMode.startsWith('custom-') && parseInt(currentMode.split('-')[1]) >= index)) {
         settings.themeMode = 'dark';
         applyThemeMode();
     }
     saveSettings();
     refreshThemeSelector();
-    showToast('美化已删除', 'info');
+    showToast('美化已刪除', 'info');
 }
 
 // ============================================
@@ -7968,7 +7968,7 @@ function _tdGenerateVars(hue, sat, brightness, accentHex, colorLight) {
 
 function _tdBuildImageCSS(images, opacities, bgHex, drawerBg) {
     const parts = [];
-    // 顶部图标（#horae_drawer）
+    // 頂部圖示（#horae_drawer）
     if (images.drawer && bgHex) {
         const c = _tdHexToRgb(drawerBg || bgHex);
         const a = (1 - (opacities.drawer || 30) / 100).toFixed(2);
@@ -7979,7 +7979,7 @@ function _tdBuildImageCSS(images, opacities, bgHex, drawerBg) {
   background-repeat: no-repeat, no-repeat !important;
 }`);
     }
-    // 抽屉头部图片
+    // 抽屜頭部圖片
     if (images.header) {
         parts.push(`#horae_drawer .drawer-header {
   background-image: url('${images.header}') !important;
@@ -7988,7 +7988,7 @@ function _tdBuildImageCSS(images, opacities, bgHex, drawerBg) {
   background-repeat: no-repeat !important;
 }`);
     }
-    // 抽屉背景图片
+    // 抽屜背景圖片
     const bodyBg = drawerBg || bgHex;
     if (images.body && bodyBg) {
         const c = _tdHexToRgb(bodyBg);
@@ -8002,7 +8002,7 @@ function _tdBuildImageCSS(images, opacities, bgHex, drawerBg) {
     } else if (drawerBg) {
         parts.push(`.horae-tab-contents { background-color: ${drawerBg} !important; }`);
     }
-    // 底部消息栏图片 — 仅作用于收缩的 toggle 条，展开内容不叠加图片
+    // 底部訊息欄圖片 — 僅作用於收縮的 toggle 條，展開內容不疊加圖片
     if (images.panel && bgHex) {
         const c = _tdHexToRgb(bgHex);
         const a = (1 - (opacities.panel || 30) / 100).toFixed(2);
@@ -8025,7 +8025,7 @@ function openThemeDesigner() {
     const accStr = cs?.getPropertyValue('--horae-accent').trim() || '#f59e0b';
     const initHsl = _tdParseColorHsl(priStr);
 
-    // 尝试从当前自定义主题恢复全部设置
+    // 嘗試從目前客製化主題恢復全部設定
     let savedImages = { drawer: '', header: '', body: '', panel: '' };
     let savedImgOp = { drawer: 30, header: 50, body: 30, panel: 30 };
     let savedName = '', savedAuthor = '', savedDrawerBg = '';
@@ -8067,7 +8067,7 @@ function openThemeDesigner() {
         return `<div class="htd-img-group">
         <div class="htd-img-label">${label}</div>
         <input type="text" id="htd-img-${key}" class="htd-input" placeholder="输入图片 URL..." value="${escapeHtml(url)}">
-        <div class="htd-img-ctrl"><span>可见度 <em id="htd-imgop-${key}">${op}</em>%</span>
+        <div class="htd-img-ctrl"><span>可見度 <em id="htd-imgop-${key}">${op}</em>%</span>
             <input type="range" class="htd-slider" id="htd-imgsl-${key}" min="5" max="100" value="${op}"></div>
         <img id="htd-imgpv-${key}" class="htd-img-preview" ${url ? `src="${escapeHtml(url)}"` : 'style="display:none;"'}>
     </div>`;
@@ -8080,13 +8080,13 @@ function openThemeDesigner() {
         <div class="htd-header"><i class="fa-solid fa-paint-roller"></i> 自助美化工具</div>
         <div class="htd-body">
             <div class="htd-section">
-                <div class="htd-section-title">快速调色</div>
+                <div class="htd-section-title">快速調色</div>
                 <div class="htd-field">
-                    <span class="htd-label">主题色相</span>
+                    <span class="htd-label">主題色相</span>
                     <div class="htd-hue-bar" id="htd-hue-bar"><div class="htd-hue-ind" id="htd-hue-ind"></div></div>
                 </div>
                 <div class="htd-field">
-                    <span class="htd-label">饱和度 <em id="htd-satv">${st.sat}</em>%</span>
+                    <span class="htd-label">飽和度 <em id="htd-satv">${st.sat}</em>%</span>
                     <input type="range" class="htd-slider" id="htd-sat" min="10" max="100" value="${st.sat}">
                 </div>
                 <div class="htd-field">
@@ -8098,7 +8098,7 @@ function openThemeDesigner() {
                     <input type="range" class="htd-slider htd-daynight" id="htd-bri" min="0" max="100" value="${st.bright}">
                 </div>
                 <div class="htd-field">
-                    <span class="htd-label">强调色</span>
+                    <span class="htd-label">強調色</span>
                     <div class="htd-color-row">
                         <input type="color" id="htd-accent" value="${st.accent}" class="htd-cpick">
                         <span class="htd-hex" id="htd-accent-hex">${st.accent}</span>
@@ -8109,7 +8109,7 @@ function openThemeDesigner() {
 
             <div class="htd-section">
                 <div class="htd-section-title htd-toggle" id="htd-fine-t">
-                    <i class="fa-solid fa-sliders"></i> 精细调色
+                    <i class="fa-solid fa-sliders"></i> 精細調色
                     <i class="fa-solid fa-chevron-down htd-arrow"></i>
                 </div>
                 <div id="htd-fine-body" style="display:none;"></div>
@@ -8117,30 +8117,30 @@ function openThemeDesigner() {
 
             <div class="htd-section">
                 <div class="htd-section-title htd-toggle" id="htd-img-t">
-                    <i class="fa-solid fa-image"></i> 装饰图片
+                    <i class="fa-solid fa-image"></i> 裝飾圖片
                     <i class="fa-solid fa-chevron-down htd-arrow"></i>
                 </div>
                 <div id="htd-imgs-section" style="display:none;">
-                    ${imgHtml('drawer', '顶部图标')}
-                    ${imgHtml('header', '抽屉头部')}
-                    ${imgHtml('body', '抽屉内容背景')}
+                    ${imgHtml('drawer', '頂部圖示')}
+                    ${imgHtml('header', '抽屜頭部')}
+                    ${imgHtml('body', '抽屜內容背景')}
                     <div class="htd-img-group">
-                        <div class="htd-img-label">抽屉背景底色</div>
+                        <div class="htd-img-label">抽屜背景底色</div>
                         <div class="htd-field">
-                            <span class="htd-label"><em id="htd-dbg-hex">${st.drawerBg || '跟随主题'}</em></span>
+                            <span class="htd-label"><em id="htd-dbg-hex">${st.drawerBg || '跟隨主題'}</em></span>
                             <div class="htd-color-row">
                                 <input type="color" id="htd-dbg" value="${st.drawerBg || '#2d2d3c'}" class="htd-cpick">
                                 <button class="horae-btn" id="htd-dbg-clear" style="font-size:10px;padding:2px 8px;">清除</button>
                             </div>
                         </div>
                     </div>
-                    ${imgHtml('panel', '底部消息栏')}
+                    ${imgHtml('panel', '底部訊息欄')}
                 </div>
             </div>
 
             <div class="htd-section">
                 <div class="htd-section-title htd-toggle" id="htd-rpg-t">
-                    <i class="fa-solid fa-shield-halved"></i> RPG 状态栏
+                    <i class="fa-solid fa-shield-halved"></i> RPG 狀態欄
                     <i class="fa-solid fa-chevron-down htd-arrow"></i>
                 </div>
                 <div id="htd-rpg-section" style="display:none;">
@@ -8180,23 +8180,23 @@ function openThemeDesigner() {
 
             <div class="htd-section">
                 <div class="htd-section-title htd-toggle" id="htd-radar-t">
-                    <i class="fa-solid fa-chart-simple"></i> 雷达图
+                    <i class="fa-solid fa-chart-simple"></i> 雷達圖
                     <i class="fa-solid fa-chevron-down htd-arrow"></i>
                 </div>
                 <div id="htd-radar-section" style="display:none;">
                     <div class="htd-field">
-                        <span class="htd-label">数据色 <em style="opacity:.5">(空=跟随主题色)</em></span>
+                        <span class="htd-label">數據色 <em style="opacity:.5">(空=跟隨主題色)</em></span>
                         <div class="htd-color-row">
                             <input type="color" id="htd-radar-color" value="${st.radarColor || priStr}" class="htd-cpick">
-                            <span class="htd-hex" id="htd-radar-color-hex">${st.radarColor || '跟随主题'}</span>
+                            <span class="htd-hex" id="htd-radar-color-hex">${st.radarColor || '跟隨主題'}</span>
                             <button class="horae-btn" id="htd-radar-color-clear" style="font-size:10px;padding:2px 8px;">清除</button>
                         </div>
                     </div>
                     <div class="htd-field">
-                        <span class="htd-label">标签色 <em style="opacity:.5">(空=跟随文字色)</em></span>
+                        <span class="htd-label">標籤色 <em style="opacity:.5">(空=跟隨文字色)</em></span>
                         <div class="htd-color-row">
                             <input type="color" id="htd-radar-label" value="${st.radarLabel || '#e2e8f0'}" class="htd-cpick">
-                            <span class="htd-hex" id="htd-radar-label-hex">${st.radarLabel || '跟随文字'}</span>
+                            <span class="htd-hex" id="htd-radar-label-hex">${st.radarLabel || '跟隨文字'}</span>
                             <button class="horae-btn" id="htd-radar-label-clear" style="font-size:10px;padding:2px 8px;">清除</button>
                         </div>
                     </div>
@@ -8204,11 +8204,11 @@ function openThemeDesigner() {
             </div>
 
             <div class="htd-section htd-save-sec">
-                <div class="htd-field"><span class="htd-label">名称</span><input type="text" id="htd-name" class="htd-input" placeholder="我的美化" value="${escapeHtml(savedName)}"></div>
+                <div class="htd-field"><span class="htd-label">名稱</span><input type="text" id="htd-name" class="htd-input" placeholder="我的美化" value="${escapeHtml(savedName)}"></div>
                 <div class="htd-field"><span class="htd-label">作者</span><input type="text" id="htd-author" class="htd-input" placeholder="匿名" value="${escapeHtml(savedAuthor)}"></div>
                 <div class="htd-btn-row">
                     <button class="horae-btn primary" id="htd-save"><i class="fa-solid fa-floppy-disk"></i> 保存</button>
-                    <button class="horae-btn" id="htd-export"><i class="fa-solid fa-file-export"></i> 导出</button>
+                    <button class="horae-btn" id="htd-export"><i class="fa-solid fa-file-export"></i> 導出</button>
                     <button class="horae-btn" id="htd-reset"><i class="fa-solid fa-rotate-left"></i> 重置</button>
                     <button class="horae-btn" id="htd-cancel"><i class="fa-solid fa-xmark"></i> 取消</button>
                 </div>
@@ -8228,19 +8228,19 @@ function openThemeDesigner() {
         const base = _tdGenerateVars(st.hue, st.sat, st.bright, st.accent, st.colorLight);
         const vars = { ...base, ...st.overrides };
 
-        // RPG HUD 背景变量（透明度：100=全透明, 0=不透明）
+        // RPG HUD 背景變數（透明度：100=全透明, 0=不透明）
         if (st.rpgColor) {
             const rc = _tdHexToRgb(st.rpgColor);
             const ra = (1 - (st.rpgOpacity ?? 85) / 100).toFixed(2);
             vars['--horae-rpg-bg'] = `rgba(${rc.r},${rc.g},${rc.b},${ra})`;
         }
-        // 骰子面板背景变量
+        // 骰子面板背景變數
         if (st.diceColor) {
             const dc = _tdHexToRgb(st.diceColor);
             const da = (1 - (st.diceOpacity ?? 15) / 100).toFixed(2);
             vars['--horae-dice-bg'] = `rgba(${dc.r},${dc.g},${dc.b},${da})`;
         }
-        // 雷达图颜色变量
+        // 雷達圖顏色變數
         if (st.radarColor) vars['--horae-radar-color'] = st.radarColor;
         if (st.radarLabel) vars['--horae-radar-label'] = st.radarLabel;
 
@@ -8341,10 +8341,10 @@ function openThemeDesigner() {
 
     // ---- Fine pickers ----
     const FINE_VARS = [
-        ['--horae-primary', '主色调'], ['--horae-primary-light', '主色调亮'], ['--horae-primary-dark', '主色调暗'],
-        ['--horae-accent', '强调色'], ['--horae-success', '成功'], ['--horae-warning', '警告'],
-        ['--horae-danger', '危险'], ['--horae-info', '信息'],
-        ['--horae-bg', '背景'], ['--horae-bg-secondary', '次背景'], ['--horae-bg-hover', '悬停背景'],
+        ['--horae-primary', '主色調'], ['--horae-primary-light', '主色調亮'], ['--horae-primary-dark', '主色調暗'],
+        ['--horae-accent', '強調色'], ['--horae-success', '成功'], ['--horae-warning', '警告'],
+        ['--horae-danger', '危險'], ['--horae-info', '資訊'],
+        ['--horae-bg', '背景'], ['--horae-bg-secondary', '次背景'], ['--horae-bg-hover', '懸停背景'],
         ['--horae-text', '文字'], ['--horae-text-muted', '次要文字']
     ];
     function buildFine() {
@@ -8395,11 +8395,11 @@ function openThemeDesigner() {
     }, { signal: sig });
     modal.querySelector('#htd-dbg-clear').addEventListener('click', () => {
         st.drawerBg = '';
-        modal.querySelector('#htd-dbg-hex').textContent = '跟随主题';
+        modal.querySelector('#htd-dbg-hex').textContent = '跟隨主題';
         update();
     }, { signal: sig });
 
-    // ---- RPG 状态栏 ----
+    // ---- RPG 狀態欄 ----
     modal.querySelector('#htd-rpg-t').addEventListener('click', () => {
         const sec = modal.querySelector('#htd-rpg-section');
         sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
@@ -8431,7 +8431,7 @@ function openThemeDesigner() {
         update();
     }, { signal: sig });
 
-    // ---- 雷达图 ----
+    // ---- 雷達圖 ----
     modal.querySelector('#htd-radar-t').addEventListener('click', () => {
         const sec = modal.querySelector('#htd-radar-section');
         sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
@@ -8443,7 +8443,7 @@ function openThemeDesigner() {
     }, { signal: sig });
     modal.querySelector('#htd-radar-color-clear').addEventListener('click', () => {
         st.radarColor = '';
-        modal.querySelector('#htd-radar-color-hex').textContent = '跟随主题';
+        modal.querySelector('#htd-radar-color-hex').textContent = '跟隨主題';
         update();
     }, { signal: sig });
     modal.querySelector('#htd-radar-label').addEventListener('input', function () {
@@ -8453,7 +8453,7 @@ function openThemeDesigner() {
     }, { signal: sig });
     modal.querySelector('#htd-radar-label-clear').addEventListener('click', () => {
         st.radarLabel = '';
-        modal.querySelector('#htd-radar-label-hex').textContent = '跟随文字';
+        modal.querySelector('#htd-radar-label-hex').textContent = '跟隨文字';
         update();
     }, { signal: sig });
 
@@ -8470,7 +8470,7 @@ function openThemeDesigner() {
 
     // ---- Save ----
     modal.querySelector('#htd-save').addEventListener('click', () => {
-        const name = modal.querySelector('#htd-name').value.trim() || '自定义美化';
+        const name = modal.querySelector('#htd-name').value.trim() || '客製化美化';
         const author = modal.querySelector('#htd-author').value.trim() || '';
         const base = _tdGenerateVars(st.hue, st.sat, st.bright, st.accent, st.colorLight);
         const vars = { ...base, ...st.overrides };
@@ -8504,12 +8504,12 @@ function openThemeDesigner() {
         saveSettings();
         applyThemeMode();
         refreshThemeSelector();
-        showToast(`美化「${name}」已保存并应用`, 'success');
+        showToast(`美化「${name}」已保存並應用`, 'success');
     }, { signal: sig });
 
     // ---- Export ----
     modal.querySelector('#htd-export').addEventListener('click', () => {
-        const name = modal.querySelector('#htd-name').value.trim() || '自定义美化';
+        const name = modal.querySelector('#htd-name').value.trim() || '客製化美化';
         const author = modal.querySelector('#htd-author').value.trim() || '';
         const base = _tdGenerateVars(st.hue, st.sat, st.bright, st.accent, st.colorLight);
         const vars = { ...base, ...st.overrides };
@@ -8537,7 +8537,7 @@ function openThemeDesigner() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = `horae-${name}.json`; a.click();
         URL.revokeObjectURL(url);
-        showToast('美化已导出为 JSON', 'info');
+        showToast('美化已導出為 JSON', 'info');
     }, { signal: sig });
 
     // ---- Reset ----
@@ -8556,7 +8556,7 @@ function openThemeDesigner() {
         modal.querySelector('#htd-bri').value = 25; modal.querySelector('#htd-briv').textContent = '夜';
         modal.querySelector('#htd-accent').value = '#f59e0b';
         modal.querySelector('#htd-accent-hex').textContent = '#f59e0b';
-        modal.querySelector('#htd-dbg-hex').textContent = '跟随主题';
+        modal.querySelector('#htd-dbg-hex').textContent = '跟隨主題';
         modal.querySelector('#htd-rpg-color').value = '#000000';
         modal.querySelector('#htd-rpg-color-hex').textContent = '#000000';
         modal.querySelector('#htd-rpg-op').value = 85;
@@ -8565,8 +8565,8 @@ function openThemeDesigner() {
         modal.querySelector('#htd-dice-color-hex').textContent = '#1a1a2e';
         modal.querySelector('#htd-dice-op').value = 15;
         modal.querySelector('#htd-dice-opv').textContent = '15';
-        modal.querySelector('#htd-radar-color-hex').textContent = '跟随主题';
-        modal.querySelector('#htd-radar-label-hex').textContent = '跟随文字';
+        modal.querySelector('#htd-radar-color-hex').textContent = '跟隨主題';
+        modal.querySelector('#htd-radar-label-hex').textContent = '跟隨文字';
         ['drawer', 'header', 'body', 'panel'].forEach(k => {
             const u = modal.querySelector(`#htd-img-${k}`); if (u) u.value = '';
             const defOp = k === 'header' ? 50 : 30;
@@ -8577,14 +8577,14 @@ function openThemeDesigner() {
         const fBody = modal.querySelector('#htd-fine-body');
         if (fBody.style.display !== 'none') buildFine();
         update();
-        showToast('已重置为默认', 'info');
+        showToast('已重置為預設', 'info');
     }, { signal: sig });
 
     update();
 }
 
 /**
- * 为消息添加元数据面板
+ * 為訊息添加元數據面板
  */
 function addMessagePanel(messageEl, messageIndex) {
     try {
@@ -8594,7 +8594,7 @@ function addMessagePanel(messageEl, messageIndex) {
     const meta = horaeManager.getMessageMeta(messageIndex);
     if (!meta) return;
     
-    // 格式化时间（标准日历添加周几）
+    // 格式化時間（標準日曆添加周幾）
     let time = '--';
     if (meta.timestamp?.story_date) {
         const parsed = parseStoryDate(meta.timestamp.story_date);
@@ -8607,11 +8607,11 @@ function addMessagePanel(messageEl, messageIndex) {
             time += ' ' + meta.timestamp.story_time;
         }
     }
-    // 兼容新旧事件格式
+    // 相容新舊事件格式
     const eventsArr = meta.events || (meta.event ? [meta.event] : []);
     const eventSummary = eventsArr.length > 0 
         ? eventsArr.map(e => e.summary).join(' | ') 
-        : '无特殊事件';
+        : '無特殊事件';
     const charCount = meta.scene?.characters_present?.length || 0;
     const isSkipped = !!meta._skipHorae;
     const sideplayBtnStyle = settings.sideplayMode ? '' : 'display:none;';
@@ -8624,14 +8624,14 @@ function addMessagePanel(messageEl, messageIndex) {
                 </div>
                 <div class="horae-panel-summary">
                     ${isSkipped ? '<span class="horae-sideplay-badge">番外</span>' : ''}
-                    <span class="horae-summary-time">${isSkipped ? '（不追踪）' : time}</span>
+                    <span class="horae-summary-time">${isSkipped ? '（不追蹤）' : time}</span>
                     <span class="horae-summary-divider">|</span>
-                    <span class="horae-summary-event">${isSkipped ? '此消息已标记为番外' : eventSummary}</span>
+                    <span class="horae-summary-event">${isSkipped ? '此訊息已標記為番外' : eventSummary}</span>
                     <span class="horae-summary-divider">|</span>
-                    <span class="horae-summary-chars">${isSkipped ? '' : charCount + '人在场'}</span>
+                    <span class="horae-summary-chars">${isSkipped ? '' : charCount + '人在場'}</span>
                 </div>
                 <div class="horae-panel-actions">
-                    <button class="horae-btn-sideplay" title="${isSkipped ? '取消番外标记' : '标记为番外（不追踪）'}" style="${sideplayBtnStyle}">
+                    <button class="horae-btn-sideplay" title="${isSkipped ? '取消番外標記' : '標記為番外（不追蹤）'}" style="${sideplayBtnStyle}">
                         <i class="fa-solid ${isSkipped ? 'fa-eye' : 'fa-masks-theater'}"></i>
                     </button>
                     <button class="horae-btn-rescan" title="重新扫描此消息">
@@ -8650,13 +8650,13 @@ function addMessagePanel(messageEl, messageIndex) {
     
     const mesTextEl = messageEl.querySelector('.mes_text');
     if (mesTextEl) {
-        mesTextEl.insertAdjacentHTML('afterend', panelHtml);
+        mesTextEl.IGertAdjacentHTML('afterend', panelHtml);
         const panelEl = messageEl.querySelector('.horae-message-panel');
         bindPanelEvents(panelEl);
         if (!settings.showMessagePanel && panelEl) {
             panelEl.style.display = 'none';
         }
-        // 应用自定义宽度和偏移
+        // 應用客製化寬度和偏移
         const w = Math.max(50, Math.min(100, settings.panelWidth || 100));
         if (w < 100 && panelEl) {
             panelEl.style.maxWidth = `${w}%`;
@@ -8665,19 +8665,19 @@ function addMessagePanel(messageEl, messageIndex) {
         if (ofs > 0 && panelEl) {
             panelEl.style.marginLeft = `${ofs}px`;
         }
-        // 继承主题模式
+        // 繼承主題模式
         if (isLightMode() && panelEl) {
             panelEl.classList.add('horae-light');
         }
         renderRpgHud(messageEl, messageIndex);
     }
     } catch (err) {
-        console.error(`[Horae] addMessagePanel #${messageIndex} 失败:`, err);
+        console.error(`[Horae] addMessagePanel #${messageIndex} 失敗:`, err);
     }
 }
 
 /**
- * 构建已删除物品显示
+ * 構建已刪除物品顯示
  */
 function buildDeletedItemsDisplay(deletedItems) {
     if (!deletedItems || deletedItems.length === 0) {
@@ -8691,7 +8691,7 @@ function buildDeletedItemsDisplay(deletedItems) {
 }
 
 /**
- * 构建待办事项编辑行
+ * 構建待辦事項編輯行
  */
 function buildAgendaEditorRows(agenda) {
     if (!agenda || agenda.length === 0) {
@@ -8700,13 +8700,13 @@ function buildAgendaEditorRows(agenda) {
     return agenda.map(item => `
         <div class="horae-editor-row horae-agenda-edit-row">
             <input type="text" class="horae-agenda-date" style="flex:0 0 90px;max-width:90px;" value="${escapeHtml(item.date || '')}" placeholder="日期">
-            <input type="text" class="horae-agenda-text" style="flex:1 1 0;min-width:0;" value="${escapeHtml(item.text || '')}" placeholder="待办内容（相对时间请标注绝对日期）">
+            <input type="text" class="horae-agenda-text" style="flex:1 1 0;min-width:0;" value="${escapeHtml(item.text || '')}" placeholder="待辦內容（相對時間請標註絕對日期）">
             <button class="horae-delete-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
     `).join('');
 }
 
-/** 关系网络面板渲染 — 数据源为 chat[0].horae_meta，不消耗 AI 输出 */
+/** 關係網路面板彩現 — 數據源為 chat[0].horae_meta，不消耗 AI 輸出 */
 function buildPanelRelationships(meta) {
     if (!settings.sendRelationships) return '';
     const presentChars = meta.scene?.characters_present || [];
@@ -8720,7 +8720,7 @@ function buildPanelRelationships(meta) {
     
     return `
         <div class="horae-panel-row full-width">
-            <label><i class="fa-solid fa-diagram-project"></i> 关系网络</label>
+            <label><i class="fa-solid fa-diagram-project"></i> 關係網路</label>
             <div class="horae-panel-relationships">${rows}</div>
         </div>`;
 }
@@ -8737,7 +8737,7 @@ function buildPanelMoodEditable(meta) {
     `).join('');
     return `
         <div class="horae-panel-row full-width">
-            <label><i class="fa-solid fa-face-smile"></i> 情绪状态</label>
+            <label><i class="fa-solid fa-face-smile"></i> 情緒狀態</label>
             <div class="horae-mood-editor">${rows}</div>
             <button class="horae-btn-add-mood"><i class="fa-solid fa-plus"></i> 添加</button>
         </div>`;
@@ -8752,7 +8752,7 @@ function buildPanelContent(messageIndex, meta) {
         </div>
     `).join('');
     
-    // 物品分类由主页面管理，底部栏不显示
+    // 物品分類由主頁面管理，底部欄不顯示
     const itemRows = Object.entries(meta.items || {}).map(([name, info]) => {
         return `
             <div class="horae-editor-row horae-item-row">
@@ -8768,7 +8768,7 @@ function buildPanelContent(messageIndex, meta) {
         `;
     }).join('');
     
-    // 获取前一条消息的好感总值（使用缓存避免 O(n²) 重复遍历）
+    // 獲取前一條訊息的好感總值（使用快取避免 O(n²) 重複遍歷）
     const prevTotals = {};
     const chat = horaeManager.getChat();
     if (!buildPanelContent._affCache || buildPanelContent._affCacheLen !== chat.length) {
@@ -8797,7 +8797,7 @@ function buildPanelContent(messageIndex, meta) {
     }
     
     const affectionRows = Object.entries(meta.affection || {}).map(([key, value]) => {
-        // 解析当前层的值
+        // 解析目前層的值
         let delta = 0, newTotal = 0;
         const prevVal = prevTotals[key] || 0;
         
@@ -8827,19 +8827,19 @@ function buildPanelContent(messageIndex, meta) {
         `;
     }).join('');
     
-    // 兼容新旧事件格式
+    // 相容新舊事件格式
     const eventsArr = meta.events || (meta.event ? [meta.event] : []);
     const firstEvent = eventsArr[0] || {};
     const eventLevel = firstEvent.level || '';
     const eventSummary = firstEvent.summary || '';
-    const multipleEventsNote = eventsArr.length > 1 ? `<span class="horae-note">（此消息有${eventsArr.length}条事件，仅显示第一条）</span>` : '';
+    const multipleEventsNote = eventsArr.length > 1 ? `<span class="horae-note">（此訊息有${eventsArr.length}條事件，僅顯示第一條）</span>` : '';
     
     return `
         <div class="horae-panel-grid">
             <div class="horae-panel-row">
-                <label><i class="fa-regular fa-clock"></i> 时间</label>
+                <label><i class="fa-regular fa-clock"></i> 時間</label>
                 <div class="horae-panel-value">
-                    <input type="text" class="horae-input-datetime" placeholder="日期 时间（如 2026/2/4 15:00）" value="${escapeHtml((() => {
+                    <input type="text" class="horae-input-datetime" placeholder="日期 時間（如 2026/2/4 15:00）" value="${escapeHtml((() => {
                         let val = meta.timestamp?.story_date || '';
                         if (meta.timestamp?.story_time) val += (val ? ' ' : '') + meta.timestamp.story_time;
                         return val;
@@ -8847,46 +8847,46 @@ function buildPanelContent(messageIndex, meta) {
                 </div>
             </div>
             <div class="horae-panel-row">
-                <label><i class="fa-solid fa-location-dot"></i> 地点</label>
+                <label><i class="fa-solid fa-location-dot"></i> 地點</label>
                 <div class="horae-panel-value">
-                    <input type="text" class="horae-input-location" value="${escapeHtml(meta.scene?.location || '')}" placeholder="场景位置">
+                    <input type="text" class="horae-input-location" value="${escapeHtml(meta.scene?.location || '')}" placeholder="場景位置">
                 </div>
             </div>
             <div class="horae-panel-row">
-                <label><i class="fa-solid fa-cloud"></i> 氛围</label>
+                <label><i class="fa-solid fa-cloud"></i> 氛圍</label>
                 <div class="horae-panel-value">
-                    <input type="text" class="horae-input-atmosphere" value="${escapeHtml(meta.scene?.atmosphere || '')}" placeholder="场景氛围">
+                    <input type="text" class="horae-input-atmosphere" value="${escapeHtml(meta.scene?.atmosphere || '')}" placeholder="場景氛圍">
                 </div>
             </div>
             <div class="horae-panel-row">
-                <label><i class="fa-solid fa-users"></i> 在场</label>
+                <label><i class="fa-solid fa-users"></i> 在場</label>
                 <div class="horae-panel-value">
                     <input type="text" class="horae-input-characters" value="${escapeHtml((meta.scene?.characters_present || []).join(', '))}" placeholder="角色名，用逗号分隔">
                 </div>
             </div>
             <div class="horae-panel-row full-width">
-                <label><i class="fa-solid fa-shirt"></i> 服装变化</label>
+                <label><i class="fa-solid fa-shirt"></i> 服裝變化</label>
                 <div class="horae-costume-editor">${costumeRows}</div>
                 <button class="horae-btn-add-costume"><i class="fa-solid fa-plus"></i> 添加</button>
             </div>
             ${buildPanelMoodEditable(meta)}
             <div class="horae-panel-row full-width">
-                <label><i class="fa-solid fa-box-open"></i> 物品获得/变化</label>
+                <label><i class="fa-solid fa-box-open"></i> 物品獲得/變化</label>
                 <div class="horae-items-editor">${itemRows}</div>
                 <button class="horae-btn-add-item"><i class="fa-solid fa-plus"></i> 添加</button>
             </div>
             <div class="horae-panel-row full-width">
-                <label><i class="fa-solid fa-trash-can"></i> 物品消耗/删除</label>
+                <label><i class="fa-solid fa-trash-can"></i> 物品消耗/刪除</label>
                 <div class="horae-deleted-items-display">${buildDeletedItemsDisplay(meta.deletedItems)}</div>
             </div>
             <div class="horae-panel-row full-width">
                 <label><i class="fa-solid fa-bookmark"></i> 事件 ${multipleEventsNote}</label>
                 <div class="horae-event-editor">
                     <select class="horae-input-event-level">
-                        <option value="">无</option>
+                        <option value="">無</option>
                         <option value="一般" ${eventLevel === '一般' ? 'selected' : ''}>一般</option>
                         <option value="重要" ${eventLevel === '重要' ? 'selected' : ''}>重要</option>
-                        <option value="关键" ${eventLevel === '关键' ? 'selected' : ''}>关键</option>
+                        <option value="關鍵" ${eventLevel === '關鍵' ? 'selected' : ''}>關鍵</option>
                     </select>
                     <input type="text" class="horae-input-event-summary" value="${escapeHtml(eventSummary)}" placeholder="事件摘要">
                 </div>
@@ -8897,19 +8897,19 @@ function buildPanelContent(messageIndex, meta) {
                 <button class="horae-btn-add-affection"><i class="fa-solid fa-plus"></i> 添加</button>
             </div>
             <div class="horae-panel-row full-width">
-                <label><i class="fa-solid fa-list-check"></i> 待办事项</label>
+                <label><i class="fa-solid fa-list-check"></i> 待辦事項</label>
                 <div class="horae-agenda-editor">${buildAgendaEditorRows(meta.agenda)}</div>
                 <button class="horae-btn-add-agenda-row"><i class="fa-solid fa-plus"></i> 添加</button>
             </div>
             ${buildPanelRelationships(meta)}
         </div>
         <div class="horae-panel-rescan">
-            <div class="horae-rescan-label"><i class="fa-solid fa-rotate"></i> 重新扫描此消息</div>
+            <div class="horae-rescan-label"><i class="fa-solid fa-rotate"></i> 重新掃描此訊息</div>
             <div class="horae-rescan-buttons">
-                <button class="horae-btn-quick-scan horae-btn" title="从现有文本中提取格式化数据（不消耗API）">
+                <button class="horae-btn-quick-scan horae-btn" title="從現有文字中提取格式化資料（不消耗API）">
                     <i class="fa-solid fa-bolt"></i> 快速解析
                 </button>
-                <button class="horae-btn-ai-analyze horae-btn" title="使用AI分析消息内容（消耗API）">
+                <button class="horae-btn-ai-analyze horae-btn" title="使用AI分析訊息內容（消耗API）">
                     <i class="fa-solid fa-wand-magic-sparkles"></i> AI分析
                 </button>
             </div>
@@ -8923,7 +8923,7 @@ function buildPanelContent(messageIndex, meta) {
 }
 
 /**
- * 绑定面板事件
+ * 綁定面板事件
  */
 function bindPanelEvents(panelEl) {
     if (!panelEl) return;
@@ -8931,7 +8931,7 @@ function bindPanelEvents(panelEl) {
     const messageId = parseInt(panelEl.dataset.messageId);
     const contentEl = panelEl.querySelector('.horae-panel-content');
     
-    // 头部区域事件只绑定一次，避免重复绑定导致 toggle 互相抵消
+    // 頭部區域事件只綁定一次，避免重複綁定導致 toggle 互相抵消
     if (!panelEl._horaeBound) {
         panelEl._horaeBound = true;
         const toggleEl = panelEl.querySelector('.horae-panel-toggle');
@@ -8962,7 +8962,7 @@ function bindPanelEvents(panelEl) {
         });
     }
     
-    // 标记面板已修改
+    // 標記面板已修改
     let panelDirty = false;
     contentEl?.addEventListener('input', () => { panelDirty = true; });
     contentEl?.addEventListener('change', () => { panelDirty = true; });
@@ -8973,7 +8973,7 @@ function bindPanelEvents(panelEl) {
     });
     
     panelEl.querySelector('.horae-btn-cancel')?.addEventListener('click', () => {
-        if (panelDirty && !confirm('有未保存的更改，确定关闭？')) return;
+        if (panelDirty && !confirm('有未保存的更改，確定關閉？')) return;
         contentEl.style.display = 'none';
         panelDirty = false;
     });
@@ -8986,7 +8986,7 @@ function bindPanelEvents(panelEl) {
             drawerIcon.removeClass('openIcon').addClass('closedIcon');
             drawerContent.removeClass('openDrawer').addClass('closedDrawer').css('display', 'none');
         } else {
-            // 关闭其他抽屉
+            // 關閉其他抽屜
             $('.openDrawer').not('#horae_drawer_content').not('.pinnedOpen').css('display', 'none')
                 .removeClass('openDrawer').addClass('closedDrawer');
             $('.openIcon').not('#horae_drawer_icon').not('.drawerPinnedOpen')
@@ -9001,7 +9001,7 @@ function bindPanelEvents(panelEl) {
         const emptyHint = editor.querySelector('.horae-empty-hint');
         if (emptyHint) emptyHint.remove();
         
-        editor.insertAdjacentHTML('beforeend', `
+        editor.IGertAdjacentHTML('beforeend', `
             <div class="horae-editor-row">
                 <input type="text" class="char-input" placeholder="角色名">
                 <input type="text" placeholder="服装描述">
@@ -9061,59 +9061,59 @@ function bindPanelEvents(panelEl) {
         bindAffectionInputs(editor);
     });
     
-    // 添加待办事项行
+    // 添加待辦事項行
     panelEl.querySelector('.horae-btn-add-agenda-row')?.addEventListener('click', () => {
         const editor = panelEl.querySelector('.horae-agenda-editor');
         const emptyHint = editor.querySelector('.horae-empty-hint');
         if (emptyHint) emptyHint.remove();
         
-        editor.insertAdjacentHTML('beforeend', `
+        editor.IGertAdjacentHTML('beforeend', `
             <div class="horae-editor-row horae-agenda-edit-row">
                 <input type="text" class="horae-agenda-date" style="flex:0 0 90px;max-width:90px;" value="" placeholder="日期">
-                <input type="text" class="horae-agenda-text" style="flex:1 1 0;min-width:0;" value="" placeholder="待办内容（相对时间请标注绝对日期）">
+                <input type="text" class="horae-agenda-text" style="flex:1 1 0;min-width:0;" value="" placeholder="待辦內容（相對時間請標註絕對日期）">
                 <button class="horae-delete-btn"><i class="fa-solid fa-xmark"></i></button>
             </div>
         `);
         bindDeleteButtons(editor);
     });
     
-    // 绑定好感度输入联动
+    // 綁定好感度輸入聯動
     bindAffectionInputs(panelEl.querySelector('.horae-affection-editor'));
     
-    // 绑定现有删除按钮
+    // 綁定現有刪除按鈕
     bindDeleteButtons(panelEl);
     
-    // 快速解析按钮（不消耗API）
+    // 快速解析按鈕（不消耗API）
     panelEl.querySelector('.horae-btn-quick-scan')?.addEventListener('click', async () => {
         const chat = horaeManager.getChat();
         const message = chat[messageId];
         if (!message) {
-            showToast('无法获取消息内容', 'error');
+            showToast('無法獲取訊息內容', 'error');
             return;
         }
         
-        // 先尝试解析标准标签
+        // 先嚐試解析標準標籤
         let parsed = horaeManager.parseHoraeTag(message.mes);
         
-        // 如果没有标签，尝试宽松解析
+        // 如果沒有標籤，嘗試寬鬆解析
         if (!parsed) {
             parsed = horaeManager.parseLooseFormat(message.mes);
         }
         
         if (parsed) {
-            // 获取现有元数据并合并
+            // 獲取現有元數據併合並
             const existingMeta = horaeManager.getMessageMeta(messageId) || createEmptyMeta();
             const newMeta = horaeManager.mergeParsedToMeta(existingMeta, parsed);
-            // 处理表格更新
+            // 處理表格更新
             if (newMeta._tableUpdates) {
                 horaeManager.applyTableUpdates(newMeta._tableUpdates);
                 delete newMeta._tableUpdates;
             }
-            // 处理已完成待办
+            // 處理已完成待辦
             if (parsed.deletedAgenda && parsed.deletedAgenda.length > 0) {
                 horaeManager.removeCompletedAgenda(parsed.deletedAgenda);
             }
-            // 全局同步
+            // 全域同步
             if (parsed.relationships?.length > 0) {
                 horaeManager._mergeRelationships(parsed.relationships);
             }
@@ -9132,16 +9132,16 @@ function bindPanelEvents(panelEl) {
             refreshAllDisplays();
             showToast('快速解析完成！', 'success');
         } else {
-            showToast('未能从文本中提取到格式化数据，请尝试AI分析', 'warning');
+            showToast('未能從文字中提取到格式化數據，請嘗試AI分析', 'warning');
         }
     });
     
-    // AI分析按钮（消耗API）
+    // AI分析按鈕（消耗API）
     panelEl.querySelector('.horae-btn-ai-analyze')?.addEventListener('click', async () => {
         const chat = horaeManager.getChat();
         const message = chat[messageId];
         if (!message) {
-            showToast('无法获取消息内容', 'error');
+            showToast('無法獲取訊息內容', 'error');
             return;
         }
         
@@ -9151,7 +9151,7 @@ function bindPanelEvents(panelEl) {
         btn.disabled = true;
         
         try {
-            // 调用AI分析
+            // 呼叫AI分析
             const result = await analyzeMessageWithAI(message.mes);
             
             if (result) {
@@ -9161,11 +9161,11 @@ function bindPanelEvents(panelEl) {
                     horaeManager.applyTableUpdates(newMeta._tableUpdates);
                     delete newMeta._tableUpdates;
                 }
-                // 处理已完成待办
+                // 處理已完成待辦
                 if (result.deletedAgenda && result.deletedAgenda.length > 0) {
                     horaeManager.removeCompletedAgenda(result.deletedAgenda);
                 }
-                // 全局同步
+                // 全域同步
                 if (result.relationships?.length > 0) {
                     horaeManager._mergeRelationships(result.relationships);
                 }
@@ -9184,11 +9184,11 @@ function bindPanelEvents(panelEl) {
                 refreshAllDisplays();
                 showToast('AI分析完成！', 'success');
             } else {
-                showToast('AI分析未返回有效数据', 'warning');
+                showToast('AI分析未返回有效數據', 'warning');
             }
         } catch (error) {
-            console.error('[Horae] AI分析失败:', error);
-            showToast('AI分析失败: ' + error.message, 'error');
+            console.error('[Horae] AI分析失敗:', error);
+            showToast('AI分析失敗: ' + error.message, 'error');
         } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;
@@ -9197,7 +9197,7 @@ function bindPanelEvents(panelEl) {
 }
 
 /**
- * 绑定删除按钮事件
+ * 綁定刪除按鈕事件
  */
 function bindDeleteButtons(container) {
     container.querySelectorAll('.horae-delete-btn').forEach(btn => {
@@ -9206,7 +9206,7 @@ function bindDeleteButtons(container) {
 }
 
 /**
- * 绑定好感度输入框联动
+ * 綁定好感度輸入框聯動
  */
 function bindAffectionInputs(container) {
     if (!container) return;
@@ -9230,7 +9230,7 @@ function bindAffectionInputs(container) {
     });
 }
 
-/** 切换消息的番外/小剧场标记 */
+/** 切換訊息的番外/小劇場標記 */
 function toggleSideplay(messageId, panelEl) {
     const meta = horaeManager.getMessageMeta(messageId);
     if (!meta) return;
@@ -9246,20 +9246,20 @@ function toggleSideplay(messageId, panelEl) {
         addMessagePanel(messageEl, messageId);
     }
     refreshAllDisplays();
-    showToast(meta._skipHorae ? '已标记为番外（不追踪）' : '已取消番外标记', 'success');
+    showToast(meta._skipHorae ? '已標記為番外（不追蹤）' : '已取消番外標記', 'success');
 }
 
-/** 重新扫描消息并更新面板（完全替换） */
+/** 重新掃描訊息並更新面板（完全替換） */
 function rescanMessageMeta(messageId, panelEl) {
-    // 从DOM获取最新的消息内容（用户可能已编辑）
+    // 從DOM獲取最新的訊息內容（用戶可能已編輯）
     const messageEl = panelEl.closest('.mes');
     if (!messageEl) {
-        showToast('无法找到消息元素', 'error');
+        showToast('無法找到訊息元素', 'error');
         return;
     }
     
-    // 获取文本内容（包括隐藏的horae标签）
-    // 先尝试从chat数组获取最新内容
+    // 獲取文字內容（包括隱藏的horae標籤）
+    // 先嚐試從chat數組獲取最新內容
     const context = window.SillyTavern?.getContext?.() || getContext?.();
     let messageContent = '';
     
@@ -9267,7 +9267,7 @@ function rescanMessageMeta(messageId, panelEl) {
         messageContent = context.chat[messageId].mes;
     }
     
-    // 如果chat中没有或为空，从DOM获取
+    // 如果chat中沒有或為空，從DOM獲取
     if (!messageContent) {
         const mesTextEl = messageEl.querySelector('.mes_text');
         if (mesTextEl) {
@@ -9276,7 +9276,7 @@ function rescanMessageMeta(messageId, panelEl) {
     }
     
     if (!messageContent) {
-        showToast('无法获取消息内容', 'error');
+        showToast('無法獲取訊息內容', 'error');
         return;
     }
     
@@ -9284,35 +9284,35 @@ function rescanMessageMeta(messageId, panelEl) {
     
     if (parsed) {
         const existingMeta = horaeManager.getMessageMeta(messageId);
-        // 用 mergeParsedToMeta 以空 meta 为基础，确保所有字段一致处理
+        // 用 mergeParsedToMeta 以空 meta 為基礎，確保所有資料欄一致處理
         const newMeta = horaeManager.mergeParsedToMeta(createEmptyMeta(), parsed);
         
-        // 只保留原有的NPC数据（如果新解析中没有）
+        // 只保留原有的NPC數據（如果新解析中沒有）
         if ((!parsed.npcs || Object.keys(parsed.npcs).length === 0) && existingMeta?.npcs) {
             newMeta.npcs = existingMeta.npcs;
         }
         
-        // 无新agenda则保留旧数据
+        // 無新agenda則保留舊數據
         if ((!newMeta.agenda || newMeta.agenda.length === 0) && existingMeta?.agenda?.length > 0) {
             newMeta.agenda = existingMeta.agenda;
         }
         
-        // 处理表格更新
+        // 處理表格更新
         if (newMeta._tableUpdates) {
             horaeManager.applyTableUpdates(newMeta._tableUpdates);
             delete newMeta._tableUpdates;
         }
         
-        // 处理已完成待办
+        // 處理已完成待辦
         if (parsed.deletedAgenda && parsed.deletedAgenda.length > 0) {
             horaeManager.removeCompletedAgenda(parsed.deletedAgenda);
         }
         
-        // 全局同步：关系网络合并到 chat[0]
+        // 全域同步：關係網路合併到 chat[0]
         if (parsed.relationships?.length > 0) {
             horaeManager._mergeRelationships(parsed.relationships);
         }
-        // 全局同步：场景记忆更新
+        // 全域同步：場景記憶更新
         if (parsed.scene?.scene_desc && parsed.scene?.location) {
             horaeManager._updateLocationMemory(parsed.scene.location, parsed.scene.scene_desc);
         }
@@ -9323,12 +9323,12 @@ function rescanMessageMeta(messageId, panelEl) {
         panelEl.remove();
         addMessagePanel(messageEl, messageId);
         
-        // 同时刷新主显示
+        // 同時重新整理主顯示
         refreshAllDisplays();
         
-        showToast('已重新扫描并更新', 'success');
+        showToast('已重新掃描並更新', 'success');
     } else {
-        // 无标签，清空数据（保留NPC）
+        // 無標籤，清空數據（保留NPC）
         const existingMeta = horaeManager.getMessageMeta(messageId);
         const newMeta = createEmptyMeta();
         if (existingMeta?.npcs) {
@@ -9340,19 +9340,19 @@ function rescanMessageMeta(messageId, panelEl) {
         addMessagePanel(messageEl, messageId);
         refreshAllDisplays();
         
-        showToast('未找到Horae标签，已清空数据', 'warning');
+        showToast('未找到Horae標籤，已清空數據', 'warning');
     }
 }
 
 /**
- * 保存面板数据
+ * 保存面板數據
  */
 function savePanelData(panelEl, messageId) {
-    // 获取现有的 meta，保留面板中没有编辑区的数据（如 NPC）
+    // 獲取現有的 meta，保留面板中沒有編輯區的數據（如 NPC）
     const existingMeta = horaeManager.getMessageMeta(messageId);
     const meta = createEmptyMeta();
     
-    // 保留面板中没有编辑区的数据
+    // 保留面板中沒有編輯區的數據
     if (existingMeta?.npcs) {
         meta.npcs = JSON.parse(JSON.stringify(existingMeta.npcs));
     }
@@ -9366,7 +9366,7 @@ function savePanelData(panelEl, messageId) {
         meta.mood = JSON.parse(JSON.stringify(existingMeta.mood));
     }
     
-    // 分离日期时间
+    // 分離日期時間
     const datetimeVal = (panelEl.querySelector('.horae-input-datetime')?.value || '').trim();
     const clockMatch = datetimeVal.match(/\b(\d{1,2}:\d{2})\s*$/);
     if (clockMatch) {
@@ -9378,13 +9378,13 @@ function savePanelData(panelEl, messageId) {
     }
     meta.timestamp.absolute = new Date().toISOString();
     
-    // 场景
+    // 場景
     meta.scene.location = panelEl.querySelector('.horae-input-location')?.value || '';
     meta.scene.atmosphere = panelEl.querySelector('.horae-input-atmosphere')?.value || '';
     const charsInput = panelEl.querySelector('.horae-input-characters')?.value || '';
     meta.scene.characters_present = charsInput.split(/[,，]/).map(s => s.trim()).filter(Boolean);
     
-    // 服装
+    // 服裝
     panelEl.querySelectorAll('.horae-costume-editor .horae-editor-row').forEach(row => {
         const inputs = row.querySelectorAll('input');
         if (inputs.length >= 2) {
@@ -9396,7 +9396,7 @@ function savePanelData(panelEl, messageId) {
         }
     });
     
-    // 情绪
+    // 情緒
     panelEl.querySelectorAll('.horae-mood-editor .horae-mood-row').forEach(row => {
         const charEl = row.querySelector('.mood-char');
         const emotionInput = row.querySelector('.mood-emotion');
@@ -9405,7 +9405,7 @@ function savePanelData(panelEl, messageId) {
         if (char && emotion) meta.mood[char] = emotion;
     });
     
-    // 物品配对处理
+    // 物品配對處理
     const itemMainRows = panelEl.querySelectorAll('.horae-items-editor .horae-item-row');
     const itemDescRows = panelEl.querySelectorAll('.horae-items-editor .horae-item-desc-row');
     const latestState = horaeManager.getLatestState();
@@ -9422,11 +9422,11 @@ function savePanelData(panelEl, messageId) {
         if (nameInput) {
             const name = nameInput.value.trim();
             if (name) {
-                // 从物品栏获取已保存的importance，底部栏不再编辑分类
+                // 從物品欄獲取已保存的importance，底部欄不再編輯分類
                 const existingImportance = existingItems[name]?.importance || existingMeta?.items?.[name]?.importance || '';
                 meta.items[name] = {
                     icon: iconInput?.value.trim() || null,
-                    importance: existingImportance,  // 保留物品栏的分类
+                    importance: existingImportance,  // 保留物品欄的分類
                     holder: holderInput?.value.trim() || null,
                     location: locationInput?.value.trim() || '',
                     description: descInput?.value.trim() || ''
@@ -9440,7 +9440,7 @@ function savePanelData(panelEl, messageId) {
     const eventSummary = panelEl.querySelector('.horae-input-event-summary')?.value;
     if (eventLevel && eventSummary) {
         meta.events = [{
-            is_important: eventLevel === '重要' || eventLevel === '关键',
+            is_important: eventLevel === '重要' || eventLevel === '關鍵',
             level: eventLevel,
             summary: eventSummary
         }];
@@ -9459,7 +9459,7 @@ function savePanelData(panelEl, messageId) {
         }
     });
     
-    // 兼容旧格式
+    // 相容舊格式
     panelEl.querySelectorAll('.horae-affection-editor .horae-editor-row:not(.horae-affection-row)').forEach(row => {
         const inputs = row.querySelectorAll('input');
         if (inputs.length >= 2) {
@@ -9487,13 +9487,13 @@ function savePanelData(panelEl, messageId) {
     if (agendaItems.length > 0) {
         meta.agenda = agendaItems;
     } else if (existingMeta?.agenda?.length > 0) {
-        // 无编辑行时保留原有待办
+        // 無編輯行時保留原有待辦
         meta.agenda = existingMeta.agenda;
     }
     
     horaeManager.setMessageMeta(messageId, meta);
     
-    // 全局同步
+    // 全域同步
     if (meta.relationships?.length > 0) {
         horaeManager._mergeRelationships(meta.relationships);
     }
@@ -9501,7 +9501,7 @@ function savePanelData(panelEl, messageId) {
         horaeManager._updateLocationMemory(meta.scene.location, meta.scene.scene_desc);
     }
     
-    // 同步写入正文标签
+    // 同步寫入正文標籤
     injectHoraeTagToMessage(messageId, meta);
     
     getContext().saveChat();
@@ -9528,14 +9528,14 @@ function savePanelData(panelEl, messageId) {
     }
     if (summaryEvent) {
         const evts = meta.events || (meta.event ? [meta.event] : []);
-        summaryEvent.textContent = evts.length > 0 ? evts.map(e => e.summary).join(' | ') : '无特殊事件';
+        summaryEvent.textContent = evts.length > 0 ? evts.map(e => e.summary).join(' | ') : '無特殊事件';
     }
     if (summaryChars) {
-        summaryChars.textContent = `${meta.scene.characters_present.length}人在场`;
+        summaryChars.textContent = `${meta.scene.characters_present.length}人在場`;
     }
 }
 
-/** 构建 <horae> 标签字符串 */
+/** 構建 <horae> 標籤字元串 */
 function buildHoraeTagFromMeta(meta) {
     const lines = [];
     
@@ -9599,7 +9599,7 @@ function buildHoraeTagFromMeta(meta) {
         }
     }
     
-    // npcs（使用新格式：npc:名|外貌=性格@关系~扩展字段）
+    // npcs（使用新格式：npc:名|外貌=個性@關係~擴展資料欄）
     if (meta.npcs) {
         for (const [name, info] of Object.entries(meta.npcs)) {
             if (!name) continue;
@@ -9613,12 +9613,12 @@ function buildHoraeTagFromMeta(meta) {
                 npcLine = `npc:${name}`;
             }
             const extras = [];
-            if (info.gender) extras.push(`性别:${info.gender}`);
-            if (info.age) extras.push(`年龄:${info.age}`);
-            if (info.race) extras.push(`种族:${info.race}`);
-            if (info.job) extras.push(`职业:${info.job}`);
+            if (info.gender) extras.push(`性別:${info.gender}`);
+            if (info.age) extras.push(`年齡:${info.age}`);
+            if (info.race) extras.push(`種族:${info.race}`);
+            if (info.job) extras.push(`職業:${info.job}`);
             if (info.birthday) extras.push(`生日:${info.birthday}`);
-            if (info.note) extras.push(`补充:${info.note}`);
+            if (info.note) extras.push(`補充:${info.note}`);
             if (extras.length > 0) npcLine += `~${extras.join('~')}`;
             lines.push(npcLine);
         }
@@ -9655,7 +9655,7 @@ function buildHoraeTagFromMeta(meta) {
     return `<horae>\n${lines.join('\n')}\n</horae>`;
 }
 
-/** 构建 <horaeevent> 标签字符串 */
+/** 構建 <horaeevent> 標籤字元串 */
 function buildHoraeEventTagFromMeta(meta) {
     const events = meta.events || (meta.event ? [meta.event] : []);
     if (events.length === 0) return '';
@@ -9668,7 +9668,7 @@ function buildHoraeEventTagFromMeta(meta) {
     return `<horaeevent>\n${lines.join('\n')}\n</horaeevent>`;
 }
 
-/** 同步注入正文标签 */
+/** 同步注入正文標籤 */
 function injectHoraeTagToMessage(messageId, meta) {
     try {
         const chat = horaeManager.getChat();
@@ -9677,7 +9677,7 @@ function injectHoraeTagToMessage(messageId, meta) {
         const message = chat[messageId];
         let mes = message.mes;
         
-        // === 处理 <horae> 标签 ===
+        // === 處理 <horae> 標籤 ===
         const newHoraeTag = buildHoraeTagFromMeta(meta);
         const hasHoraeTag = /<horae>[\s\S]*?<\/horae>/i.test(mes);
         
@@ -9689,7 +9689,7 @@ function injectHoraeTagToMessage(messageId, meta) {
             mes = mes.trimEnd() + '\n\n' + newHoraeTag;
         }
         
-        // === 处理 <horaeevent> 标签 ===
+        // === 處理 <horaeevent> 標籤 ===
         const newEventTag = buildHoraeEventTagFromMeta(meta);
         const hasEventTag = /<horaeevent>[\s\S]*?<\/horaeevent>/i.test(mes);
         
@@ -9702,25 +9702,25 @@ function injectHoraeTagToMessage(messageId, meta) {
         }
         
         message.mes = mes;
-        console.log(`[Horae] 已同步写入消息 #${messageId} 的标签`);
+        console.log(`[Horae] 已同步寫入訊息 #${messageId} 的標籤`);
     } catch (error) {
-        console.error(`[Horae] 写入标签失败:`, error);
+        console.error(`[Horae] 寫入標籤失敗:`, error);
     }
 }
 
 // ============================================
-// 抽屉面板交互
+// 抽屜面板互動
 // ============================================
 
 /**
- * 打开/关闭抽屉（旧版兼容模式）
+ * 打開/關閉抽屜（舊版相容模式）
  */
 function openDrawerLegacy() {
     const drawerIcon = $('#horae_drawer_icon');
     const drawerContent = $('#horae_drawer_content');
     
     if (drawerIcon.hasClass('closedIcon')) {
-        // 关闭其他抽屉
+        // 關閉其他抽屜
         $('.openDrawer').not('#horae_drawer_content').not('.pinnedOpen').addClass('resizing').each((_, el) => {
             slideToggle(el, {
                 ...getSlideToggleOptions(),
@@ -9753,23 +9753,23 @@ function openDrawerLegacy() {
 }
 
 /**
- * 初始化抽屉
+ * 初始化抽屜
  */
 async function initDrawer() {
     const toggle = $('#horae_drawer .drawer-toggle');
     
     if (isNewNavbarVersion()) {
         toggle.on('click', doNavbarIconClick);
-        console.log(`[Horae] 使用新版导航栏模式`);
+        console.log(`[Horae] 使用新版導航欄模式`);
     } else {
         $('#horae_drawer_content').attr('data-slide-toggle', 'hidden').css('display', 'none');
         toggle.on('click', openDrawerLegacy);
-        console.log(`[Horae] 使用旧版抽屉模式`);
+        console.log(`[Horae] 使用舊版抽屜模式`);
     }
 }
 
 /**
- * 初始化标签页切换
+ * 初始化標籤頁切換
  */
 function initTabs() {
     $('.horae-tab').on('click', function() {
@@ -9800,11 +9800,11 @@ function initTabs() {
 }
 
 // ============================================
-// 清理无主物品功能
+// 清理無主物品功能
 // ============================================
 
 /**
- * 初始化设置页事件
+ * 初始化設定頁事件
  */
 function initSettingsEvents() {
     $('#horae-btn-restart-tutorial').on('click', () => startTutorial());
@@ -9859,9 +9859,9 @@ function initSettingsEvents() {
         const result = repairAllSummaryStates();
         if (result > 0) {
             updateTimelineDisplay();
-            showToast(`已修复 ${result} 处摘要状态`, 'success');
+            showToast(`已修復 ${result} 處摘要狀態`, 'success');
         } else {
-            showToast('所有摘要状态正常，无需修复', 'info');
+            showToast('所有摘要狀態正常，無需修復', 'info');
         }
     });
     
@@ -9873,7 +9873,7 @@ function initSettingsEvents() {
     $('#horae-btn-add-location').on('click', () => openLocationEditModal(null));
     $('#horae-btn-merge-locations').on('click', openLocationMergeModal);
 
-    // RPG 属性条配置
+    // RPG 屬性條配置
     $(document).on('input', '.horae-rpg-config-key', function() {
         const i = parseInt(this.dataset.idx);
         if (settings.rpgBarConfig?.[i]) {
@@ -9913,18 +9913,18 @@ function initSettingsEvents() {
             updateTokenCounter();
         }
     });
-    // 属性条：恢复默认
+    // 屬性條：恢復預設
     $('#horae-rpg-bar-reset').on('click', () => {
-        if (!confirm('确定恢复属性条为默认配置（HP/MP/SP）？')) return;
+        if (!confirm('確定恢復屬性條為預設配置（HP/MP/SP）？')) return;
         settings.rpgBarConfig = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.rpgBarConfig));
         saveSettings(); renderBarConfig();
         horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
-        showToast('已恢复默认属性条', 'success');
+        showToast('已恢復預設屬性條', 'success');
     });
-    // 属性条：清理不在当前配置中的旧数据
+    // 屬性條：清理不在目前配置中的舊數據
     $('#horae-rpg-bar-clean').on('click', async () => {
         const chat = horaeManager.getChat();
-        if (!chat?.length) { showToast('无聊天数据', 'warning'); return; }
+        if (!chat?.length) { showToast('無聊天數據', 'warning'); return; }
         const validKeys = new Set((settings.rpgBarConfig || []).map(b => b.key));
         validKeys.add('status');
         const staleKeys = new Set();
@@ -9938,13 +9938,13 @@ function initSettingsEvents() {
         if (globalBars) for (const owner of Object.keys(globalBars)) {
             for (const key of Object.keys(globalBars[owner] || {})) { if (!validKeys.has(key)) staleKeys.add(key); }
         }
-        if (staleKeys.size === 0) { showToast('没有需要清理的旧属性条数据', 'success'); return; }
+        if (staleKeys.size === 0) { showToast('沒有需要清理的舊屬性條數據', 'success'); return; }
         const keyList = [...staleKeys].join('、');
         const ok = confirm(
-            `⚠ 发现以下不在当前属性条配置中的旧数据：\n\n` +
+            `⚠ 發現以下不在目前屬性條配置中的舊數據：\n\n` +
             `【${keyList}】\n\n` +
-            `清理后将从所有消息中移除这些属性条的历史记录，RPG 面板将不再显示它们。\n` +
-            `此操作不可撤销！\n\n确定清理吗？`
+            `清理後將從所有訊息中移除這些屬性條的歷史記錄，RPG 面板將不再顯示它們。\n` +
+            `此操作不可撤銷！\n\n確定清理嗎？`
         );
         if (!ok) return;
         let cleaned = 0;
@@ -9961,15 +9961,15 @@ function initSettingsEvents() {
         horaeManager.rebuildRpgData();
         await getContext().saveChat();
         refreshAllDisplays();
-        showToast(`已清理 ${cleaned} 条旧属性数据（${keyList}）`, 'success');
+        showToast(`已清理 ${cleaned} 條舊屬性數據（${keyList}）`, 'success');
     });
-    // 属性条：导出
+    // 屬性條：導出
     $('#horae-rpg-bar-export').on('click', () => {
         const blob = new Blob([JSON.stringify(settings.rpgBarConfig, null, 2)], { type: 'application/json' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
         a.download = 'horae-rpg-bars.json'; a.click(); URL.revokeObjectURL(a.href);
     });
-    // 属性条：导入
+    // 屬性條：導入
     $('#horae-rpg-bar-import').on('click', () => document.getElementById('horae-rpg-bar-import-file')?.click());
     $('#horae-rpg-bar-import-file').on('change', function() {
         const file = this.files?.[0];
@@ -9978,31 +9978,31 @@ function initSettingsEvents() {
         reader.onload = () => {
             try {
                 const arr = JSON.parse(reader.result);
-                if (!Array.isArray(arr) || !arr.every(b => b.key && b.name)) throw new Error('格式不正确');
+                if (!Array.isArray(arr) || !arr.every(b => b.key && b.name)) throw new Error('格式不正確');
                 settings.rpgBarConfig = arr;
                 saveSettings(); renderBarConfig();
                 horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
-                showToast(`已导入 ${arr.length} 条属性条配置`, 'success');
-            } catch (e) { showToast('导入失败: ' + e.message, 'error'); }
+                showToast(`已導入 ${arr.length} 條屬性條配置`, 'success');
+            } catch (e) { showToast('導入失敗: ' + e.message, 'error'); }
         };
         reader.readAsText(file);
         this.value = '';
     });
-    // 属性面板：恢复默认
+    // 屬性面板：恢復預設
     $('#horae-rpg-attr-reset').on('click', () => {
-        if (!confirm('确定恢复属性面板为默认配置（DND六维）？')) return;
+        if (!confirm('確定恢復屬性面板為預設配置（DND六維）？')) return;
         settings.rpgAttributeConfig = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.rpgAttributeConfig));
         saveSettings(); renderAttrConfig();
         horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
-        showToast('已恢复默认属性面板', 'success');
+        showToast('已恢復預設屬性面板', 'success');
     });
-    // 属性面板：导出
+    // 屬性面板：導出
     $('#horae-rpg-attr-export').on('click', () => {
         const blob = new Blob([JSON.stringify(settings.rpgAttributeConfig, null, 2)], { type: 'application/json' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
         a.download = 'horae-rpg-attrs.json'; a.click(); URL.revokeObjectURL(a.href);
     });
-    // 属性面板：导入
+    // 屬性面板：導入
     $('#horae-rpg-attr-import').on('click', () => document.getElementById('horae-rpg-attr-import-file')?.click());
     $('#horae-rpg-attr-import-file').on('change', function() {
         const file = this.files?.[0];
@@ -10011,12 +10011,12 @@ function initSettingsEvents() {
         reader.onload = () => {
             try {
                 const arr = JSON.parse(reader.result);
-                if (!Array.isArray(arr) || !arr.every(a => a.key && a.name)) throw new Error('格式不正确');
+                if (!Array.isArray(arr) || !arr.every(a => a.key && a.name)) throw new Error('格式不正確');
                 settings.rpgAttributeConfig = arr;
                 saveSettings(); renderAttrConfig();
                 horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
-                showToast(`已导入 ${arr.length} 条属性配置`, 'success');
-            } catch (e) { showToast('导入失败: ' + e.message, 'error'); }
+                showToast(`已導入 ${arr.length} 條屬性配置`, 'success');
+            } catch (e) { showToast('導入失敗: ' + e.message, 'error'); }
         };
         reader.readAsText(file);
         this.value = '';
@@ -10035,7 +10035,7 @@ function initSettingsEvents() {
         updateTokenCounter();
     });
 
-    // 角色卡内编辑属性按钮
+    // 角色卡內編輯屬性按鈕
     $(document).on('click', '.horae-rpg-charattr-edit', function() {
         const charName = this.dataset.char;
         if (!charName) return;
@@ -10047,13 +10047,13 @@ function initSettingsEvents() {
             `<div class="horae-rpg-charattr-row"><label>${escapeHtml(a.name)}(${escapeHtml(a.key)})</label><input type="number" class="horae-rpg-charattr-val" data-key="${escapeHtml(a.key)}" min="0" max="100" placeholder="0-100" /></div>`
         ).join('');
         form.innerHTML = `
-            <div class="horae-rpg-form-title">编辑: ${escapeHtml(charName)}</div>
+            <div class="horae-rpg-form-title">編輯: ${escapeHtml(charName)}</div>
             ${attrInputs}
             <div class="horae-rpg-form-actions">
                 <button id="horae-rpg-charattr-save-inline" class="horae-rpg-btn-sm" data-char="${escapeHtml(charName)}">保存</button>
                 <button id="horae-rpg-charattr-cancel-inline" class="horae-rpg-btn-sm horae-rpg-btn-muted">取消</button>
             </div>`;
-        // 填入现有值
+        // 填入現有值
         const rpg = getContext().chat?.[0]?.horae_meta?.rpg;
         const existing = rpg?.attributes?.[charName] || {};
         form.querySelectorAll('.horae-rpg-charattr-val').forEach(inp => {
@@ -10069,7 +10069,7 @@ function initSettingsEvents() {
                 const v = parseInt(inp.value);
                 if (!isNaN(v)) { vals[k] = Math.max(0, Math.min(100, v)); hasVal = true; }
             });
-            if (!hasVal) { showToast('请至少填写一个属性值', 'warning'); return; }
+            if (!hasVal) { showToast('請至少填寫一個屬性值', 'warning'); return; }
             const chat = getContext().chat;
             if (!chat?.[0]?.horae_meta) return;
             if (!chat[0].horae_meta.rpg) chat[0].horae_meta.rpg = { bars: {}, status: {}, skills: {}, attributes: {} };
@@ -10078,7 +10078,7 @@ function initSettingsEvents() {
             getContext().saveChat();
             form.style.display = 'none';
             updateRpgDisplay();
-            showToast('已保存角色属性', 'success');
+            showToast('已保存角色屬性', 'success');
         });
         form.querySelector('#horae-rpg-charattr-cancel-inline').addEventListener('click', () => {
             form.style.display = 'none';
@@ -10086,13 +10086,13 @@ function initSettingsEvents() {
         form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 
-    // RPG 角色属性手动添加/编辑
+    // RPG 角色屬性手動添加/編輯
     $('#horae-rpg-add-charattr').on('click', () => {
         const form = document.getElementById('horae-rpg-charattr-form');
         if (!form) return;
         if (form.style.display !== 'none') { form.style.display = 'none'; return; }
         const attrCfg = settings.rpgAttributeConfig || [];
-        if (!attrCfg.length) { showToast('请先在属性面板配置中添加属性', 'warning'); return; }
+        if (!attrCfg.length) { showToast('請先在屬性面板配置中添加屬性', 'warning'); return; }
         const attrInputs = attrCfg.map(a =>
             `<div class="horae-rpg-charattr-row"><label>${escapeHtml(a.name)}(${escapeHtml(a.key)})</label><input type="number" class="horae-rpg-charattr-val" data-key="${escapeHtml(a.key)}" min="0" max="100" placeholder="0-100" /></div>`
         ).join('');
@@ -10100,12 +10100,12 @@ function initSettingsEvents() {
             <select id="horae-rpg-charattr-owner">${buildCharacterOptions()}</select>
             ${attrInputs}
             <div class="horae-rpg-form-actions">
-                <button id="horae-rpg-charattr-load" class="horae-rpg-btn-sm horae-rpg-btn-muted">加载现有</button>
+                <button id="horae-rpg-charattr-load" class="horae-rpg-btn-sm horae-rpg-btn-muted">加載現有</button>
                 <button id="horae-rpg-charattr-save" class="horae-rpg-btn-sm">保存</button>
                 <button id="horae-rpg-charattr-cancel" class="horae-rpg-btn-sm horae-rpg-btn-muted">取消</button>
             </div>`;
         form.style.display = '';
-        // 加载已有数据
+        // 加載已有數據
         form.querySelector('#horae-rpg-charattr-load').addEventListener('click', () => {
             const ownerVal = form.querySelector('#horae-rpg-charattr-owner').value;
             const owner = ownerVal === '__user__' ? (getContext().name1 || '{{user}}') : ownerVal;
@@ -10126,7 +10126,7 @@ function initSettingsEvents() {
                 const v = parseInt(inp.value);
                 if (!isNaN(v)) { vals[k] = Math.max(0, Math.min(100, v)); hasVal = true; }
             });
-            if (!hasVal) { showToast('请至少填写一个属性值', 'warning'); return; }
+            if (!hasVal) { showToast('請至少填寫一個屬性值', 'warning'); return; }
             const chat = getContext().chat;
             if (!chat?.[0]?.horae_meta) return;
             if (!chat[0].horae_meta.rpg) chat[0].horae_meta.rpg = { bars: {}, status: {}, skills: {}, attributes: {} };
@@ -10135,14 +10135,14 @@ function initSettingsEvents() {
             getContext().saveChat();
             form.style.display = 'none';
             updateRpgDisplay();
-            showToast('已保存角色属性', 'success');
+            showToast('已保存角色屬性', 'success');
         });
         form.querySelector('#horae-rpg-charattr-cancel').addEventListener('click', () => {
             form.style.display = 'none';
         });
     });
 
-    // RPG 技能增删
+    // RPG 技能增刪
     $('#horae-rpg-add-skill').on('click', () => {
         const form = document.getElementById('horae-rpg-skill-form');
         if (!form) return;
@@ -10153,14 +10153,14 @@ function initSettingsEvents() {
             <input id="horae-rpg-skill-level" placeholder="等级（可选）" maxlength="10" />
             <input id="horae-rpg-skill-desc" placeholder="效果描述（可选）" maxlength="80" />
             <div class="horae-rpg-form-actions">
-                <button id="horae-rpg-skill-save" class="horae-rpg-btn-sm">确定</button>
+                <button id="horae-rpg-skill-save" class="horae-rpg-btn-sm">確定</button>
                 <button id="horae-rpg-skill-cancel" class="horae-rpg-btn-sm horae-rpg-btn-muted">取消</button>
             </div>`;
         form.style.display = '';
         form.querySelector('#horae-rpg-skill-save').addEventListener('click', () => {
             const ownerVal = form.querySelector('#horae-rpg-skill-owner').value;
             const skillName = form.querySelector('#horae-rpg-skill-name').value.trim();
-            if (!skillName) { showToast('请填写技能名', 'warning'); return; }
+            if (!skillName) { showToast('請填寫技能名', 'warning'); return; }
             const owner = ownerVal === '__user__' ? (getContext().name1 || '{{user}}') : ownerVal;
             const chat = getContext().chat;
             if (!chat?.[0]?.horae_meta) return;
@@ -10198,7 +10198,7 @@ function initSettingsEvents() {
         }
     });
 
-    // 属性面板配置
+    // 屬性面板配置
     $(document).on('input', '.horae-rpg-config-key[data-type="attr"]', function() {
         const i = parseInt(this.dataset.idx);
         if (settings.rpgAttributeConfig?.[i]) {
@@ -10242,13 +10242,13 @@ function initSettingsEvents() {
         settings.rpgAttrViewMode = settings.rpgAttrViewMode === 'radar' ? 'text' : 'radar';
         saveSettings(); updateRpgDisplay();
     });
-    // 声望系统事件绑定
+    // 聲望系統事件綁定
     _bindReputationConfigEvents();
-    // 装备栏事件绑定
+    // 裝備欄事件綁定
     _bindEquipmentEvents();
-    // 货币系统事件绑定
+    // 貨幣系統事件綁定
     _bindCurrencyEvents();
-    // 属性面板开关
+    // 屬性面板開關
     $('#horae-setting-rpg-attrs').on('change', function() {
         settings.sendRpgAttributes = this.checked;
         saveSettings();
@@ -10256,7 +10256,7 @@ function initSettingsEvents() {
         horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
         updateRpgDisplay();
     });
-    // RPG 自定义提示词
+    // RPG 客製化提示詞
     $('#horae-custom-rpg-prompt').on('input', function() {
         const val = this.value;
         settings.customRpgPrompt = (val.trim() === horaeManager.getDefaultRpgPrompt().trim()) ? '' : val;
@@ -10265,7 +10265,7 @@ function initSettingsEvents() {
         _refreshSystemPromptDisplay(); updateTokenCounter();
     });
     $('#horae-btn-reset-rpg-prompt').on('click', () => {
-        if (!confirm('确定恢复 RPG 提示词为默认值？')) return;
+        if (!confirm('確定恢復 RPG 提示詞為預設值？')) return;
         settings.customRpgPrompt = '';
         saveSettings();
         const def = horaeManager.getDefaultRpgPrompt();
@@ -10274,7 +10274,7 @@ function initSettingsEvents() {
         horaeManager.init(getContext(), settings); _refreshSystemPromptDisplay(); updateTokenCounter();
     });
 
-    // ── 提示词预设存档 ──
+    // ── 提示詞預設存檔 ──
     const _PRESET_PROMPT_KEYS = [
         'customSystemPrompt', 'customBatchPrompt', 'customAnalysisPrompt',
         'customCompressPrompt', 'customAutoSummaryPrompt', 'customTablesPrompt',
@@ -10308,7 +10308,7 @@ function initSettingsEvents() {
         }
         horaeManager.init(getContext(), settings);
         updateTokenCounter();
-        // 自动展开提示词区域，让用户看到加载结果
+        // 自動展開提示詞區域，讓用戶看到加載結果
         const body = document.getElementById('horae-prompt-collapse-body');
         if (body) body.style.display = '';
     }
@@ -10317,7 +10317,7 @@ function initSettingsEvents() {
         sel.empty();
         const presets = settings.promptPresets || [];
         if (presets.length === 0) {
-            sel.append('<option value="-1">（无预设）</option>');
+            sel.append('<option value="-1">（無預設）</option>');
         } else {
             for (let i = 0; i < presets.length; i++) {
                 sel.append(`<option value="${i}">${presets[i].name}</option>`);
@@ -10329,42 +10329,42 @@ function initSettingsEvents() {
     $('#horae-prompt-preset-load').on('click', () => {
         const idx = parseInt($('#horae-prompt-preset-select').val());
         const presets = settings.promptPresets || [];
-        if (idx < 0 || idx >= presets.length) { showToast('请先选择一个预设', 'warning'); return; }
-        if (!confirm(`确定加载预设「${presets[idx].name}」？\n\n当前所有提示词将被替换为该预设的内容。`)) return;
+        if (idx < 0 || idx >= presets.length) { showToast('請先選擇一個預設', 'warning'); return; }
+        if (!confirm(`確定加載預設「${presets[idx].name}」？\n\n目前所有提示詞將被替換為該預設的內容。`)) return;
         _applyPresetPrompts(presets[idx].prompts);
-        showToast(`已加载预设「${presets[idx].name}」`, 'success');
+        showToast(`已加載預設「${presets[idx].name}」`, 'success');
     });
 
     $('#horae-prompt-preset-save').on('click', () => {
         const idx = parseInt($('#horae-prompt-preset-select').val());
         const presets = settings.promptPresets || [];
-        if (idx < 0 || idx >= presets.length) { showToast('请先选择一个预设', 'warning'); return; }
-        if (!confirm(`确定将当前提示词保存到预设「${presets[idx].name}」？`)) return;
+        if (idx < 0 || idx >= presets.length) { showToast('請先選擇一個預設', 'warning'); return; }
+        if (!confirm(`確定將目前提示詞保存到預設「${presets[idx].name}」？`)) return;
         presets[idx].prompts = _collectCurrentPrompts();
         saveSettings();
-        showToast(`已保存到预设「${presets[idx].name}」`, 'success');
+        showToast(`已保存到預設「${presets[idx].name}」`, 'success');
     });
 
     $('#horae-prompt-preset-new').on('click', () => {
-        const name = prompt('输入新预设名称：');
+        const name = prompt('輸入新預設名稱：');
         if (!name?.trim()) return;
         if (!settings.promptPresets) settings.promptPresets = [];
         settings.promptPresets.push({ name: name.trim(), prompts: _collectCurrentPrompts() });
         saveSettings();
         _renderPresetSelect();
         $('#horae-prompt-preset-select').val(settings.promptPresets.length - 1);
-        showToast(`已创建预设「${name.trim()}」`, 'success');
+        showToast(`已建立預設「${name.trim()}」`, 'success');
     });
 
     $('#horae-prompt-preset-delete').on('click', () => {
         const idx = parseInt($('#horae-prompt-preset-select').val());
         const presets = settings.promptPresets || [];
-        if (idx < 0 || idx >= presets.length) { showToast('请先选择一个预设', 'warning'); return; }
-        if (!confirm(`确定删除预设「${presets[idx].name}」？此操作不可撤销。`)) return;
+        if (idx < 0 || idx >= presets.length) { showToast('請先選擇一個預設', 'warning'); return; }
+        if (!confirm(`確定刪除預設「${presets[idx].name}」？此操作不可撤銷。`)) return;
         presets.splice(idx, 1);
         saveSettings();
         _renderPresetSelect();
-        showToast('预设已删除', 'success');
+        showToast('預設已刪除', 'success');
     });
 
     $('#horae-prompt-preset-export').on('click', () => {
@@ -10375,7 +10375,7 @@ function initSettingsEvents() {
         a.download = `horae-prompts_${Date.now()}.json`;
         a.click();
         URL.revokeObjectURL(a.href);
-        showToast('提示词已导出', 'success');
+        showToast('提示詞已導出', 'success');
     });
 
     $('#horae-prompt-preset-import').on('click', () => {
@@ -10388,22 +10388,22 @@ function initSettingsEvents() {
             try {
                 const text = await file.text();
                 const data = JSON.parse(text);
-                if (!data.prompts || data.type !== 'horae-prompts') throw new Error('无效的提示词文件格式');
-                if (!confirm('确定导入？当前所有提示词将被替换。')) return;
+                if (!data.prompts || data.type !== 'horae-prompts') throw new Error('無效的提示詞資料格式');
+                if (!confirm('確定導入？目前所有提示詞將被替換。')) return;
                 _applyPresetPrompts(data.prompts);
                 const body = document.getElementById('horae-prompt-collapse-body');
                 if (body) body.style.display = '';
-                showToast('提示词已导入', 'success');
+                showToast('提示詞已導入', 'success');
             } catch (err) {
-                showToast('导入失败: ' + err.message, 'error');
+                showToast('導入失敗: ' + err.message, 'error');
             }
         };
         input.click();
     });
 
-    // 一键恢复所有提示词为默认
+    // 一鍵恢復所有提示詞為預設
     $('#horae-prompt-reset-all').on('click', () => {
-        if (!confirm('⚠️ 确定将所有自定义提示词恢复为默认值？\n\n这将清空以下全部自定义内容：\n• 主提示词\n• AI摘要提示词\n• AI分析提示词\n• 剧情压缩提示词\n• 自动摘要提示词\n• 表格填写提示词\n• 场景记忆提示词\n• 关系网络提示词\n• 情绪追踪提示词\n• RPG模式提示词\n\n恢复后所有提示词将使用插件内置默认值。')) return;
+        if (!confirm('⚠️ 確定將所有客製化提示詞恢復為預設值？\n\n這將清空以下全部客製化內容：\n• 主提示詞\n• AI摘要提示詞\n• AI分析提示詞\n• 劇情壓縮提示詞\n• 自動摘要提示詞\n• 表格填寫提示詞\n• 場景記憶提示詞\n• 關係網路提示詞\n• 情緒追蹤提示詞\n• RPG模式提示詞\n\n恢復後所有提示詞將使用插件內置預設值。')) return;
         for (const k of _PRESET_PROMPT_KEYS) settings[k] = '';
         saveSettings();
         const pairs = [
@@ -10426,10 +10426,10 @@ function initSettingsEvents() {
         horaeManager.init(getContext(), settings);
         _refreshSystemPromptDisplay();
         updateTokenCounter();
-        showToast('已将所有提示词恢复为默认值', 'success');
+        showToast('已將所有提示詞恢復為預設值', 'success');
     });
 
-    // ── Horae 全局配置 导出/导入/重置 ──
+    // ── Horae 全域配置 導出/導入/重置 ──
     const _SETTINGS_EXPORT_KEYS = [
         'enabled','autoParse','injectContext','showMessagePanel','showTopIcon',
         'contextDepth','injectionPosition',
@@ -10457,7 +10457,7 @@ function initSettingsEvents() {
         a.download = `horae-settings_${Date.now()}.json`;
         a.click();
         URL.revokeObjectURL(a.href);
-        showToast('全局配置已导出', 'success');
+        showToast('全域配置已導出', 'success');
     });
 
     $('#horae-settings-import').on('click', () => {
@@ -10471,16 +10471,16 @@ function initSettingsEvents() {
                 const text = await file.text();
                 const data = JSON.parse(text);
                 if (data.type !== 'horae-settings' || !data.settings) {
-                    showToast('文件格式不正确，请选择 Horae 配置档文件', 'error');
+                    showToast('資料格式不正確，請選擇 Horae 配置檔資料', 'error');
                     return;
                 }
                 const imported = data.settings;
                 const keys = Object.keys(imported).filter(k => _SETTINGS_EXPORT_KEYS.includes(k));
                 if (keys.length === 0) {
-                    showToast('配置文件中无可用设置', 'warning');
+                    showToast('配置資料中無可用設定', 'warning');
                     return;
                 }
-                if (!confirm(`即将导入 ${keys.length} 项设置（来自 v${data.version || '?'}）。\n当前设置将被覆盖，确定继续？`)) return;
+                if (!confirm(`即將導入 ${keys.length} 項設定（來自 v${data.version || '?'}）。\n目前設定將被覆蓋，確定繼續？`)) return;
                 for (const k of keys) {
                     settings[k] = JSON.parse(JSON.stringify(imported[k]));
                 }
@@ -10491,17 +10491,17 @@ function initSettingsEvents() {
                 horaeManager.init(getContext(), settings);
                 _refreshSystemPromptDisplay();
                 updateTokenCounter();
-                showToast(`已导入 ${keys.length} 项设置`, 'success');
+                showToast(`已導入 ${keys.length} 項設定`, 'success');
             } catch (err) {
-                console.error('[Horae] 导入配置失败:', err);
-                showToast('导入失败：' + err.message, 'error');
+                console.error('[Horae] 導入配置失敗:', err);
+                showToast('導入失敗：' + err.message, 'error');
             }
         };
         input.click();
     });
 
     $('#horae-settings-reset').on('click', () => {
-        if (!confirm('⚠️ 确定将所有设置恢复为默认值？\n\n这将重置以下全部内容：\n• 所有功能开关\n• 仅限主角设置\n• 所有自定义提示词\n• RPG 属性条/属性面板/装备模板配置\n\n不受影响的内容：自动摘要参数、向量记忆、表格、主题、预设存档等。')) return;
+        if (!confirm('⚠️ 確定將所有設定恢復為預設值？\n\n這將重置以下全部內容：\n• 所有功能開關\n• 僅限主角設定\n• 所有客製化提示詞\n• RPG 屬性條/屬性面板/裝備模範配置\n\n不受影響的內容：自動摘要參數、向量記憶、表格、主題、預設存檔等。')) return;
         for (const k of _SETTINGS_EXPORT_KEYS) {
             settings[k] = JSON.parse(JSON.stringify(DEFAULT_SETTINGS[k]));
         }
@@ -10512,7 +10512,7 @@ function initSettingsEvents() {
         horaeManager.init(getContext(), settings);
         _refreshSystemPromptDisplay();
         updateTokenCounter();
-        showToast('已将所有设置恢复为默认值', 'success');
+        showToast('已將所有設定恢復為預設值', 'success');
     });
 
     $('#horae-btn-agenda-select-all').on('click', selectAllAgenda);
@@ -10555,7 +10555,7 @@ function initSettingsEvents() {
     
     $('#horae-btn-items-refresh').on('click', () => {
         updateItemsDisplay();
-        showToast('物品列表已刷新', 'info');
+        showToast('物品列表已重新整理', 'info');
     });
     
     $('#horae-setting-send-timeline').on('change', function() {
@@ -10638,7 +10638,7 @@ function initSettingsEvents() {
         updateTokenCounter();
         if (this.checked) updateRpgDisplay();
     });
-    // RPG 仅限主角 - 总开关联动所有子模块
+    // RPG 僅限主角 - 總開關聯動所有子模組
     const _rpgUoKeys = ['rpgBarsUserOnly','rpgSkillsUserOnly','rpgAttrsUserOnly','rpgReputationUserOnly','rpgEquipmentUserOnly','rpgLevelUserOnly','rpgCurrencyUserOnly'];
     const _rpgUoIds = ['bars','skills','attrs','reputation','equipment','level','currency'];
     function _syncRpgUserOnlyMaster() {
@@ -10668,7 +10668,7 @@ function initSettingsEvents() {
             _rpgUoRefresh();
         });
     }
-    // 各模块开关 + 子开关显示/隐藏
+    // 各模組開關 + 子開關顯示/隱藏
     const _rpgModulePairs = [
         { checkId: 'horae-setting-rpg-bars', settingKey: 'sendRpgBars', uoId: 'horae-setting-rpg-bars-uo' },
         { checkId: 'horae-setting-rpg-skills', settingKey: 'sendRpgSkills', uoId: 'horae-setting-rpg-skills-uo' },
@@ -10712,7 +10712,7 @@ function initSettingsEvents() {
         showToast('骰子面板位置已重置', 'success');
     });
 
-    // 自动摘要折叠面板
+    // 自動摘要摺疊面板
     $('#horae-autosummary-collapse-toggle').on('click', function() {
         const body = $('#horae-autosummary-collapse-body');
         const icon = $(this).find('.horae-collapse-icon');
@@ -10720,7 +10720,7 @@ function initSettingsEvents() {
         icon.toggleClass('collapsed');
     });
 
-    // 自动摘要设置
+    // 自動摘要設定
     $('#horae-setting-auto-summary').on('change', function() {
         settings.autoSummaryEnabled = this.checked;
         saveSettings();
@@ -10788,27 +10788,27 @@ function initSettingsEvents() {
         applyPanelWidth();
     });
 
-    // 主题模式切换
+    // 主題模式切換
     $('#horae-setting-theme-mode').on('change', function() {
         settings.themeMode = this.value;
         saveSettings();
         applyThemeMode();
     });
 
-    // 美化导入/导出/删除/自助美化
+    // 美化導入/導出/刪除/自助美化
     $('#horae-btn-theme-export').on('click', exportTheme);
     $('#horae-btn-theme-import').on('click', importTheme);
     $('#horae-btn-theme-designer').on('click', openThemeDesigner);
     $('#horae-btn-theme-delete').on('click', function() {
         const mode = settings.themeMode || 'dark';
         if (!mode.startsWith('custom-')) {
-            showToast('仅可删除导入的自定义美化', 'warning');
+            showToast('僅可刪除導入的客製化美化', 'warning');
             return;
         }
         deleteCustomTheme(parseInt(mode.split('-')[1]));
     });
 
-    // 自定义CSS
+    // 客製化CSS
     $('#horae-custom-css').on('change', function() {
         settings.customCSS = this.value;
         saveSettings();
@@ -10826,7 +10826,7 @@ function initSettingsEvents() {
         const file = e.target.files[0];
         if (file) {
             importTable(file);
-            e.target.value = ''; // 清空以便可以再次选择同一文件
+            e.target.value = ''; // 清空以便可以再次選擇同一資料
         }
     });
     renderCustomTablesList();
@@ -10835,7 +10835,7 @@ function initSettingsEvents() {
     $('#horae-btn-import').on('click', importData);
     $('#horae-btn-clear').on('click', clearAllData);
     
-    // 好感度显示/隐藏（不可用hidden类名，酒馆全局有display:none规则）
+    // 好感度顯示/隱藏（不可用hidden類名，酒館全域有display:none規則）
     $('#horae-affection-toggle').on('click', function() {
         const list = $('#horae-affection-list');
         const icon = $(this).find('i');
@@ -10850,10 +10850,10 @@ function initSettingsEvents() {
         }
     });
     
-    // 自定义提示词
+    // 客製化提示詞
     $('#horae-custom-system-prompt').on('input', function() {
         const val = this.value;
-        // 与默认一致时视为未自定义
+        // 與預設一致時視為未客製化
         settings.customSystemPrompt = (val.trim() === horaeManager.getDefaultSystemPrompt().trim()) ? '' : val;
         $('#horae-system-prompt-count').text(val.length);
         saveSettings();
@@ -10869,7 +10869,7 @@ function initSettingsEvents() {
     });
     
     $('#horae-btn-reset-system-prompt').on('click', () => {
-        if (!confirm('确定恢复系统注入提示词为默认值？')) return;
+        if (!confirm('確定恢復系統注入提示詞為預設值？')) return;
         settings.customSystemPrompt = '';
         saveSettings();
         const def = horaeManager.getDefaultSystemPrompt();
@@ -10877,20 +10877,20 @@ function initSettingsEvents() {
         $('#horae-system-prompt-count').text(def.length);
         horaeManager.init(getContext(), settings);
         updateTokenCounter();
-        showToast('已恢复默认提示词', 'success');
+        showToast('已恢復預設提示詞', 'success');
     });
     
     $('#horae-btn-reset-batch-prompt').on('click', () => {
-        if (!confirm('确定恢复AI摘要提示词为默认值？')) return;
+        if (!confirm('確定恢復AI摘要提示詞為預設值？')) return;
         settings.customBatchPrompt = '';
         saveSettings();
         const def = getDefaultBatchPrompt();
         $('#horae-custom-batch-prompt').val(def);
         $('#horae-batch-prompt-count').text(def.length);
-        showToast('已恢复默认提示词', 'success');
+        showToast('已恢復預設提示詞', 'success');
     });
 
-    // AI分析提示词
+    // AI分析提示詞
     $('#horae-custom-analysis-prompt').on('input', function() {
         const val = this.value;
         settings.customAnalysisPrompt = (val.trim() === getDefaultAnalysisPrompt().trim()) ? '' : val;
@@ -10899,16 +10899,16 @@ function initSettingsEvents() {
     });
 
     $('#horae-btn-reset-analysis-prompt').on('click', () => {
-        if (!confirm('确定恢复AI分析提示词为默认值？')) return;
+        if (!confirm('確定恢復AI分析提示詞為預設值？')) return;
         settings.customAnalysisPrompt = '';
         saveSettings();
         const def = getDefaultAnalysisPrompt();
         $('#horae-custom-analysis-prompt').val(def);
         $('#horae-analysis-prompt-count').text(def.length);
-        showToast('已恢复默认提示词', 'success');
+        showToast('已恢復預設提示詞', 'success');
     });
 
-    // 剧情压缩提示词
+    // 劇情壓縮提示詞
     $('#horae-custom-compress-prompt').on('input', function() {
         const val = this.value;
         settings.customCompressPrompt = (val.trim() === getDefaultCompressPrompt().trim()) ? '' : val;
@@ -10917,16 +10917,16 @@ function initSettingsEvents() {
     });
 
     $('#horae-btn-reset-compress-prompt').on('click', () => {
-        if (!confirm('确定恢复剧情压缩提示词为默认值？')) return;
+        if (!confirm('確定恢復劇情壓縮提示詞為預設值？')) return;
         settings.customCompressPrompt = '';
         saveSettings();
         const def = getDefaultCompressPrompt();
         $('#horae-custom-compress-prompt').val(def);
         $('#horae-compress-prompt-count').text(def.length);
-        showToast('已恢复默认提示词', 'success');
+        showToast('已恢復預設提示詞', 'success');
     });
 
-    // 自动摘要提示词
+    // 自動摘要提示詞
     $('#horae-custom-auto-summary-prompt').on('input', function() {
         const val = this.value;
         settings.customAutoSummaryPrompt = (val.trim() === getDefaultAutoSummaryPrompt().trim()) ? '' : val;
@@ -10935,16 +10935,16 @@ function initSettingsEvents() {
     });
 
     $('#horae-btn-reset-auto-summary-prompt').on('click', () => {
-        if (!confirm('确定恢复自动摘要提示词为默认值？')) return;
+        if (!confirm('確定恢復自動摘要提示詞為預設值？')) return;
         settings.customAutoSummaryPrompt = '';
         saveSettings();
         const def = getDefaultAutoSummaryPrompt();
         $('#horae-custom-auto-summary-prompt').val(def);
         $('#horae-auto-summary-prompt-count').text(def.length);
-        showToast('已恢复默认提示词', 'success');
+        showToast('已恢復預設提示詞', 'success');
     });
 
-    // 表格填写规则提示词
+    // 表格填寫規則提示詞
     $('#horae-custom-tables-prompt').on('input', function() {
         const val = this.value;
         settings.customTablesPrompt = (val.trim() === horaeManager.getDefaultTablesPrompt().trim()) ? '' : val;
@@ -10955,7 +10955,7 @@ function initSettingsEvents() {
     });
 
     $('#horae-btn-reset-tables-prompt').on('click', () => {
-        if (!confirm('确定恢复表格填写规则提示词为默认值？')) return;
+        if (!confirm('確定恢復表格填寫規則提示詞為預設值？')) return;
         settings.customTablesPrompt = '';
         saveSettings();
         const def = horaeManager.getDefaultTablesPrompt();
@@ -10963,10 +10963,10 @@ function initSettingsEvents() {
         $('#horae-tables-prompt-count').text(def.length);
         horaeManager.init(getContext(), settings);
         updateTokenCounter();
-        showToast('已恢复默认提示词', 'success');
+        showToast('已恢復預設提示詞', 'success');
     });
 
-    // 场景记忆提示词
+    // 場景記憶提示詞
     $('#horae-custom-location-prompt').on('input', function() {
         const val = this.value;
         settings.customLocationPrompt = (val.trim() === horaeManager.getDefaultLocationPrompt().trim()) ? '' : val;
@@ -10977,7 +10977,7 @@ function initSettingsEvents() {
     });
 
     $('#horae-btn-reset-location-prompt').on('click', () => {
-        if (!confirm('确定恢复场景记忆提示词为默认值？')) return;
+        if (!confirm('確定恢復場景記憶提示詞為預設值？')) return;
         settings.customLocationPrompt = '';
         saveSettings();
         const def = horaeManager.getDefaultLocationPrompt();
@@ -10985,10 +10985,10 @@ function initSettingsEvents() {
         $('#horae-location-prompt-count').text(def.length);
         horaeManager.init(getContext(), settings);
         updateTokenCounter();
-        showToast('已恢复默认提示词', 'success');
+        showToast('已恢復預設提示詞', 'success');
     });
 
-    // 关系网络提示词
+    // 關係網路提示詞
     $('#horae-custom-relationship-prompt').on('input', function() {
         const val = this.value;
         settings.customRelationshipPrompt = (val.trim() === horaeManager.getDefaultRelationshipPrompt().trim()) ? '' : val;
@@ -10999,7 +10999,7 @@ function initSettingsEvents() {
     });
 
     $('#horae-btn-reset-relationship-prompt').on('click', () => {
-        if (!confirm('确定恢复关系网络提示词为默认值？')) return;
+        if (!confirm('確定恢復關係網路提示詞為預設值？')) return;
         settings.customRelationshipPrompt = '';
         saveSettings();
         const def = horaeManager.getDefaultRelationshipPrompt();
@@ -11007,10 +11007,10 @@ function initSettingsEvents() {
         $('#horae-relationship-prompt-count').text(def.length);
         horaeManager.init(getContext(), settings);
         updateTokenCounter();
-        showToast('已恢复默认提示词', 'success');
+        showToast('已恢復預設提示詞', 'success');
     });
 
-    // 情绪追踪提示词
+    // 情緒追蹤提示詞
     $('#horae-custom-mood-prompt').on('input', function() {
         const val = this.value;
         settings.customMoodPrompt = (val.trim() === horaeManager.getDefaultMoodPrompt().trim()) ? '' : val;
@@ -11021,7 +11021,7 @@ function initSettingsEvents() {
     });
 
     $('#horae-btn-reset-mood-prompt').on('click', () => {
-        if (!confirm('确定恢复情绪追踪提示词为默认值？')) return;
+        if (!confirm('確定恢復情緒追蹤提示詞為預設值？')) return;
         settings.customMoodPrompt = '';
         saveSettings();
         const def = horaeManager.getDefaultMoodPrompt();
@@ -11029,10 +11029,10 @@ function initSettingsEvents() {
         $('#horae-mood-prompt-count').text(def.length);
         horaeManager.init(getContext(), settings);
         updateTokenCounter();
-        showToast('已恢复默认提示词', 'success');
+        showToast('已恢復預設提示詞', 'success');
     });
 
-    // 提示词区域折叠切换
+    // 提示詞區域摺疊切換
     $('#horae-prompt-collapse-toggle').on('click', function() {
         const body = $('#horae-prompt-collapse-body');
         const icon = $(this).find('.horae-collapse-icon');
@@ -11040,7 +11040,7 @@ function initSettingsEvents() {
         icon.toggleClass('collapsed');
     });
 
-    // 自定义CSS区域折叠切换
+    // 客製化CSS區域摺疊切換
     $('#horae-css-collapse-toggle').on('click', function() {
         const body = $('#horae-css-collapse-body');
         const icon = $(this).find('.horae-collapse-icon');
@@ -11048,7 +11048,7 @@ function initSettingsEvents() {
         icon.toggleClass('collapsed');
     });
 
-    // 向量记忆区域折叠切换
+    // 向量記憶區域摺疊切換
     $('#horae-vector-collapse-toggle').on('click', function() {
         const body = $('#horae-vector-collapse-body');
         const icon = $(this).find('.horae-collapse-icon');
@@ -11074,7 +11074,7 @@ function initSettingsEvents() {
         _syncVectorSourceUI();
         if (settings.vectorEnabled) {
             vectorManager.clearIndex().then(() => {
-                showToast('向量来源已切换，索引已清除，正在加载...', 'info');
+                showToast('向量來源已切換，索引已清除，正在加載...', 'info');
                 _initVectorModel();
             });
         }
@@ -11085,7 +11085,7 @@ function initSettingsEvents() {
         saveSettings();
         if (settings.vectorEnabled) {
             vectorManager.clearIndex().then(() => {
-                showToast('模型已更换，索引已清除，正在加载新模型...', 'info');
+                showToast('模型已更換，索引已清除，正在加載新模型...', 'info');
                 _initVectorModel();
             });
         }
@@ -11096,7 +11096,7 @@ function initSettingsEvents() {
         saveSettings();
         if (settings.vectorEnabled) {
             vectorManager.clearIndex().then(() => {
-                showToast('量化精度已更换，索引已清除，正在重新加载...', 'info');
+                showToast('量化精度已更換，索引已清除，正在重新加載...', 'info');
                 _initVectorModel();
             });
         }
@@ -11117,7 +11117,7 @@ function initSettingsEvents() {
         saveSettings();
         if (settings.vectorEnabled && settings.vectorSource === 'api') {
             vectorManager.clearIndex().then(() => {
-                showToast('API 模型已更换，索引已清除，正在重新连接...', 'info');
+                showToast('API 模型已更換，索引已清除，正在重新連接...', 'info');
                 _initVectorModel();
             });
         }
@@ -11187,7 +11187,7 @@ function initSettingsEvents() {
 }
 
 /**
- * 同步设置到UI
+ * 同步設定到UI
  */
 function _refreshSystemPromptDisplay() {
     if (settings.customSystemPrompt) return;
@@ -11217,21 +11217,21 @@ function syncSettingsToUI() {
     
     applyTopIconVisibility();
     
-    // 场景记忆
+    // 場景記憶
     $('#horae-setting-send-location-memory').prop('checked', !!settings.sendLocationMemory);
     $('#horae-location-prompt-group').toggle(!!settings.sendLocationMemory);
     $('.horae-tab[data-tab="locations"]').toggle(!!settings.sendLocationMemory);
     
-    // 关系网络
+    // 關係網路
     $('#horae-setting-send-relationships').prop('checked', !!settings.sendRelationships);
     $('#horae-relationship-section').toggle(!!settings.sendRelationships);
     $('#horae-relationship-prompt-group').toggle(!!settings.sendRelationships);
     
-    // 情绪追踪
+    // 情緒追蹤
     $('#horae-setting-send-mood').prop('checked', !!settings.sendMood);
     $('#horae-mood-prompt-group').toggle(!!settings.sendMood);
     
-    // 反转述模式
+    // 反轉述模式
     $('#horae-setting-anti-paraphrase').prop('checked', !!settings.antiParaphraseMode);
     // 番外模式
     $('#horae-setting-sideplay-mode').prop('checked', !!settings.sideplayMode);
@@ -11266,7 +11266,7 @@ function syncSettingsToUI() {
     $('#horae-rpg-prompt-group').toggle(!!settings.rpgMode);
     _syncRpgTabVisibility();
 
-    // 自动摘要
+    // 自動摘要
     $('#horae-setting-auto-summary').prop('checked', !!settings.autoSummaryEnabled);
     $('#horae-auto-summary-options').toggle(!!settings.autoSummaryEnabled);
     $('#horae-setting-auto-summary-keep').val(settings.autoSummaryKeepRecent || 10);
@@ -11278,7 +11278,7 @@ function syncSettingsToUI() {
     $('#horae-auto-summary-api-options').toggle(!!settings.autoSummaryUseCustomApi);
     $('#horae-setting-auto-summary-api-url').val(settings.autoSummaryApiUrl || '');
     $('#horae-setting-auto-summary-api-key').val(settings.autoSummaryApiKey || '');
-    // 如果已有保存的模型名，初始化 select 选项
+    // 如果已有保存的模型名，初始化 select 選項
     const _savedModel = settings.autoSummaryModel || '';
     const _modelSel = document.getElementById('horae-setting-auto-summary-model');
     if (_savedModel && _modelSel) {
@@ -11322,22 +11322,22 @@ function syncSettingsToUI() {
     $('#horae-mood-prompt-count').text(moodPromptVal.length);
     $('#horae-rpg-prompt-count').text(rpgPromptVal.length);
     
-    // 面板宽度和偏移
+    // 面板寬度和偏移
     $('#horae-setting-panel-width').val(settings.panelWidth || 100);
     const ofs = settings.panelOffset || 0;
     $('#horae-setting-panel-offset').val(ofs);
     $('#horae-panel-offset-value').text(`${ofs}px`);
     applyPanelWidth();
 
-    // 主题模式
+    // 主題模式
     refreshThemeSelector();
     applyThemeMode();
 
-    // 自定义CSS
+    // 客製化CSS
     $('#horae-custom-css').val(settings.customCSS || '');
     applyCustomCSS();
 
-    // 向量记忆
+    // 向量記憶
     $('#horae-setting-vector-enabled').prop('checked', !!settings.vectorEnabled);
     $('#horae-vector-options').toggle(!!settings.vectorEnabled);
     $('#horae-setting-vector-source').val(settings.vectorSource || 'local');
@@ -11345,7 +11345,7 @@ function syncSettingsToUI() {
     $('#horae-setting-vector-dtype').val(settings.vectorDtype || 'q8');
     $('#horae-setting-vector-api-url').val(settings.vectorApiUrl || '');
     $('#horae-setting-vector-api-key').val(settings.vectorApiKey || '');
-    // Embedding 模型：若有保存值则初始化 select 选项
+    // Embedding 模型：若有保存值則初始化 select 選項
     if (settings.vectorApiModel) {
         const _embSel = document.getElementById('horae-setting-vector-api-model');
         if (_embSel) {
@@ -11361,7 +11361,7 @@ function syncSettingsToUI() {
     $('#horae-setting-vector-rerank-enabled').prop('checked', !!settings.vectorRerankEnabled);
     $('#horae-vector-rerank-options').toggle(!!settings.vectorRerankEnabled);
     $('#horae-setting-vector-rerank-fulltext').prop('checked', !!settings.vectorRerankFullText);
-    // Rerank 模型：若有保存值则初始化 select 选项
+    // Rerank 模型：若有保存值則初始化 select 選項
     if (settings.vectorRerankModel) {
         const _rrSel = document.getElementById('horae-setting-vector-rerank-model');
         if (_rrSel) {
@@ -11385,7 +11385,7 @@ function syncSettingsToUI() {
 }
 
 // ============================================
-// 向量记忆
+// 向量記憶
 // ============================================
 
 function _deriveChatId(ctx) {
@@ -11400,24 +11400,24 @@ function _updateVectorStatus() {
     const countEl = document.getElementById('horae-vector-index-count');
     if (!statusEl) return;
     if (vectorManager.isLoading) {
-        statusEl.textContent = '模型加载中...';
+        statusEl.textContent = '模型加載中...';
     } else if (vectorManager.isReady) {
-        const dimText = vectorManager.dimensions ? ` (${vectorManager.dimensions}维)` : '';
+        const dimText = vectorManager.dimensions ? ` (${vectorManager.dimensions}維)` : '';
         const nameText = vectorManager.isApiMode
             ? `API: ${vectorManager.modelName}`
             : vectorManager.modelName.split('/').pop();
         statusEl.textContent = `✓ ${nameText}${dimText}`;
     } else {
-        statusEl.textContent = settings.vectorEnabled ? '模型未加载' : '已关闭';
+        statusEl.textContent = settings.vectorEnabled ? '模型未加載' : '已關閉';
     }
     if (countEl) {
         countEl.textContent = vectorManager.vectors.size > 0
-            ? `| 索引: ${vectorManager.vectors.size} 条`
+            ? `| 索引: ${vectorManager.vectors.size} 條`
             : '';
     }
 }
 
-/** 检测是否为移动端（iOS/Android/小屏设备） */
+/** 檢測是否為移動端（iOS/Android/小屏設備） */
 function _isMobileDevice() {
     const ua = navigator.userAgent || '';
     if (/iPhone|iPad|iPod|Android/i.test(ua)) return true;
@@ -11425,8 +11425,8 @@ function _isMobileDevice() {
 }
 
 /**
- * 移动端本地向量安全检查：弹窗确认后才加载，防 OOM 闪退。
- * 返回 true = 允许继续加载，false = 用户拒绝或被拦截
+ * 移動端本地向量安全檢查：彈窗確認後才加載，防 OOM 閃退。
+ * 返回 true = 允許繼續加載，false = 用戶拒絕或被攔截
  */
 function _mobileLocalVectorGuard() {
     if (!_isMobileDevice()) return Promise.resolve(true);
@@ -11439,13 +11439,13 @@ function _mobileLocalVectorGuard() {
         <div class="horae-modal-content" style="max-width:360px;">
             <div class="horae-modal-header"><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b;"></i> 本地向量模型警告</div>
             <div class="horae-modal-body" style="font-size:13px;line-height:1.6;">
-                <p>检测到您正在<b>移动设备</b>上使用<b>本地向量模型</b>。</p>
-                <p>本地模型需要在浏览器中加载约 30-60MB 的 WASM 模型，<b>极易导致浏览器内存溢出闪退</b>。</p>
-                <p style="color:var(--horae-accent,#6366f1);font-weight:600;">强烈建议切换为「API 模式」（如硅基流动免费向量模型），零内存压力。</p>
+                <p>檢測到您正在<b>移動設備</b>上使用<b>本地向量模型</b>。</p>
+                <p>本地模型需要在瀏覽器中加載約 30-60MB 的 WASM 模型，<b>極易導致瀏覽器主記憶體溢出閃退</b>。</p>
+                <p style="color:var(--horae-accent,#6366f1);font-weight:600;">強烈建議切換為「API 模式」（如硅基流動免費向量模型），零主記憶體壓力。</p>
             </div>
             <div class="horae-modal-footer" style="display:flex;gap:8px;justify-content:flex-end;padding:10px 16px;">
-                <button id="horae-vec-guard-cancel" class="horae-btn" style="flex:1;">不加载</button>
-                <button id="horae-vec-guard-ok" class="horae-btn" style="flex:1;opacity:0.7;">仍然加载</button>
+                <button id="horae-vec-guard-cancel" class="horae-btn" style="flex:1;">不加載</button>
+                <button id="horae-vec-guard-ok" class="horae-btn" style="flex:1;opacity:0.7;">仍然加載</button>
             </div>
         </div>`;
         document.body.appendChild(modal);
@@ -11467,10 +11467,10 @@ function _mobileLocalVectorGuard() {
 async function _initVectorModel() {
     if (vectorManager.isLoading) return;
 
-    // 移动端 + 本地模型：弹窗确认，默认不加载
+    // 移動端 + 本地模型：彈窗確認，預設不加載
     const allowed = await _mobileLocalVectorGuard();
     if (!allowed) {
-        showToast('已跳过本地向量模型加载，建议切换为 API 模式', 'info');
+        showToast('已跳過本地向量模型加載，建議切換為 API 模式', 'info');
         return;
     }
 
@@ -11485,7 +11485,7 @@ async function _initVectorModel() {
             const apiKey = settings.vectorApiKey;
             const apiModel = settings.vectorApiModel;
             if (!apiUrl || !apiKey || !apiModel) {
-                throw new Error('请填写完整的 API 地址、密钥和模型名称');
+                throw new Error('請填寫完整的 API 地址、密鑰和模型名稱');
             }
             await vectorManager.initApi(apiUrl, apiKey, apiModel);
         } else {
@@ -11496,9 +11496,9 @@ async function _initVectorModel() {
                     if (info.status === 'progress' && fillEl && textEl) {
                         const pct = info.progress?.toFixed(0) || 0;
                         fillEl.style.width = `${pct}%`;
-                        textEl.textContent = `下载模型... ${pct}%`;
+                        textEl.textContent = `下載模型... ${pct}%`;
                     } else if (info.status === 'done' && textEl) {
-                        textEl.textContent = '模型加载中...';
+                        textEl.textContent = '模型加載中...';
                     }
                     _updateVectorStatus();
                 }
@@ -11512,10 +11512,10 @@ async function _initVectorModel() {
         const displayName = settings.vectorSource === 'api'
             ? `API: ${settings.vectorApiModel}`
             : vectorManager.modelName.split('/').pop();
-        showToast(`向量模型已加载: ${displayName}`, 'success');
+        showToast(`向量模型已加載: ${displayName}`, 'success');
     } catch (err) {
-        console.error('[Horae] 向量模型加载失败:', err);
-        showToast(`向量模型加载失败: ${err.message}`, 'error');
+        console.error('[Horae] 向量模型加載失敗:', err);
+        showToast(`向量模型加載失敗: ${err.message}`, 'error');
     } finally {
         if (progressEl) progressEl.style.display = 'none';
         _updateVectorStatus();
@@ -11524,13 +11524,13 @@ async function _initVectorModel() {
 
 async function _buildVectorIndex() {
     if (!vectorManager.isReady) {
-        showToast('请先等待模型加载完成', 'warning');
+        showToast('請先等待模型加載完成', 'warning');
         return;
     }
 
     const chat = horaeManager.getChat();
     if (!chat || chat.length === 0) {
-        showToast('当前没有聊天记录', 'warning');
+        showToast('目前沒有聊天記錄', 'warning');
         return;
     }
 
@@ -11538,19 +11538,19 @@ async function _buildVectorIndex() {
     const fillEl = document.getElementById('horae-vector-progress-fill');
     const textEl = document.getElementById('horae-vector-progress-text');
     if (progressEl) progressEl.style.display = 'block';
-    if (textEl) textEl.textContent = '构建索引中...';
+    if (textEl) textEl.textContent = '構建索引中...';
 
     try {
         const result = await vectorManager.batchIndex(chat, ({ current, total }) => {
             const pct = Math.round((current / total) * 100);
             if (fillEl) fillEl.style.width = `${pct}%`;
-            if (textEl) textEl.textContent = `构建索引: ${current}/${total}`;
+            if (textEl) textEl.textContent = `構建索引: ${current}/${total}`;
         });
 
-        showToast(`索引构建完成: ${result.indexed} 条新增，${result.skipped} 条跳过`, 'success');
+        showToast(`索引構建完成: ${result.indexed} 條新增，${result.skipped} 條跳過`, 'success');
     } catch (err) {
-        console.error('[Horae] 构建索引失败:', err);
-        showToast(`构建索引失败: ${err.message}`, 'error');
+        console.error('[Horae] 構建索引失敗:', err);
+        showToast(`構建索引失敗: ${err.message}`, 'error');
     } finally {
         if (progressEl) progressEl.style.display = 'none';
         _updateVectorStatus();
@@ -11558,7 +11558,7 @@ async function _buildVectorIndex() {
 }
 
 async function _clearVectorIndex() {
-    if (!confirm('确定清除当前对话的所有向量索引？')) return;
+    if (!confirm('確定清除目前對話的所有向量索引？')) return;
     await vectorManager.clearIndex();
     showToast('向量索引已清除', 'success');
     _updateVectorStatus();
@@ -11569,18 +11569,18 @@ async function _clearVectorIndex() {
 // ============================================
 
 /**
- * 带进度显示的历史扫描
+ * 帶進度顯示的歷史掃描
  */
 async function scanHistoryWithProgress() {
     const overlay = document.createElement('div');
     overlay.className = 'horae-progress-overlay' + (isLightMode() ? ' horae-light' : '');
     overlay.innerHTML = `
         <div class="horae-progress-container">
-            <div class="horae-progress-title">正在扫描历史记录...</div>
+            <div class="horae-progress-title">正在掃描歷史記錄...</div>
             <div class="horae-progress-bar">
                 <div class="horae-progress-fill" style="width: 0%"></div>
             </div>
-            <div class="horae-progress-text">准备中...</div>
+            <div class="horae-progress-text">準備中...</div>
         </div>
     `;
     document.body.appendChild(overlay);
@@ -11592,105 +11592,105 @@ async function scanHistoryWithProgress() {
         const result = await horaeManager.scanAndInjectHistory(
             (percent, current, total) => {
                 fillEl.style.width = `${percent}%`;
-                textEl.textContent = `处理中... ${current}/${total}`;
+                textEl.textContent = `處理中... ${current}/${total}`;
             },
-            null // 不使用AI分析，只解析已有标签
+            null // 不使用AI分析，只解析已有標籤
         );
         
         horaeManager.rebuildTableData();
         
         await getContext().saveChat();
         
-        showToast(`扫描完成！处理 ${result.processed} 条，跳过 ${result.skipped} 条`, 'success');
+        showToast(`掃描完成！處理 ${result.processed} 條，跳過 ${result.skipped} 條`, 'success');
         refreshAllDisplays();
         renderCustomTablesList();
     } catch (error) {
-        console.error('[Horae] 扫描失败:', error);
-        showToast('扫描失败: ' + error.message, 'error');
+        console.error('[Horae] 掃描失敗:', error);
+        showToast('掃描失敗: ' + error.message, 'error');
     } finally {
         overlay.remove();
     }
 }
 
-/** 默认的批量摘要提示词模板 */
+/** 預設的批量摘要提示詞模範 */
 function getDefaultBatchPrompt() {
-    return `你是剧情分析助手。请逐条分析以下对话记录，为每条消息提取【时间】【剧情事件】和【物品变化】。
+    return `你是劇情分析助手。請逐條分析以下對話記錄，為每條訊息提取【時間】【劇情事件】和【物品變化】。
 
-核心原则：
-- 只提取文本中明确出现的信息，禁止编造
-- 每条消息独立分析，用 ===消息#编号=== 分隔
+核心原則：
+- 只提取文字中明確出現的資訊，禁止編造
+- 每條訊息獨立分析，用 ===訊息#編號=== 分隔
 
 {{messages}}
 
-【输出格式】每条消息按以下格式输出：
+【輸出格式】每條訊息按以下格式輸出：
 
-===消息#编号===
+===訊息#編號===
 <horae>
-time:日期 时间（从文本中提取，如 2026/2/4 15:00 或 霜降月第三日 黄昏）
-item:emoji物品名(数量)|描述=持有者@位置（新获得的物品，普通物品可省描述）
-item!:emoji物品名(数量)|描述=持有者@位置（重要物品，描述必填）
-item-:物品名（消耗/丢失/用完的物品）
+time:日期 時間（從文字中提取，如 2026/2/4 15:00 或 霜降月第三日 黃昏）
+item:emoji物品名(數量)|描述=持有者@位置（新獲得的物品，普通物品可省描述）
+item!:emoji物品名(數量)|描述=持有者@位置（重要物品，描述必填）
+item-:物品名（消耗/遺失/用完的物品）
 </horae>
 <horaeevent>
-event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键）
+event:重要程度|事件簡述（30-50字，重要程度：一般/重要/關鍵）
 </horaeevent>
 
-【规则】
-· time：从文本中提取当前场景的日期时间，必填（没有明确时间则根据上下文推断）
-· event：本条消息中发生的关键剧情，每条消息至少一个 event
-· 物品仅在获得、消耗、状态改变时记录，无变化则不写 item 行
-· item格式：emoji前缀如🔑🍞，单件不写(1)，位置需精确（❌地上 ✅酒馆大厅桌上）
-· 重要程度判断：日常对话=一般，推动剧情=重要，关键转折=关键
+【規則】
+· time：從文字中提取目前場景的日期時間，必填（沒有明確時間則根據上下文推斷）
+· event：本條訊息中發生的關鍵劇情，每條訊息至少一個 event
+· 物品僅在獲得、消耗、狀態改變時記錄，無變化則不寫 item 行
+· item格式：emoji前綴如🔑🍞，單件不寫(1)，位置需精確（❌地上 ✅酒館大廳桌上）
+· 重要程度判斷：日常對話=一般，推動劇情=重要，關鍵轉折=關鍵
 · {{user}} 是主角名`;
 }
 
-/** 默认的AI分析提示词模板 */
+/** 預設的AI分析提示詞模範 */
 function getDefaultAnalysisPrompt() {
-    return `请分析以下文本，提取关键信息并以指定格式输出。核心原则：只提取文本中明确提到的信息，没有的字段不写，禁止编造。
+    return `請分析以下文字，提取關鍵資訊並以指定格式輸出。核心原則：只提取文字中明確提到的資訊，沒有的資料欄不寫，禁止編造。
 
-【文本内容】
+【文字內容】
 {{content}}
 
-【输出格式】
+【輸出格式】
 <horae>
-time:日期 时间（必填，如 2026/2/4 15:00 或 霜降月第一日 19:50）
-location:当前地点（必填）
-atmosphere:氛围
-characters:在场角色,逗号分隔（必填）
-costume:角色名=完整服装描述（必填，每人一行，禁止分号合并）
-item:emoji物品名(数量)|描述=持有者@精确位置（仅新获得或有变化的物品）
-item!:emoji物品名(数量)|描述=持有者@精确位置（重要物品，描述必填）
-item!!:emoji物品名(数量)|描述=持有者@精确位置（关键道具，描述必须详细）
-item-:物品名（消耗/丢失的物品）
-affection:角色名=好感度数值（仅NPC对{{user}}的好感，禁止记录{{user}}自己，禁止数值后加注解）
-npc:角色名|外貌=性格@与{{user}}的关系~性别:男或女~年龄:数字~种族:种族名~职业:职业名
-agenda:订立日期|待办内容（仅在出现新约定/计划/伏笔时写入，相对时间须括号标注绝对日期）
-agenda-:内容关键词（待办已完成/失效/取消时写入，系统自动移除匹配的待办）
+time:日期 時間（必填，如 2026/2/4 15:00 或 霜降月第一日 19:50）
+location:目前地點（必填）
+atmosphere:氛圍
+characters:在場角色,逗號分隔（必填）
+costume:角色名=完整服裝描述（必填，每人一行，禁止分號合併）
+item:emoji物品名(數量)|描述=持有者@精確位置（僅新獲得或有變化的物品）
+item!:emoji物品名(數量)|描述=持有者@精確位置（重要物品，描述必填）
+item!!:emoji物品名(數量)|描述=持有者@精確位置（關鍵道具，描述必須詳細）
+item-:物品名（消耗/遺失的物品）
+affection:角色名=好感度數值（僅NPC對{{user}}的好感，禁止記錄{{user}}自己，禁止數值後加註解）
+npc:角色名|外貌=個性@與{{user}}的關係~性別:男或女~年齡:數字~種族:種族名~職業:職業名
+agenda:訂立日期|待辦內容（僅在出現新約定/計劃/伏筆時寫入，相對時間須括號標註絕對日期）
+agenda-:內容關鍵詞（待辦已完成/失效/取消時寫入，系統自動移除配對的待辦）
 </horae>
 <horaeevent>
-event:重要程度|事件简述（30-50字，一般/重要/关键）
+event:重要程度|事件簡述（30-50字，一般/重要/關鍵）
 </horaeevent>
 
-【触发条件】只在满足条件时才输出对应字段：
-· 物品：仅新获得、数量/归属/位置改变、消耗丢失时写。无变化不写。单件不写(1)。emoji前缀如🔑🍞。
-· NPC：首次出场必须完整（含~性别/年龄/种族/职业）。之后仅变化的字段写，无变化不写。
-  分隔符：| 分名字，= 分外貌和性格，@ 分关系，~ 分扩展字段
-· 好感度：首次按关系判定（陌生0-20/熟人30-50/朋友50-70），之后仅变化时写。
-· 待办：仅出现新约定/计划/伏笔时写。已完成/失效的待办用 agenda-: 移除。
-  新增：agenda:2026/02/10|艾伦邀请{{user}}情人节晚上约会(2026/02/14 18:00)
-  完成：agenda-:艾伦邀请{{user}}情人节晚上约会
-· event：放在<horaeevent>内，不放在<horae>内。`;
+【觸發條件】只在滿足條件時才輸出對應資料欄：
+· 物品：僅新獲得、數量/歸屬/位置改變、消耗遺失時寫。無變化不寫。單件不寫(1)。emoji前綴如🔑🍞。
+· NPC：首次出場必須完整（含~性別/年齡/種族/職業）。之後僅變化的資料欄寫，無變化不寫。
+  分隔符：| 分名字，= 分外貌和個性，@ 分關係，~ 分擴展資料欄
+· 好感度：首次按關係判定（陌生0-20/熟人30-50/朋友50-70），之後僅變化時寫。
+· 待辦：僅出現新約定/計劃/伏筆時寫。已完成/失效的待辦用 agenda-: 移除。
+  新增：agenda:2026/02/10|艾倫邀請{{user}}情人節晚上約會(2026/02/14 18:00)
+  完成：agenda-:艾倫邀請{{user}}情人節晚上約會
+· event：放在<horaeevent>內，不放在<horae>內。`;
 }
 
 let _autoSummaryRanThisTurn = false;
 
 /**
- * 自动摘要生成入口
- * useProfile=true 时允许切换连接配置（仅在AI回复后的顺序模式使用）
- * useProfile=false 时直接调用 generateRaw（并行安全）
+ * 自動摘要生成入口
+ * useProfile=true 時允許切換連接配置（僅在AI回覆後的順序模式使用）
+ * useProfile=false 時直接呼叫 generateRaw（並行安全）
  */
 async function generateForSummary(prompt) {
-    // 从 DOM 补读一次副API设置，防止浏览器自动填充未触发 input 事件导致设置为空
+    // 從 DOM 補讀一次副API設定，防止瀏覽器自動填充未觸發 input 事件導致設定為空
     _syncSubApiSettingsFromDom();
     const useCustom = settings.autoSummaryUseCustomApi;
     const hasUrl = !!(settings.autoSummaryApiUrl && settings.autoSummaryApiUrl.trim());
@@ -11701,11 +11701,11 @@ async function generateForSummary(prompt) {
         return await generateWithDirectApi(prompt);
     }
     if (useCustom && (!hasUrl || !hasKey || !hasModel)) {
-        const missing = [!hasUrl && 'API地址', !hasKey && 'API密钥', !hasModel && '模型名称'].filter(Boolean).join('、');
-        console.warn(`[Horae] 副API已勾选但缺少: ${missing}，回退主API`);
+        const missing = [!hasUrl && 'API地址', !hasKey && 'API密鑰', !hasModel && '模型名稱'].filter(Boolean).join('、');
+        console.warn(`[Horae] 副API已勾選但缺少: ${missing}，回退主API`);
         showToast(`副API缺少${missing}，已回退主API`, 'warning');
     } else if (!useCustom) {
-        console.log('[Horae] 副API未启用，使用主API (generateRaw)');
+        console.log('[Horae] 副API未啟用，使用主API (generateRaw)');
     }
     return await getContext().generateRaw(prompt, null, false, false);
 }
@@ -11737,9 +11737,9 @@ function _syncSubApiSettingsFromDom() {
     } catch (_) {}
 }
 
-/** 通用：从 OpenAI 兼容端点拉取模型列表 */
+/** 通用：從 OpenAI 相容端點拉取模型列表 */
 async function _fetchModelList(rawUrl, apiKey) {
-    if (!rawUrl || !apiKey) throw new Error('请先填写 API 地址和密钥');
+    if (!rawUrl || !apiKey) throw new Error('請先填寫 API 地址和密鑰');
     let base = rawUrl.trim().replace(/\/+$/, '').replace(/\/chat\/completions$/i, '').replace(/\/embeddings$/i, '');
     if (!base.endsWith('/v1')) base = base.replace(/\/+$/, '') + '/v1';
     const testUrl = `${base}/models`;
@@ -11756,7 +11756,7 @@ async function _fetchModelList(rawUrl, apiKey) {
     return (data.data || data || []).map(m => m.id || m.name).filter(Boolean);
 }
 
-/** 拉取 Embedding 模型列表并填充 <select> */
+/** 拉取 Embedding 模型列表並填充 <select> */
 async function fetchEmbeddingModels() {
     const btn = document.getElementById('horae-btn-fetch-embed-models');
     const sel = document.getElementById('horae-setting-vector-api-model');
@@ -11765,7 +11765,7 @@ async function fetchEmbeddingModels() {
         const url = ($('#horae-setting-vector-api-url').val() || settings.vectorApiUrl || '').trim();
         const key = ($('#horae-setting-vector-api-key').val() || settings.vectorApiKey || '').trim();
         const models = await _fetchModelList(url, key);
-        if (!models.length) { showToast('未获取到模型列表', 'warning'); return; }
+        if (!models.length) { showToast('未獲取到模型列表', 'warning'); return; }
         const prev = settings.vectorApiModel || '';
         sel.innerHTML = '';
         for (const m of models.sort()) {
@@ -11776,18 +11776,18 @@ async function fetchEmbeddingModels() {
         }
         if (prev && !models.includes(prev)) {
             const opt = document.createElement('option');
-            opt.value = prev; opt.textContent = `${prev} (手动)`;
+            opt.value = prev; opt.textContent = `${prev} (手動)`;
             opt.selected = true; sel.prepend(opt);
         }
-        showToast(`已拉取 ${models.length} 个模型`, 'success');
+        showToast(`已拉取 ${models.length} 個模型`, 'success');
     } catch (err) {
-        showToast(`拉取模型失败: ${err.message || err}`, 'error');
+        showToast(`拉取模型失敗: ${err.message || err}`, 'error');
     } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i>'; }
     }
 }
 
-/** 拉取 Rerank 模型列表并填充 <select> */
+/** 拉取 Rerank 模型列表並填充 <select> */
 async function fetchRerankModels() {
     const btn = document.getElementById('horae-btn-fetch-rerank-models');
     const sel = document.getElementById('horae-setting-vector-rerank-model');
@@ -11800,7 +11800,7 @@ async function fetchRerankModels() {
         const url = rerankUrl || embedUrl;
         const key = rerankKey || embedKey;
         const models = await _fetchModelList(url, key);
-        if (!models.length) { showToast('未获取到模型列表', 'warning'); return; }
+        if (!models.length) { showToast('未獲取到模型列表', 'warning'); return; }
         const prev = settings.vectorRerankModel || '';
         sel.innerHTML = '';
         for (const m of models.sort()) {
@@ -11811,24 +11811,24 @@ async function fetchRerankModels() {
         }
         if (prev && !models.includes(prev)) {
             const opt = document.createElement('option');
-            opt.value = prev; opt.textContent = `${prev} (手动)`;
+            opt.value = prev; opt.textContent = `${prev} (手動)`;
             opt.selected = true; sel.prepend(opt);
         }
-        showToast(`已拉取 ${models.length} 个模型`, 'success');
+        showToast(`已拉取 ${models.length} 個模型`, 'success');
     } catch (err) {
-        showToast(`拉取模型失败: ${err.message || err}`, 'error');
+        showToast(`拉取模型失敗: ${err.message || err}`, 'error');
     } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i>'; }
     }
 }
 
-/** 从副API拉取模型列表并填充下拉选单 */
+/** 從副API拉取模型列表並填充下拉選單 */
 async function _fetchSubApiModels() {
     _syncSubApiSettingsFromDom();
     const rawUrl = (settings.autoSummaryApiUrl || '').trim();
     const apiKey = (settings.autoSummaryApiKey || '').trim();
     if (!rawUrl || !apiKey) {
-        showToast('请先填写 API 地址和密钥', 'warning');
+        showToast('請先填寫 API 地址和密鑰', 'warning');
         return [];
     }
     const isGemini = /gemini/i.test(rawUrl) || /googleapis|generativelanguage/i.test(rawUrl);
@@ -11856,14 +11856,14 @@ async function _fetchSubApiModels() {
         : (data.data || data || []).map(m => m.id || m.name).filter(Boolean);
 }
 
-/** 拉取模型列表并填充 <select> */
+/** 拉取模型列表並填充 <select> */
 async function fetchAndPopulateModels() {
     const btn = document.getElementById('horae-btn-fetch-models');
     const sel = document.getElementById('horae-setting-auto-summary-model');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
     try {
         const models = await _fetchSubApiModels();
-        if (!models.length) { showToast('未获取到模型列表，请检查地址和密钥', 'warning'); return; }
+        if (!models.length) { showToast('未獲取到模型列表，請檢查地址和密鑰', 'warning'); return; }
         const prev = settings.autoSummaryModel || '';
         sel.innerHTML = '';
         for (const m of models.sort()) {
@@ -11876,7 +11876,7 @@ async function fetchAndPopulateModels() {
         if (prev && !models.includes(prev)) {
             const opt = document.createElement('option');
             opt.value = prev;
-            opt.textContent = `${prev} (手动)`;
+            opt.textContent = `${prev} (手動)`;
             opt.selected = true;
             sel.prepend(opt);
         }
@@ -11885,32 +11885,32 @@ async function fetchAndPopulateModels() {
             settings.autoSummaryModel = models[0];
             saveSettings();
         }
-        showToast(`已拉取 ${models.length} 个模型`, 'success');
+        showToast(`已拉取 ${models.length} 個模型`, 'success');
     } catch (err) {
-        showToast(`拉取模型失败: ${err.message || err}`, 'error');
+        showToast(`拉取模型失敗: ${err.message || err}`, 'error');
     } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i>'; }
     }
 }
 
-/** 测试副API连接 */
+/** 測試副API連接 */
 async function testSubApiConnection() {
     const btn = document.getElementById('horae-btn-test-sub-api');
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 测试中...'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 測試中...'; }
     try {
         const models = await _fetchSubApiModels();
         const model = (settings.autoSummaryModel || '').trim();
         const matchStr = model && models.some(m => m && m.toLowerCase().includes(model.toLowerCase()))
-            ? `✓ 找到目标模型「${model}」` : (model ? `⚠ 未在列表中找到「${model}」，请确认` : '');
-        showToast(`副API连接成功！可用模型 ${models.length} 个${matchStr ? '。' + matchStr : ''}`, 'success');
+            ? `✓ 找到目標模型「${model}」` : (model ? `⚠ 未在列表中找到「${model}」，請確認` : '');
+        showToast(`副API連接成功！可用模型 ${models.length} 個${matchStr ? '。' + matchStr : ''}`, 'success');
     } catch (err) {
-        showToast(`副API连接失败: ${err.message || err}`, 'error');
+        showToast(`副API連接失敗: ${err.message || err}`, 'error');
     } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plug-circle-check"></i> 测试副API连接'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plug-circle-check"></i> 測試副API連接'; }
     }
 }
 
-/** 构建多轮对话消息数组——模仿酒馆原生 system/assistant/user 交替结构，提高 NSFW 通过率 */
+/** 構建多輪對話訊息數組——模仿酒館原生 system/assistant/user 交替結構，提高 NSFW 透過率 */
 async function _buildSummaryMessages(prompt) {
     const messages = [];
     let _oaiSettings = null;
@@ -11944,28 +11944,28 @@ async function _buildSummaryMessages(prompt) {
 }
 
 /**
- * CORS 感知 fetch：直连失败时自动走 ST /proxy 代理
- * Electron 不受 CORS 限制直接返回；浏览器遇 TypeError 后自动重试代理路由
+ * CORS 感知 fetch：直連失敗時自動走 ST /proxy 代理
+ * Electron 不受 CORS 限制直接返回；瀏覽器遇 TypeError 後自動重試代理路由
  */
 async function _corsAwareFetch(url, init) {
     try {
         return await fetch(url, init);
     } catch (err) {
-        if (!(err instanceof TypeError)) throw err;
+        if (!(err IGtanceof TypeError)) throw err;
         const proxyUrl = `${location.origin}/proxy?url=${encodeURIComponent(url)}`;
         console.log('[Horae] Direct fetch failed (CORS?), retrying via ST proxy:', proxyUrl);
         try {
             return await fetch(proxyUrl, init);
         } catch (_) {
             throw new Error(
-                'API请求被浏览器CORS拦截，且酒馆代理不可用。\n' +
-                '请在 config.yaml 中设置 enableCorsProxy: true 后重启酒馆。'
+                'API請求被瀏覽器CORS攔截，且酒館代理不可用。\n' +
+                '請在 config.yaml 中設定 enableCorsProxy: true 後重啟酒館。'
             );
         }
     }
 }
 
-/** 直接请求API端点，完全独立于酒馆主连接，支持真并行 */
+/** 直接請求API端點，完全獨立於酒館主連接，支援真並行 */
 async function generateWithDirectApi(prompt) {
     const _model = settings.autoSummaryModel.trim();
     const _apiKey = settings.autoSummaryApiKey.trim();
@@ -11984,7 +11984,7 @@ async function generateWithDirectApi(prompt) {
         max_tokens: 4096,
         stream: false
     };
-    // 仅当端点疑似 Gemini 系渠道时才注入 safetySettings（纯 OpenAI 端点会拒绝未知字段返回 400）
+    // 僅當端點疑似 Gemini 系管道時才注入 safetySettings（純 OpenAI 端點會拒絕未知資料欄返回 400）
     if (/gemini|google|generativelanguage/i.test(url) || /gemini/i.test(body.model)) {
         const blockNone = [
             { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
@@ -11996,7 +11996,7 @@ async function generateWithDirectApi(prompt) {
         body.safety_settings = blockNone;
         body.safetySettings = blockNone;
     }
-    console.log(`[Horae] 独立API请求: ${url}, 模型: ${body.model}`);
+    console.log(`[Horae] 獨立API請求: ${url}, 模型: ${body.model}`);
     const resp = await _corsAwareFetch(url, {
         method: 'POST',
         headers: {
@@ -12007,22 +12007,22 @@ async function generateWithDirectApi(prompt) {
     });
     if (!resp.ok) {
         const errText = await resp.text().catch(() => '');
-        throw new Error(`独立API返回 ${resp.status}: ${errText.slice(0, 200)}`);
+        throw new Error(`獨立API返回 ${resp.status}: ${errText.slice(0, 200)}`);
     }
     const data = await resp.json();
     const finishReason = data?.choices?.[0]?.finish_reason || '';
     if (finishReason === 'content_filter' || finishReason === 'SAFETY') {
-        throw new Error('副API安全过滤拦截，建议：降低批次token上限 或 换用限制更宽松的模型');
+        throw new Error('副API安全過濾攔截，建議：降低批次token上限 或 換用限制更寬鬆的模型');
     }
     return data?.choices?.[0]?.message?.content || '';
 }
 
 /**
- * Gemini 原生格式请求 —— 复刻 ST 后端 sendMakerSuiteRequest 的完整处理链路
- * 解决中转 OpenAI 兼容端点丢弃 safetySettings 导致 PROMPT BLOCKED 的问题
+ * Gemini 原生格式請求 —— 復刻 ST 後端 sendMakerSuiteRequest 的完整處理連結
+ * 解決中轉 OpenAI 相容端點丟棄 safetySettings 導致 PROMPT BLOCKED 的問題
  */
 async function _geminiNativeRequest(prompt, rawUrl, model, apiKey) {
-    // ── 1. 收集 system 指令（全部进 systemInstruction）+ user 内容 ──
+    // ── 1. 收集 system 指令（全部進 systemInstruction）+ user 內容 ──
     const systemParts = [];
     try {
         const { oai_settings } = await import('/scripts/openai.js');
@@ -12044,7 +12044,7 @@ async function _geminiNativeRequest(prompt, rawUrl, model, apiKey) {
         });
     }
 
-    // ── 2. safetySettings（与 ST 后端 GEMINI_SAFETY 常量对齐） ──
+    // ── 2. safetySettings（與 ST 後端 GEMINI_SAFETY 常數對齊） ──
     const modelLow = model.toLowerCase();
     const isOldModel = /gemini-1\.(0|5)-(pro|flash)-001/.test(modelLow);
     const threshold = isOldModel ? 'BLOCK_NONE' : 'OFF';
@@ -12058,7 +12058,7 @@ async function _geminiNativeRequest(prompt, rawUrl, model, apiKey) {
         safetySettings.push({ category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold });
     }
 
-    // ── 3. 请求体（Gemini 原生 contents 格式） ──
+    // ── 3. 請求體（Gemini 原生 contents 格式） ──
     const body = {
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         safetySettings,
@@ -12072,7 +12072,7 @@ async function _geminiNativeRequest(prompt, rawUrl, model, apiKey) {
         body.systemInstruction = { parts: systemParts };
     }
 
-    // ── 4. 构建端点 URL ──
+    // ── 4. 構建端點 URL ──
     let baseUrl = rawUrl
         .replace(/\/+$/, '')
         .replace(/\/chat\/completions$/i, '')
@@ -12089,7 +12089,7 @@ async function _geminiNativeRequest(prompt, rawUrl, model, apiKey) {
 
     console.log(`[Horae] Gemini原生API: ${endpointUrl}, threshold: ${threshold}`);
 
-    // ── 5. 发送请求 + 解析原生响应 ──
+    // ── 5. 發送請求 + 解析原生響應 ──
     const resp = await _corsAwareFetch(endpointUrl, {
         method: 'POST',
         headers,
@@ -12104,16 +12104,16 @@ async function _geminiNativeRequest(prompt, rawUrl, model, apiKey) {
     const data = await resp.json();
 
     if (data?.promptFeedback?.blockReason) {
-        throw new Error(`Gemini输入安全拦截: ${data.promptFeedback.blockReason}`);
+        throw new Error(`Gemini輸入安全攔截: ${data.promptFeedback.blockReason}`);
     }
 
     const candidates = data?.candidates;
     if (!candidates?.length) {
-        throw new Error('Gemini API未返回候选内容');
+        throw new Error('Gemini API未返回候選內容');
     }
 
     if (candidates[0]?.finishReason === 'SAFETY') {
-        throw new Error('Gemini输出安全拦截，建议换用限制更宽松的模型');
+        throw new Error('Gemini輸出安全攔截，建議換用限制更寬鬆的模型');
     }
 
     const text = candidates[0]?.content?.parts
@@ -12122,13 +12122,13 @@ async function _geminiNativeRequest(prompt, rawUrl, model, apiKey) {
         ?.join('\n\n') || '';
 
     if (!text) {
-        throw new Error(`Gemini返回空内容 (finishReason: ${candidates[0]?.finishReason || '?'})`);
+        throw new Error(`Gemini返回空內容 (finishReason: ${candidates[0]?.finishReason || '?'})`);
     }
 
     return text;
 }
 
-/** 自动摘要：检查是否需要触发 */
+/** 自動摘要：檢查是否需要觸發 */
 async function checkAutoSummary() {
     if (!settings.autoSummaryEnabled || !settings.sendTimeline) return;
     if (_summaryInProgress) return;
@@ -12145,7 +12145,7 @@ async function checkAutoSummary() {
         const totalMsgs = chat.length;
         const cutoff = Math.max(1, totalMsgs - keepRecent);
         
-        // 收集已被活跃摘要覆盖的消息索引（无论 is_hidden 是否生效都排除）
+        // 收集已被活躍摘要覆蓋的訊息索引（無論 is_hidden 是否生效都排除）
         const summarizedIndices = new Set();
         const existingSums = chat[0]?.horae_meta?.autoSummaries || [];
         for (const s of existingSums) {
@@ -12174,11 +12174,11 @@ async function checkAutoSummary() {
             shouldTrigger = bufferMsgIndices.length > bufferLimit;
         }
         
-        console.log(`[Horae] 自动摘要检查：${bufferMsgIndices.length}条缓冲消息(${bufferMode === 'tokens' ? bufferTokens + 'tok' : bufferMsgIndices.length + '条'})，阈值${bufferLimit}，${shouldTrigger ? '触发' : '未达阈值'}`);
+        console.log(`[Horae] 自動摘要檢查：${bufferMsgIndices.length}條緩衝訊息(${bufferMode === 'tokens' ? bufferTokens + 'tok' : bufferMsgIndices.length + '條'})，閾值${bufferLimit}，${shouldTrigger ? '觸發' : '未達閾值'}`);
         
         if (!shouldTrigger || bufferMsgIndices.length === 0) return;
         
-        // 单次摘要批量上限：防止旧档案首次启用时 token 爆炸
+        // 單次摘要批量上限：防止舊檔案首次啟用時 token 爆炸
         const MAX_BATCH_MSGS = settings.autoSummaryBatchMaxMsgs || 50;
         const MAX_BATCH_TOKENS = settings.autoSummaryBatchMaxTokens || 80000;
         let batchIndices = [];
@@ -12213,7 +12213,7 @@ async function checkAutoSummary() {
             }
         }
         
-        // 检测缓冲区消息的时间线/时间戳缺失情况
+        // 檢測緩衝區訊息的時間線/時間戳缺失情況
         const _missingTimestamp = [];
         const _missingEvents = [];
         for (const i of batchIndices) {
@@ -12224,7 +12224,7 @@ async function checkAutoSummary() {
             if (!hasEvt && !meta?.event?.summary) _missingEvents.push(i);
         }
         if (bufferEvents.length === 0 && _missingTimestamp.length === batchIndices.length) {
-            showToast('自动摘要：缓冲区消息完全没有 Horae 数据，建议先用「AI智能摘要」批量补全。', 'warning');
+            showToast('自動摘要：緩衝區訊息完全沒有 Horae 數據，建議先用「AI智慧摘要」批量補全。', 'warning');
             return;
         }
         if (_missingTimestamp.length > 0 || _missingEvents.length > 0) {
@@ -12232,24 +12232,24 @@ async function checkAutoSummary() {
             if (_missingTimestamp.length > 0) {
                 const floors = _missingTimestamp.length <= 8
                     ? _missingTimestamp.map(i => `#${i}`).join(', ')
-                    : _missingTimestamp.slice(0, 6).map(i => `#${i}`).join(', ') + ` 等${_missingTimestamp.length}楼`;
-                parts.push(`缺时间戳: ${floors}`);
+                    : _missingTimestamp.slice(0, 6).map(i => `#${i}`).join(', ') + ` 等${_missingTimestamp.length}樓`;
+                parts.push(`缺時間戳: ${floors}`);
             }
             if (_missingEvents.length > 0) {
                 const floors = _missingEvents.length <= 8
                     ? _missingEvents.map(i => `#${i}`).join(', ')
-                    : _missingEvents.slice(0, 6).map(i => `#${i}`).join(', ') + ` 等${_missingEvents.length}楼`;
-                parts.push(`缺时间线: ${floors}`);
+                    : _missingEvents.slice(0, 6).map(i => `#${i}`).join(', ') + ` 等${_missingEvents.length}樓`;
+                parts.push(`缺時間線: ${floors}`);
             }
-            console.warn(`[Horae] 自动摘要数据缺失: ${parts.join(' | ')}`);
+            console.warn(`[Horae] 自動摘要數據缺失: ${parts.join(' | ')}`);
             if (_missingTimestamp.length > batchIndices.length * 0.5) {
-                showToast(`自动摘要提示：${parts.join('；')}。建议用「AI智能摘要」补全后再开启，否则摘要/向量精度受损。`, 'warning');
+                showToast(`自動摘要提示：${parts.join('；')}。建議用「AI智慧摘要」補全後再開啟，否則摘要/向量精度受損。`, 'warning');
             }
         }
         
         const batchMsg = remaining > 0
-            ? `自动摘要：正在压缩 ${batchIndices.length}/${bufferMsgIndices.length} 条消息（剩余 ${remaining} 条将在后续轮次处理）...`
-            : `自动摘要：正在压缩 ${batchIndices.length} 条消息...`;
+            ? `自動摘要：正在壓縮 ${batchIndices.length}/${bufferMsgIndices.length} 條訊息（剩餘 ${remaining} 條將在後續輪次處理）...`
+            : `自動摘要：正在壓縮 ${batchIndices.length} 條訊息...`;
         showToast(batchMsg, 'info');
         
         const context = getContext();
@@ -12274,18 +12274,18 @@ async function checkAutoSummary() {
         
         const response = await generateForSummary(prompt);
         if (!response?.trim()) {
-            showToast('自动摘要：AI返回为空', 'warning');
+            showToast('自動摘要：AI返回為空', 'warning');
             return;
         }
         
-        // 清洗 AI 回复中的 horae 标签，只保留纯文本摘要
+        // 清洗 AI 回覆中的 horae 標籤，只保留純文字摘要
         let summaryText = response.trim()
             .replace(/<horae>[\s\S]*?<\/horae>/gi, '')
             .replace(/<horaeevent>[\s\S]*?<\/horaeevent>/gi, '')
             .replace(/<!--horae[\s\S]*?-->/gi, '')
             .trim();
         if (!summaryText) {
-            showToast('自动摘要：清洗标签后内容为空', 'warning');
+            showToast('自動摘要：清洗標籤後內容為空', 'warning');
             return;
         }
 
@@ -12299,7 +12299,7 @@ async function checkAutoSummary() {
             timestamp: chat[e.msgIdx]?.horae_meta?.timestamp
         }));
         
-        // 完整隐藏范围（包含中间所有 USER 消息）
+        // 完整隱藏範圍（包含中間所有 USER 訊息）
         const hideMin = msgIndices[0];
         const hideMax = msgIndices[msgIndices.length - 1];
 
@@ -12314,7 +12314,7 @@ async function checkAutoSummary() {
             auto: true
         });
         
-        // 标记原始事件为已压缩（active 时隐藏原始事件显示摘要）
+        // 標記原始事件為已壓縮（active 時隱藏原始事件顯示摘要）
         for (const e of bufferEvents) {
             const meta = chat[e.msgIdx]?.horae_meta;
             if (meta?.events?.[e.evtIdx]) {
@@ -12322,7 +12322,7 @@ async function checkAutoSummary() {
             }
         }
         
-        // 插入摘要事件卡片：优先放在有事件的消息上，否则放在范围首条
+        // 插入摘要事件卡片：優先放在有事件的訊息上，否則放在範圍首條
         const targetIdx = bufferEvents.length > 0 ? bufferEvents[0].msgIdx : msgIndices[0];
         if (!chat[targetIdx].horae_meta) chat[targetIdx].horae_meta = createEmptyMeta();
         const targetMeta = chat[targetIdx].horae_meta;
@@ -12335,20 +12335,20 @@ async function checkAutoSummary() {
             _summaryId: summaryId
         });
         
-        // /hide 整个范围内的消息楼层
+        // /hide 整個範圍內的訊息樓層
         const fullRangeIndices = [];
         for (let i = hideMin; i <= hideMax; i++) fullRangeIndices.push(i);
         await setMessagesHidden(chat, fullRangeIndices, true);
         
         await context.saveChat();
         updateTimelineDisplay();
-        showToast(`自动摘要完成：#${msgIndices[0]}-#${msgIndices[msgIndices.length - 1]}`, 'success');
+        showToast(`自動摘要完成：#${msgIndices[0]}-#${msgIndices[msgIndices.length - 1]}`, 'success');
     } catch (err) {
-        console.error('[Horae] 自动摘要失败:', err);
-        showToast(`自动摘要失败: ${err.message || err}`, 'error');
+        console.error('[Horae] 自動摘要失敗:', err);
+        showToast(`自動摘要失敗: ${err.message || err}`, 'error');
     } finally {
         _summaryInProgress = false;
-        // 权威存盘：补偿 onMessageReceived 因竞态保护而跳过的 save
+        // 權威存盤：補償 onMessageReceived 因競態保護而跳過的 save
         try {
             await enforceHiddenState();
             await getContext().saveChat();
@@ -12356,56 +12356,56 @@ async function checkAutoSummary() {
     }
 }
 
-/** 默认的剧情压缩提示词（含事件压缩和全文摘要两段，以分隔线区分） */
+/** 預設的劇情壓縮提示詞（含事件壓縮和全文摘要兩段，以分隔線區分） */
 function getDefaultCompressPrompt() {
-    return `=====【事件压缩】=====
-你是剧情压缩助手。请将以下{{count}}条剧情事件压缩为一段简洁的摘要（100-200字），保留关键信息和因果关系。
+    return `=====【事件壓縮】=====
+你是劇情壓縮助手。請將以下{{count}}條劇情事件壓縮為一段簡潔的摘要（100-200字），保留關鍵資訊和因果關係。
 
 {{events}}
 
 要求：
-- 按时间顺序叙述，保留重要转折点
-- 人名、地名必须保留原文
-- 输出纯文本摘要，不要添加任何标记或格式
-- 不要遗漏「关键」和「重要」级别的事件
+- 按時間順序敘述，保留重要轉捩點
+- 人名、地名必須保留原文
+- 輸出純文字摘要，不要添加任何標記或格式
+- 不要遺漏「關鍵」和「重要」層級的事件
 - {{user}} 是主角名
-- 语言风格：简洁客观的叙事体
+- 語言風格：簡潔客觀的敘事體
 
 =====【全文摘要】=====
-你是剧情压缩助手。请阅读以下对话记录，将其压缩为一段精炼的剧情摘要（150-300字），保留关键信息和因果关系。
+你是劇情壓縮助手。請閱讀以下對話記錄，將其壓縮為一段精煉的劇情摘要（150-300字），保留關鍵資訊和因果關係。
 
 {{fulltext}}
 
 要求：
-- 按时间顺序叙述，保留重要转折点和关键细节
-- 人名、地名必须保留原文
-- 输出纯文本摘要，不要添加任何标记或格式
-- 保留人物的关键对话和情绪变化
+- 按時間順序敘述，保留重要轉捩點和關鍵細節
+- 人名、地名必須保留原文
+- 輸出純文字摘要，不要添加任何標記或格式
+- 保留人物的關鍵對話和情緒變化
 - {{user}} 是主角名
-- 语言风格：简洁客观的叙事体`;
+- 語言風格：簡潔客觀的敘事體`;
 }
 
-/** 默认的自动摘要提示词（独立于手动压缩，由副API使用） */
+/** 預設的自動摘要提示詞（獨立於手動壓縮，由副API使用） */
 function getDefaultAutoSummaryPrompt() {
-    return `你是剧情压缩助手。请阅读以下对话记录，将其压缩为一段精炼的剧情摘要（150-300字），保留关键信息和因果关系。
+    return `你是劇情壓縮助手。請閱讀以下對話記錄，將其壓縮為一段精煉的劇情摘要（150-300字），保留關鍵資訊和因果關係。
 
 {{fulltext}}
 
-已有事件概要（辅助参考，不要仅依赖此列表）：
+已有事件概要（輔助參考，不要僅依賴此列表）：
 {{events}}
 
 要求：
-- 按时间顺序叙述，保留重要转折点和关键细节
-- 人名、地名必须保留原文
-- 输出纯文本摘要，不要添加任何标记或格式（禁止<horae>等XML标签）
-- 保留人物的关键对话和情绪变化
+- 按時間順序敘述，保留重要轉捩點和關鍵細節
+- 人名、地名必須保留原文
+- 輸出純文字摘要，不要添加任何標記或格式（禁止<horae>等XML標籤）
+- 保留人物的關鍵對話和情緒變化
 - {{user}} 是主角名
-- 语言风格：简洁客观的叙事体`;
+- 語言風格：簡潔客觀的敘事體`;
 }
 
-/** 从压缩提示词模板中按模式提取对应的 prompt 段 */
+/** 從壓縮提示詞模範中按模式提取對應的 prompt 段 */
 function parseCompressPrompt(template, mode) {
-    const eventRe = /=+【事件压缩】=+/;
+    const eventRe = /=+【事件壓縮】=+/;
     const fulltextRe = /=+【全文摘要】=+/;
     const eMatch = template.match(eventRe);
     const fMatch = template.match(fulltextRe);
@@ -12422,26 +12422,26 @@ function parseCompressPrompt(template, mode) {
             return mode === 'fulltext' ? fulltextSection : eventSection;
         }
     }
-    // 无分隔线：整段当通用 prompt
+    // 無分隔線：整段當通用 prompt
     return template;
 }
 
-/** 根据缓冲模式动态更新缓冲上限的说明文案 */
+/** 根據緩衝模式動態更新緩衝上限的說明文案 */
 function updateAutoSummaryHint() {
     const hintEl = document.getElementById('horae-auto-summary-limit-hint');
     if (!hintEl) return;
     const mode = settings.autoSummaryBufferMode || 'messages';
     if (mode === 'tokens') {
-        hintEl.innerHTML = '填入Token上限。超过后触发自动压缩。<br>' +
-            '<small>参考：Claude ≈ 80K~200K · GPT-4o ≈ 128K · Gemini ≈ 1M~2M<br>' +
-            '建议设为模型上下文窗口的 30%~50%，留出足够空间给其他内容。</small>';
+        hintEl.innerHTML = '填入Token上限。超過後觸發自動壓縮。<br>' +
+            '<small>參考：Claude ≈ 80K~200K · GPT-4o ≈ 128K · Gemini ≈ 1M~2M<br>' +
+            '建議設為模型上下文視窗的 30%~50%，留出足夠空間給其他內容。</small>';
     } else {
-        hintEl.innerHTML = '填入楼层数（消息条数）。超过后触发自动压缩。<br>' +
-            '<small>即「保留最近消息数」之外的多余消息达到此数量时，自动将其压缩为摘要。</small>';
+        hintEl.innerHTML = '填入樓層數（訊息條數）。超過後觸發自動壓縮。<br>' +
+            '<small>即「保留最近訊息數」之外的多餘訊息達到此數量時，自動將其壓縮為摘要。</small>';
     }
 }
 
-/** 估算文本的token数（CJK按1.5、其余按0.4） */
+/** 估算文字的token數（CJK按1.5、其餘按0.4） */
 function estimateTokens(text) {
     if (!text) return 0;
     const cjk = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/g) || []).length;
@@ -12449,7 +12449,7 @@ function estimateTokens(text) {
     return Math.ceil(cjk * 1.5 + rest * 0.4);
 }
 
-/** 根据 vectorStripTags 配置的标签列表，整块移除对应内容（小剧场等），避免污染 AI 摘要/解析 */
+/** 根據 vectorStripTags 配置的標籤列表，整塊移除對應內容（小劇場等），避免汙染 AI 摘要/解析 */
 function _stripConfiguredTags(text) {
     if (!text) return text;
     const tagList = settings.vectorStripTags;
@@ -12462,7 +12462,7 @@ function _stripConfiguredTags(text) {
     return text.trim();
 }
 
-/** 判断消息是否为空层（同层系统等代码渲染的无实际叙事内容楼层） */
+/** 判斷訊息是否為空層（同層系統等代碼彩現的無實際敘事內容樓層） */
 function isEmptyOrCodeLayer(mes) {
     if (!mes) return true;
     const stripped = mes
@@ -12473,11 +12473,11 @@ function isEmptyOrCodeLayer(mes) {
     return stripped.length < 20;
 }
 
-/** AI智能摘要 — 批量分析历史消息，暂存结果后弹出审阅视窗 */
+/** AI智慧摘要 — 批量分析歷史訊息，暫存結果後彈出審閱視窗 */
 async function batchAIScan() {
     const chat = horaeManager.getChat();
     if (!chat || chat.length === 0) {
-        showToast('当前没有聊天记录', 'warning');
+        showToast('目前沒有聊天記錄', 'warning');
         return;
     }
 
@@ -12492,7 +12492,7 @@ async function batchAIScan() {
                 const nextMeta = nextMsg.horae_meta;
                 if (nextMeta?.events?.length > 0) { i++; continue; }
                 if (isEmptyOrCodeLayer(nextMsg.mes) && isEmptyOrCodeLayer(msg.mes)) { i++; skippedEmpty++; continue; }
-                const combined = `[USER行动]\n${_stripConfiguredTags(msg.mes)}\n\n[AI回复]\n${_stripConfiguredTags(nextMsg.mes)}`;
+                const combined = `[USER行動]\n${_stripConfiguredTags(msg.mes)}\n\n[AI回覆]\n${_stripConfiguredTags(nextMsg.mes)}`;
                 targets.push({ index: i + 1, text: combined });
                 i++;
             }
@@ -12506,8 +12506,8 @@ async function batchAIScan() {
     }
 
     if (targets.length === 0) {
-        const hint = skippedEmpty > 0 ? `（已跳过 ${skippedEmpty} 条空层/代码渲染楼层）` : '';
-        showToast(`所有消息已有时间线数据，无需补充${hint}`, 'info');
+        const hint = skippedEmpty > 0 ? `（已跳過 ${skippedEmpty} 條空層/代碼彩現樓層）` : '';
+        showToast(`所有訊息已有時間線數據，無需補充${hint}`, 'info');
         return;
     }
 
@@ -12529,26 +12529,26 @@ async function batchAIScan() {
     }
     if (currentBatch.length > 0) batches.push(currentBatch);
 
-    const skippedHint = skippedEmpty > 0 ? `\n· 已跳过 ${skippedEmpty} 条空层/代码渲染楼层` : '';
-    const confirmMsg = `预计分 ${batches.length} 批处理，消耗 ${batches.length} 次生成\n\n· 仅补充尚无时间线的消息，不覆盖已有数据\n· 中途取消会保留已完成的批次\n· 扫描后可「撤销摘要」还原${skippedHint}\n\n是否继续？`;
+    const skippedHint = skippedEmpty > 0 ? `\n· 已跳過 ${skippedEmpty} 條空層/代碼彩現樓層` : '';
+    const confirmMsg = `預計分 ${batches.length} 批處理，消耗 ${batches.length} 次生成\n\n· 僅補充尚無時間線的訊息，不覆蓋已有數據\n· 中途取消會保留已完成的批次\n· 掃描後可「撤銷摘要」還原${skippedHint}\n\n是否繼續？`;
     if (!confirm(confirmMsg)) return;
 
     const scanResults = await executeBatchScan(batches, { includeNpc, includeAffection, includeScene, includeRelationship });
     if (scanResults.length === 0) {
-        showToast('未提取到任何摘要数据', 'warning');
+        showToast('未提取到任何摘要數據', 'warning');
         return;
     }
     showScanReviewModal(scanResults, { includeNpc, includeAffection, includeScene, includeRelationship });
 }
 
-/** 执行批量扫描，返回暂存结果（不写入chat） */
+/** 執行批量掃描，返回暫存結果（不寫入chat） */
 async function executeBatchScan(batches, options = {}) {
     const { includeNpc, includeAffection, includeScene, includeRelationship } = options;
     let cancelled = false;
     let cancelResolve = null;
     const cancelPromise = new Promise(resolve => { cancelResolve = resolve; });
 
-    // 用于真正中止HTTP请求的AbortController（fetch层面）
+    // 用於真正中止HTTP請求的AbortController（fetch層面）
     const fetchAbort = new AbortController();
     const _origFetch = window.fetch;
     window.fetch = function(input, init = {}) {
@@ -12567,11 +12567,11 @@ async function executeBatchScan(batches, options = {}) {
     overlay.className = 'horae-progress-overlay' + (isLightMode() ? ' horae-light' : '');
     overlay.innerHTML = `
         <div class="horae-progress-container">
-            <div class="horae-progress-title">AI 智能摘要中...</div>
+            <div class="horae-progress-title">AI 智慧摘要中...</div>
             <div class="horae-progress-bar">
                 <div class="horae-progress-fill" style="width: 0%"></div>
             </div>
-            <div class="horae-progress-text">准备中...</div>
+            <div class="horae-progress-text">準備中...</div>
             <button class="horae-progress-cancel"><i class="fa-solid fa-xmark"></i> 取消摘要</button>
         </div>
     `;
@@ -12581,31 +12581,31 @@ async function executeBatchScan(batches, options = {}) {
     const context = getContext();
     const userName = context?.name1 || '主角';
 
-    // 取消：中止fetch请求 + stopGeneration + Promise.race跳出
+    // 取消：中止fetch請求 + stopGeneration + Promise.race跳出
     overlay.querySelector('.horae-progress-cancel').addEventListener('click', () => {
         if (cancelled) return;
         const hasPartial = scanResults.length > 0;
         const hint = hasPartial
-            ? `已完成 ${scanResults.length} 条摘要将保留，可在审阅弹窗中查看。\n\n确定停止后续批次？`
-            : '当前批次尚未完成，确定取消？';
+            ? `已完成 ${scanResults.length} 條摘要將保留，可在審閱彈窗中查看。\n\n確定停止後續批次？`
+            : '目前批次尚未完成，確定取消？';
         if (!confirm(hint)) return;
         cancelled = true;
         fetchAbort.abort();
         try { context.stopGeneration(); } catch (_) {}
         cancelResolve();
         overlay.remove();
-        showToast(hasPartial ? `已停止，保留 ${scanResults.length} 条已完成摘要` : '已取消摘要生成', 'info');
+        showToast(hasPartial ? `已停止，保留 ${scanResults.length} 條已完成摘要` : '已取消摘要生成', 'info');
     });
     const scanResults = [];
 
-    // 动态构建允许的标签
+    // 動態構建允許的標籤
     let allowedTags = 'time、item、event';
-    let forbiddenNote = '禁止输出 agenda/costume/location/atmosphere/characters';
+    let forbiddenNote = '禁止輸出 agenda/costume/location/atmosphere/characters';
     if (!includeNpc) forbiddenNote += '/npc';
     if (!includeAffection) forbiddenNote += '/affection';
     if (!includeScene) forbiddenNote += '/scene_desc';
     if (!includeRelationship) forbiddenNote += '/rel';
-    forbiddenNote += ' 等其他标签';
+    forbiddenNote += ' 等其他標籤';
     if (includeNpc) allowedTags += '、npc';
     if (includeAffection) allowedTags += '、affection';
     if (includeScene) allowedTags += '、scene_desc';
@@ -12614,12 +12614,12 @@ async function executeBatchScan(batches, options = {}) {
     for (let b = 0; b < batches.length; b++) {
         if (cancelled) break;
         const batch = batches[b];
-        textEl.textContent = `第 ${b + 1}/${batches.length} 批（${batch.length} 条消息）...`;
+        textEl.textContent = `第 ${b + 1}/${batches.length} 批（${batch.length} 條訊息）...`;
         fillEl.style.width = `${Math.round((b / batches.length) * 100)}%`;
 
-        const messagesBlock = batch.map(t => `【消息#${t.index}】\n${t.text}`).join('\n\n');
+        const messagesBlock = batch.map(t => `【訊息#${t.index}】\n${t.text}`).join('\n\n');
 
-        // 自定义摘要prompt或默认
+        // 客製化摘要prompt或預設
         let batchPrompt;
         if (settings.customBatchPrompt) {
             batchPrompt = settings.customBatchPrompt
@@ -12629,52 +12629,52 @@ async function executeBatchScan(batches, options = {}) {
             let extraFormat = '';
             let extraRules = '';
             if (includeNpc) {
-                extraFormat += `\nnpc:角色名|外貌=性格@与${userName}的关系~性别:值~年龄:值~种族:值~职业:值（仅首次出场或信息变化时）`;
-                extraRules += `\n· NPC：首次出场完整记录（含~扩展字段），之后仅变化时写`;
+                extraFormat += `\nnpc:角色名|外貌=個性@與${userName}的關係~性別:值~年齡:值~種族:值~職業:值（僅首次出場或資訊變化時）`;
+                extraRules += `\n· NPC：首次出場完整記錄（含~擴展資料欄），之後僅變化時寫`;
             }
             if (includeAffection) {
-                extraFormat += `\naffection:角色名=好感度数值（仅NPC对${userName}的好感，从文本中提取已有数值）`;
-                extraRules += `\n· 好感度：仅从文本中提取明确出现的好感度数值，禁止自行推断`;
+                extraFormat += `\naffection:角色名=好感度數值（僅NPC對${userName}的好感，從文字中提取已有數值）`;
+                extraRules += `\n· 好感度：僅從文字中提取明確出現的好感度數值，禁止自行推斷`;
             }
             if (includeScene) {
-                extraFormat += `\nlocation:当前地点名（场景发生的地点，多级用·分隔如「酒馆·大厅」）\nscene_desc:位于…。该地点的固定物理特征描述（50-150字，仅首次到达或发生永久变化时写）`;
-                extraRules += `\n· 场景：location行写地点名（每条消息都写），scene_desc行仅在首次到达新地点时才写，子级地点仅写相对父级的方位`;
+                extraFormat += `\nlocation:目前地點名（場景發生的地點，多級用·分隔如「酒館·大廳」）\nscene_desc:位於…。該地點的固定物理特徵描述（50-150字，僅首次到達或發生永久變化時寫）`;
+                extraRules += `\n· 場景：location行寫地點名（每條訊息都寫），scene_desc行僅在首次到達新地點時才寫，子級地點僅寫相對父級的方位`;
             }
             if (includeRelationship) {
-                extraFormat += `\nrel:角色A>角色B=关系类型|备注（角色间关系发生变化时输出）`;
-                extraRules += `\n· 关系：仅在关系新建或变化时写，格式 rel:角色A>角色B=关系类型，备注可选`;
+                extraFormat += `\nrel:角色A>角色B=關係類型|備註（角色間關係發生變化時輸出）`;
+                extraRules += `\n· 關係：僅在關係建立或變化時寫，格式 rel:角色A>角色B=關係類型，備註可選`;
             }
 
-            batchPrompt = `你是剧情分析助手。请逐条分析以下对话记录，为每条消息提取【${allowedTags}】。
+            batchPrompt = `你是劇情分析助手。請逐條分析以下對話記錄，為每條訊息提取【${allowedTags}】。
 
-核心原则：
-- 只提取文本中明确出现的信息，禁止编造
-- 每条消息独立分析，用 ===消息#编号=== 分隔
-- 严格只输出 ${allowedTags} 标签，${forbiddenNote}
+核心原則：
+- 只提取文字中明確出現的資訊，禁止編造
+- 每條訊息獨立分析，用 ===訊息#編號=== 分隔
+- 嚴格只輸出 ${allowedTags} 標籤，${forbiddenNote}
 
 ${messagesBlock}
 
-【输出格式】每条消息按以下格式输出：
+【輸出格式】每條訊息按以下格式輸出：
 
-===消息#编号===
+===訊息#編號===
 <horae>
-time:日期 时间（从文本中提取，如 2026/2/4 15:00 或 霜降月第三日 黄昏）
-item:emoji物品名(数量)|描述=持有者@位置（新获得的物品，普通物品可省描述）
-item!:emoji物品名(数量)|描述=持有者@位置（重要物品，描述必填）
-item-:物品名（消耗/丢失/用完的物品）${extraFormat}
+time:日期 時間（從文字中提取，如 2026/2/4 15:00 或 霜降月第三日 黃昏）
+item:emoji物品名(數量)|描述=持有者@位置（新獲得的物品，普通物品可省描述）
+item!:emoji物品名(數量)|描述=持有者@位置（重要物品，描述必填）
+item-:物品名（消耗/遺失/用完的物品）${extraFormat}
 </horae>
 <horaeevent>
-event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键）
+event:重要程度|事件簡述（30-50字，重要程度：一般/重要/關鍵）
 </horaeevent>
 
-【规则】
-· time：从文本中提取当前场景的日期时间，必填（没有明确时间则根据上下文推断）
-· event：本条消息中发生的关键剧情，每条消息至少一个 event
-· 物品仅在获得、消耗、状态改变时记录，无变化则不写 item 行
-· item格式：emoji前缀如🔑🍞，单件不写(1)，位置需精确（❌地上 ✅酒馆大厅桌上）
-· 重要程度判断：日常对话=一般，推动剧情=重要，关键转折=关键
+【規則】
+· time：從文字中提取目前場景的日期時間，必填（沒有明確時間則根據上下文推斷）
+· event：本條訊息中發生的關鍵劇情，每條訊息至少一個 event
+· 物品僅在獲得、消耗、狀態改變時記錄，無變化則不寫 item 行
+· item格式：emoji前綴如🔑🍞，單件不寫(1)，位置需精確（❌地上 ✅酒館大廳桌上）
+· 重要程度判斷：日常對話=一般，推動劇情=重要，關鍵轉折=關鍵
 · ${userName} 是主角名${extraRules}
-· 再次强调：只允许 ${allowedTags}，${forbiddenNote}`;
+· 再次強調：只允許 ${allowedTags}，${forbiddenNote}`;
         }
 
         try {
@@ -12684,14 +12684,14 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
             ]);
             if (cancelled) break;
             if (!response) {
-                console.warn(`[Horae] 第 ${b + 1} 批：AI 未返回内容`);
-                showToast(`第 ${b + 1} 批：AI 未返回内容（可能被内容审查拦截）`, 'warning');
+                console.warn(`[Horae] 第 ${b + 1} 批：AI 未返回內容`);
+                showToast(`第 ${b + 1} 批：AI 未返回內容（可能被內容審查攔截）`, 'warning');
                 continue;
             }
-            const segments = response.split(/===消息#(\d+)===/);
+            const segments = response.split(/===訊息#(\d+)===/);
             if (segments.length <= 1) {
-                console.warn(`[Horae] 第 ${b + 1} 批：AI 回复格式不匹配（未找到 ===消息#N=== 分隔符）`, response.substring(0, 300));
-                showToast(`第 ${b + 1} 批：AI 回复格式不匹配，请重试`, 'warning');
+                console.warn(`[Horae] 第 ${b + 1} 批：AI 回覆格式不配對（未找到 ===訊息#N=== 分隔符）`, response.substring(0, 300));
+                showToast(`第 ${b + 1} 批：AI 回覆格式不配對，請重試`, 'warning');
                 continue;
             }
             for (let s = 1; s < segments.length; s += 2) {
@@ -12724,8 +12724,8 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
             }
         } catch (err) {
             if (cancelled || err?.name === 'AbortError') break;
-            console.error(`[Horae] 第 ${b + 1} 批摘要失败:`, err);
-            showToast(`第 ${b + 1} 批：AI 请求失败，请检查 API 连接`, 'error');
+            console.error(`[Horae] 第 ${b + 1} 批摘要失敗:`, err);
+            showToast(`第 ${b + 1} 批：AI 請求失敗，請檢查 API 連接`, 'error');
         }
 
         if (b < batches.length - 1 && !cancelled) {
@@ -12741,7 +12741,7 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
     return scanResults;
 }
 
-/** 从暂存结果中按分类提取审阅条目 */
+/** 從暫存結果中按分類提取審閱條目 */
 function extractReviewCategories(scanResults) {
     const categories = { events: [], items: [], npcs: [], affection: [], scenes: [], relationships: [] };
 
@@ -12792,7 +12792,7 @@ function extractReviewCategories(scanResults) {
             });
         }
 
-        // 场景记忆
+        // 場景記憶
         if (meta.scene?.location && meta.scene?.scene_desc) {
             categories.scenes.push({
                 resultIndex: ri, field: 'scene', key: meta.scene.location,
@@ -12802,7 +12802,7 @@ function extractReviewCategories(scanResults) {
             });
         }
 
-        // 关系网络
+        // 關係網路
         if (meta.relationships?.length > 0) {
             for (let rri = 0; rri < meta.relationships.length; rri++) {
                 const rel = meta.relationships[rri];
@@ -12816,14 +12816,14 @@ function extractReviewCategories(scanResults) {
         }
     }
 
-    // 好感度去重：同名NPC只保留最后一次（最终值）
+    // 好感度去重：同名NPC只保留最後一次（最終值）
     const affMap = new Map();
     for (const item of categories.affection) {
         affMap.set(item.text, item);
     }
     categories.affection = [...affMap.values()];
 
-    // 场景去重：同名地点只保留最后一次描述
+    // 場景去重：同名地點只保留最後一次描述
     const sceneMap = new Map();
     for (const item of categories.scenes) {
         sceneMap.set(item.text, item);
@@ -12834,29 +12834,29 @@ function extractReviewCategories(scanResults) {
     return categories;
 }
 
-/** 审阅条目唯一标识 */
+/** 審閱條目唯一標識 */
 function makeReviewKey(item) {
     if (item.field === 'events') return `${item.resultIndex}-events-${item.subIndex}`;
     if (item.field === 'relationships') return `${item.resultIndex}-relationships-${item.subIndex}`;
     return `${item.resultIndex}-${item.field}-${item.key}`;
 }
 
-/** 摘要审阅弹窗 — 按分类展示，支持逐条删除和补充摘要 */
+/** 摘要審閱彈窗 — 按分類展示，支援逐條刪除和補充摘要 */
 function showScanReviewModal(scanResults, scanOptions) {
     const categories = extractReviewCategories(scanResults);
     const deletedSet = new Set();
 
     const tabs = [
-        { id: 'events', label: '剧情轨迹', icon: 'fa-clock-rotate-left', items: categories.events },
+        { id: 'events', label: '劇情軌跡', icon: 'fa-clock-rotate-left', items: categories.events },
         { id: 'items', label: '物品', icon: 'fa-box-open', items: categories.items },
         { id: 'npcs', label: '角色', icon: 'fa-user', items: categories.npcs },
         { id: 'affection', label: '好感度', icon: 'fa-heart', items: categories.affection },
-        { id: 'scenes', label: '场景', icon: 'fa-map-location-dot', items: categories.scenes },
-        { id: 'relationships', label: '关系', icon: 'fa-people-arrows', items: categories.relationships }
+        { id: 'scenes', label: '場景', icon: 'fa-map-location-dot', items: categories.scenes },
+        { id: 'relationships', label: '關係', icon: 'fa-people-arrows', items: categories.relationships }
     ].filter(t => t.items.length > 0);
 
     if (tabs.length === 0) {
-        showToast('未提取到任何摘要数据', 'warning');
+        showToast('未提取到任何摘要數據', 'warning');
         return;
     }
 
@@ -12874,7 +12874,7 @@ function showScanReviewModal(scanResults, scanOptions) {
         const itemsHtml = t.items.map(item => {
             const itemKey = escapeHtml(makeReviewKey(item));
             const levelAttr = item.level ? ` data-level="${escapeHtml(item.level)}"` : '';
-            const levelBadge = item.level ? `<span class="horae-level-badge ${item.level === '关键' ? 'critical' : item.level === '重要' ? 'important' : ''}" style="font-size:10px;margin-right:4px;">${escapeHtml(item.level)}</span>` : '';
+            const levelBadge = item.level ? `<span class="horae-level-badge ${item.level === '關鍵' ? 'critical' : item.level === '重要' ? 'important' : ''}" style="font-size:10px;margin-right:4px;">${escapeHtml(item.level)}</span>` : '';
             const descHtml = item.desc ? `<div class="horae-review-item-sub" style="font-style:italic;opacity:0.8;">📝 ${escapeHtml(item.desc)}</div>` : '';
             return `<div class="horae-review-item" data-key="${itemKey}"${levelAttr}>
                 <div class="horae-review-item-body">
@@ -12884,13 +12884,13 @@ function showScanReviewModal(scanResults, scanOptions) {
                     ${item.time ? `<div class="horae-review-item-sub">${escapeHtml(item.time)}</div>` : ''}
                     <div class="horae-review-item-msg">#${item.msgIndex}</div>
                 </div>
-                <button class="horae-review-delete-btn" data-key="${itemKey}" title="删除/恢复">
+                <button class="horae-review-delete-btn" data-key="${itemKey}" title="刪除/恢復">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>`;
         }).join('');
         return `<div class="horae-review-panel ${t.id === activeTab ? 'active' : ''}" data-panel="${t.id}">
-            ${itemsHtml || '<div class="horae-review-empty">暂无数据</div>'}
+            ${itemsHtml || '<div class="horae-review-empty">暫無數據</div>'}
         </div>`;
     }).join('');
 
@@ -12899,24 +12899,24 @@ function showScanReviewModal(scanResults, scanOptions) {
     modal.innerHTML = `
         <div class="horae-modal-content">
             <div class="horae-modal-header">
-                <span>摘要审阅</span>
-                <span style="font-size:12px;color:var(--horae-text-muted);">共 ${totalCount} 条</span>
+                <span>摘要審閱</span>
+                <span style="font-size:12px;color:var(--horae-text-muted);">共 ${totalCount} 條</span>
             </div>
             <div class="horae-review-tabs">${tabsHtml}</div>
             <div class="horae-review-body">${panelsHtml}</div>
             <div class="horae-modal-footer horae-review-footer">
-                <div class="horae-review-stats">已删除 <strong id="horae-review-del-count">0</strong> 条</div>
+                <div class="horae-review-stats">已刪除 <strong id="horae-review-del-count">0</strong> 條</div>
                 <div class="horae-review-actions">
                     <button class="horae-btn" id="horae-review-cancel"><i class="fa-solid fa-xmark"></i> 取消</button>
-                    <button class="horae-btn primary" id="horae-review-rescan" disabled style="opacity:0.5;"><i class="fa-solid fa-wand-magic-sparkles"></i> 补充摘要</button>
-                    <button class="horae-btn primary" id="horae-review-confirm"><i class="fa-solid fa-check"></i> 确认保存</button>
+                    <button class="horae-btn primary" id="horae-review-rescan" disabled style="opacity:0.5;"><i class="fa-solid fa-wand-magic-sparkles"></i> 補充摘要</button>
+                    <button class="horae-btn primary" id="horae-review-confirm"><i class="fa-solid fa-check"></i> 確認保存</button>
                 </div>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
 
-    // tab 切换
+    // tab 切換
     modal.querySelectorAll('.horae-review-tab').forEach(tabBtn => {
         tabBtn.addEventListener('click', () => {
             modal.querySelectorAll('.horae-review-tab').forEach(t => t.classList.remove('active'));
@@ -12926,7 +12926,7 @@ function showScanReviewModal(scanResults, scanOptions) {
         });
     });
 
-    // 删除/恢复切换
+    // 刪除/恢復切換
     modal.querySelectorAll('.horae-review-delete-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const key = btn.dataset.key;
@@ -12957,7 +12957,7 @@ function showScanReviewModal(scanResults, scanOptions) {
         }
     }
 
-    // 确认保存
+    // 確認保存
     modal.querySelector('#horae-review-confirm').addEventListener('click', async () => {
         applyDeletedToResults(scanResults, deletedSet, categories);
         let saved = 0;
@@ -12969,11 +12969,11 @@ function showScanReviewModal(scanResults, scanOptions) {
                 m.timestamp?.story_date || (m.scene?.scene_desc) || (m.relationships?.length > 0);
             if (!hasData) continue;
             m._aiScanned = true;
-            // 场景记忆写入 locationMemory
+            // 場景記憶寫入 locationMemory
             if (m.scene?.location && m.scene?.scene_desc) {
                 horaeManager._updateLocationMemory(m.scene.location, m.scene.scene_desc);
             }
-            // 关系网络合并
+            // 關係網路合併
             if (m.relationships?.length > 0) {
                 horaeManager._mergeRelationships(m.relationships);
             }
@@ -12984,17 +12984,17 @@ function showScanReviewModal(scanResults, scanOptions) {
         horaeManager.rebuildTableData();
         await getContext().saveChat();
         modal.remove();
-        showToast(`已保存 ${saved} 条摘要`, 'success');
+        showToast(`已保存 ${saved} 條摘要`, 'success');
         refreshAllDisplays();
         renderCustomTablesList();
     });
 
     // 取消
-    const closeModal = () => { if (confirm('关闭审阅弹窗？未保存的摘要将丢失。\n（下次可重新运行「AI智能摘要」继续补充）')) modal.remove(); };
+    const closeModal = () => { if (confirm('關閉審閱彈窗？未保存的摘要將遺失。\n（下次可重新執行「AI智慧摘要」繼續補充）')) modal.remove(); };
     modal.querySelector('#horae-review-cancel').addEventListener('click', closeModal);
     modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
-    // 补充摘要 — 对已删除条目所在楼层重跑
+    // 補充摘要 — 對已刪除條目所在樓層重跑
     modal.querySelector('#horae-review-rescan').addEventListener('click', async () => {
         const deletedMsgIndices = new Set();
         for (const key of deletedSet) {
@@ -13002,7 +13002,7 @@ function showScanReviewModal(scanResults, scanOptions) {
             if (!isNaN(ri) && scanResults[ri]) deletedMsgIndices.add(scanResults[ri].msgIndex);
         }
         if (deletedMsgIndices.size === 0) return;
-        if (!confirm(`将对 ${deletedMsgIndices.size} 条消息重新生成摘要，消耗至少 1 次生成。\n\n是否继续？`)) return;
+        if (!confirm(`將對 ${deletedMsgIndices.size} 條訊息重新生成摘要，消耗至少 1 次生成。\n\n是否繼續？`)) return;
 
         applyDeletedToResults(scanResults, deletedSet, categories);
 
@@ -13031,7 +13031,7 @@ function showScanReviewModal(scanResults, scanOptions) {
     });
 }
 
-/** 将删除标记应用到 scanResults 的实际数据 */
+/** 將刪除標記應用到 scanResults 的實際數據 */
 function applyDeletedToResults(scanResults, deletedSet, categories) {
     const deleteMap = new Map();
     const allItems = [...categories.events, ...categories.items, ...categories.npcs, ...categories.affection, ...categories.scenes, ...categories.relationships];
@@ -13073,7 +13073,7 @@ function applyDeletedToResults(scanResults, deletedSet, categories) {
     }
 }
 
-/** AI摘要配置弹窗 */
+/** AI摘要配置彈窗 */
 function showAIScanConfigDialog(targetCount) {
     return new Promise(resolve => {
         const modal = document.createElement('div');
@@ -13081,11 +13081,11 @@ function showAIScanConfigDialog(targetCount) {
         modal.innerHTML = `
             <div class="horae-modal-content" style="max-width: 420px;">
                 <div class="horae-modal-header">
-                    <span>AI 智能摘要</span>
+                    <span>AI 智慧摘要</span>
                 </div>
                 <div class="horae-modal-body" style="padding: 16px;">
                     <p style="margin: 0 0 12px; color: var(--horae-text-muted); font-size: 13px;">
-                        检测到 <strong style="color: var(--horae-primary-light);">${targetCount}</strong> 条尚无时间线的消息（已有时间线的楼层自动跳过）
+                        檢測到 <strong style="color: var(--horae-primary-light);">${targetCount}</strong> 條尚無時間線的訊息（已有時間線的樓層自動跳過）
                     </p>
                     <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--horae-text);">
                         每批 Token 上限
@@ -13093,14 +13093,14 @@ function showAIScanConfigDialog(targetCount) {
                             style="flex:1; padding: 6px 10px; background: var(--horae-bg); border: 1px solid var(--horae-border); border-radius: 4px; color: var(--horae-text); font-size: 13px;">
                     </label>
                     <p style="margin: 8px 0 12px; color: var(--horae-text-muted); font-size: 11px;">
-                        值越大每批消息越多、生成次数越少，但可能超出模型限制。<br>
+                        值越大每批訊息越多、生成次數越少，但可能超出模型限制。<br>
                         Claude ≈ 80K~200K · Gemini ≈ 100K~1000K · GPT-4o ≈ 80K~128K
                     </p>
                     <div style="border-top: 1px solid var(--horae-border); padding-top: 12px;">
-                        <p style="margin: 0 0 8px; font-size: 12px; color: var(--horae-text);">额外提取项（可选）</p>
+                        <p style="margin: 0 0 8px; font-size: 12px; color: var(--horae-text);">額外提取項（可選）</p>
                         <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--horae-text); margin-bottom: 6px; cursor: pointer;">
                             <input type="checkbox" id="horae-scan-include-npc" ${settings.aiScanIncludeNpc ? 'checked' : ''}>
-                            NPC 角色信息
+                            NPC 角色資訊
                         </label>
                         <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--horae-text); cursor: pointer;">
                             <input type="checkbox" id="horae-scan-include-affection" ${settings.aiScanIncludeAffection ? 'checked' : ''}>
@@ -13108,32 +13108,32 @@ function showAIScanConfigDialog(targetCount) {
                         </label>
                         <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--horae-text); margin-top: 6px; cursor: pointer;">
                             <input type="checkbox" id="horae-scan-include-scene" ${settings.aiScanIncludeScene ? 'checked' : ''}>
-                            场景记忆（地点物理特征描述）
+                            場景記憶（地點物理特徵描述）
                         </label>
                         <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--horae-text); margin-top: 6px; cursor: pointer;">
                             <input type="checkbox" id="horae-scan-include-relationship" ${settings.aiScanIncludeRelationship ? 'checked' : ''}>
-                            关系网络
+                            關係網路
                         </label>
                         <p style="margin: 6px 0 0; color: var(--horae-text-muted); font-size: 10px;">
-                            从历史文本中提取信息，提取后可在审阅弹窗中逐条调整。
+                            從歷史文字中提取資訊，提取後可在審閱彈窗中逐條調整。
                         </p>
                     </div>
                     <div style="border-top: 1px solid var(--horae-border); padding-top: 12px; margin-top: 12px;">
                         <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--horae-text);">
                             <i class="fa-solid fa-filter" style="font-size: 11px; opacity: .6;"></i>
-                            内容剔除标签
+                            內容剔除標籤
                             <input type="text" id="horae-scan-strip-tags" value="${escapeHtml(settings.vectorStripTags || '')}" placeholder="snow, theater, side"
                                 style="flex:1; padding: 5px 8px; background: var(--horae-bg); border: 1px solid var(--horae-border); border-radius: 4px; color: var(--horae-text); font-size: 12px;">
                         </label>
                         <p style="margin: 4px 0 0; color: var(--horae-text-muted); font-size: 10px;">
-                            逗号分隔标签名，匹配的区块会在发送 AI 前整段移除（如小剧场 &lt;snow&gt;...&lt;/snow&gt;）。<br>
-                            同时作用于时间线解析和向量检索，与向量设置中的同一选项联动。
+                            逗號分隔標籤名，配對的區塊會在發送 AI 前整段移除（如小劇場 &lt;snow&gt;...&lt;/snow&gt;）。<br>
+                            同時作用於時間線解析和向量檢索，與向量設定中的同一選項聯動。
                         </p>
                     </div>
                 </div>
                 <div class="horae-modal-footer">
                     <button class="horae-btn" id="horae-ai-scan-cancel">取消</button>
-                    <button class="horae-btn primary" id="horae-ai-scan-confirm">继续</button>
+                    <button class="horae-btn primary" id="horae-ai-scan-confirm">繼續</button>
                 </div>
             </div>
         `;
@@ -13166,7 +13166,7 @@ function showAIScanConfigDialog(targetCount) {
     });
 }
 
-/** 撤销AI摘要 — 清除所有 _aiScanned 标记的数据 */
+/** 撤銷AI摘要 — 清除所有 _aiScanned 標記的數據 */
 async function undoAIScan() {
     const chat = horaeManager.getChat();
     if (!chat || chat.length === 0) return;
@@ -13177,11 +13177,11 @@ async function undoAIScan() {
     }
 
     if (count === 0) {
-        showToast('没有找到AI摘要数据', 'info');
+        showToast('沒有找到AI摘要數據', 'info');
         return;
     }
 
-    if (!confirm(`将清除 ${count} 条消息的AI摘要数据（事件和物品）。\n手动编辑的数据不受影响。\n\n是否继续？`)) return;
+    if (!confirm(`將清除 ${count} 條訊息的AI摘要數據（事件和物品）。\n手動編輯的數據不受影響。\n\n是否繼續？`)) return;
 
     for (let i = 0; i < chat.length; i++) {
         const meta = chat[i].horae_meta;
@@ -13194,13 +13194,13 @@ async function undoAIScan() {
 
     horaeManager.rebuildTableData();
     await getContext().saveChat();
-    showToast(`已撤销 ${count} 条消息的AI摘要数据`, 'success');
+    showToast(`已撤銷 ${count} 條訊息的AI摘要數據`, 'success');
     refreshAllDisplays();
     renderCustomTablesList();
 }
 
 /**
- * 导出数据
+ * 導出數據
  */
 function exportData() {
     const chat = horaeManager.getChat();
@@ -13221,17 +13221,17 @@ function exportData() {
     a.click();
     URL.revokeObjectURL(url);
     
-    showToast('数据已导出', 'success');
+    showToast('數據已導出', 'success');
 }
 
 /**
- * 导入数据（支持两种模式）
+ * 導入數據（支援兩種模式）
  */
 function importData() {
     const mode = confirm(
-        '请选择导入模式：\n\n' +
-        '【确定】→ 按楼层匹配导入（同一对话还原）\n' +
-        '【取消】→ 导入为初始状态（新对话继承元数据）'
+        '請選擇導入模式：\n\n' +
+        '【確定】→ 按樓層配對導入（同一對話還原）\n' +
+        '【取消】→ 導入為初始狀態（新對話繼承元數據）'
     ) ? 'match' : 'initial';
     
     const input = document.createElement('input');
@@ -13246,7 +13246,7 @@ function importData() {
             const importObj = JSON.parse(text);
             
             if (!importObj.data || !Array.isArray(importObj.data)) {
-                throw new Error('无效的数据格式');
+                throw new Error('無效的數據格式');
             }
             
             const chat = horaeManager.getChat();
@@ -13260,24 +13260,24 @@ function importData() {
                     }
                 }
                 await getContext().saveChat();
-                showToast(`成功导入 ${imported} 条记录`, 'success');
+                showToast(`成功導入 ${imported} 條記錄`, 'success');
             } else {
                 _importAsInitialState(importObj, chat);
                 await getContext().saveChat();
-                showToast('已将元数据导入为初始状态', 'success');
+                showToast('已將元數據導入為初始狀態', 'success');
             }
             refreshAllDisplays();
         } catch (error) {
-            console.error('[Horae] 导入失败:', error);
-            showToast('导入失败: ' + error.message, 'error');
+            console.error('[Horae] 導入失敗:', error);
+            showToast('導入失敗: ' + error.message, 'error');
         }
     };
     input.click();
 }
 
 /**
- * 从导出文件提取最终累积状态，写入当前对话的 chat[0] 作为初始元数据，
- * 适用于新聊天继承旧聊天的世界观数据。
+ * 從導出資料提取最終累積狀態，寫入目前對話的 chat[0] 作為初始元數據，
+ * 適用於新聊天繼承舊聊天的世界觀數據。
  */
 function _importAsInitialState(importObj, chat) {
     const allMetas = importObj.data
@@ -13285,11 +13285,11 @@ function _importAsInitialState(importObj, chat) {
         .map(d => d.horae_meta)
         .filter(Boolean);
     
-    if (!allMetas.length) throw new Error('导出文件中无有效元数据');
+    if (!allMetas.length) throw new Error('導出資料中無有效元數據');
     if (!chat[0].horae_meta) chat[0].horae_meta = createEmptyMeta();
     const target = chat[0].horae_meta;
     
-    // 累积 NPC
+    // 累積 NPC
     for (const meta of allMetas) {
         if (meta.npcs) {
             for (const [name, info] of Object.entries(meta.npcs)) {
@@ -13333,7 +13333,7 @@ function _importAsInitialState(importObj, chat) {
         }
     }
     
-    // 导入所有事件（含摘要事件），保留 _compressedBy / _summaryId 引用
+    // 導入所有事件（含摘要事件），保留 _compressedBy / _summaryId 引用
     const importedEvents = [];
     for (const meta of allMetas) {
         if (!meta.events?.length) continue;
@@ -13346,13 +13346,13 @@ function _importAsInitialState(importObj, chat) {
         target.events.push(...importedEvents);
     }
     
-    // 导入自动摘要记录（来自源数据的 chat[0]）
+    // 導入自動摘要記錄（來自源數據的 chat[0]）
     const srcFirstMeta = allMetas[0];
     if (srcFirstMeta?.autoSummaries?.length) {
         target.autoSummaries = srcFirstMeta.autoSummaries.map(s => ({ ...s }));
     }
     
-    // 关系网络
+    // 關係網路
     const finalRels = [];
     for (const meta of allMetas) {
         if (meta.relationships?.length) {
@@ -13365,7 +13365,7 @@ function _importAsInitialState(importObj, chat) {
     }
     if (finalRels.length > 0) target.relationships = finalRels;
     
-    // RPG 数据
+    // RPG 數據
     for (const meta of allMetas) {
         if (meta.rpg) {
             if (!target.rpg) target.rpg = { bars: {}, status: {}, skills: {}, attributes: {} };
@@ -13375,7 +13375,7 @@ function _importAsInitialState(importObj, chat) {
         }
     }
     
-    // 自定义表格
+    // 客製化表格
     for (const meta of allMetas) {
         if (meta.tableContributions) {
             if (!target.tableContributions) target.tableContributions = {};
@@ -13383,7 +13383,7 @@ function _importAsInitialState(importObj, chat) {
         }
     }
     
-    // 场景记忆
+    // 場景記憶
     for (const meta of allMetas) {
         if (meta.locationMemory) {
             if (!target.locationMemory) target.locationMemory = {};
@@ -13391,7 +13391,7 @@ function _importAsInitialState(importObj, chat) {
         }
     }
     
-    // 待办事项
+    // 待辦事項
     const seenAgenda = new Set();
     for (const meta of allMetas) {
         if (meta.agenda?.length) {
@@ -13405,7 +13405,7 @@ function _importAsInitialState(importObj, chat) {
         }
     }
     
-    // 处理已删除物品
+    // 處理已刪除物品
     for (const meta of allMetas) {
         if (meta.deletedItems?.length) {
             for (const name of meta.deletedItems) {
@@ -13418,14 +13418,14 @@ function _importAsInitialState(importObj, chat) {
     const itemCount = Object.keys(target.items || {}).length;
     const eventCount = importedEvents.length;
     const summaryCount = target.autoSummaries?.length || 0;
-    console.log(`[Horae] 导入初始状态: ${npcCount} NPC, ${itemCount} 物品, ${eventCount} 事件, ${summaryCount} 摘要`);
+    console.log(`[Horae] 導入初始狀態: ${npcCount} NPC, ${itemCount} 物品, ${eventCount} 事件, ${summaryCount} 摘要`);
 }
 
 /**
- * 清除所有数据
+ * 清除所有數據
  */
 async function clearAllData() {
-    if (!confirm('确定要清除所有 Horae 元数据吗？此操作不可恢复！')) {
+    if (!confirm('確定要清除所有 Horae 元數據嗎？此操作不可恢復！')) {
         return;
     }
     
@@ -13435,11 +13435,11 @@ async function clearAllData() {
     }
     
     await getContext().saveChat();
-    showToast('所有数据已清除', 'warning');
+    showToast('所有數據已清除', 'warning');
     refreshAllDisplays();
 }
 
-/** 使用AI分析消息内容 */
+/** 使用AI分析訊息內容 */
 async function analyzeMessageWithAI(messageContent) {
     const context = getContext();
     const userName = context?.name1 || '主角';
@@ -13463,7 +13463,7 @@ async function analyzeMessageWithAI(messageContent) {
             return parsed;
         }
     } catch (error) {
-        console.error('[Horae] AI分析调用失败:', error);
+        console.error('[Horae] AI分析呼叫失敗:', error);
         throw error;
     }
     
@@ -13471,11 +13471,11 @@ async function analyzeMessageWithAI(messageContent) {
 }
 
 // ============================================
-// 事件监听
+// 事件監聽
 // ============================================
 
 /**
- * AI回复接收时触发
+ * AI回覆接收時觸發
  */
 async function onMessageReceived(messageId) {
     if (!settings.enabled || !settings.autoParse) return;
@@ -13514,15 +13514,15 @@ async function onMessageReceived(messageId) {
             await getContext().saveChat();
         }
     } catch (err) {
-        console.error(`[Horae] onMessageReceived 处理消息 #${messageId} 失败:`, err);
+        console.error(`[Horae] onMessageReceived 處理訊息 #${messageId} 失敗:`, err);
     }
 
-    // 无论上面是否出错，面板渲染和显示刷新必须执行
+    // 無論上面是否出錯，面板彩現和顯示重新整理必須執行
     try {
         refreshAllDisplays();
         renderCustomTablesList();
     } catch (err) {
-        console.error('[Horae] refreshAllDisplays 失败:', err);
+        console.error('[Horae] refreshAllDisplays 失敗:', err);
     }
     
     setTimeout(() => {
@@ -13534,7 +13534,7 @@ async function onMessageReceived(messageId) {
                 addMessagePanel(messageEl, messageId);
             }
         } catch (err) {
-            console.error(`[Horae] 面板渲染 #${messageId} 失败:`, err);
+            console.error(`[Horae] 面板彩現 #${messageId} 失敗:`, err);
         }
     }, 100);
 
@@ -13544,10 +13544,10 @@ async function onMessageReceived(messageId) {
             if (meta) {
                 vectorManager.addMessage(messageId, meta).then(() => {
                     _updateVectorStatus();
-                }).catch(err => console.warn('[Horae] 向量索引失败:', err));
+                }).catch(err => console.warn('[Horae] 向量索引失敗:', err));
             }
         } catch (err) {
-            console.warn('[Horae] 向量处理失败:', err);
+            console.warn('[Horae] 向量處理失敗:', err);
         }
     }
 
@@ -13561,7 +13561,7 @@ async function onMessageReceived(messageId) {
 }
 
 /**
- * 消息删除时触发 — 重建表格数据
+ * 訊息刪除時觸發 — 重建表格數據
  */
 function onMessageDeleted() {
     if (!settings.enabled) return;
@@ -13577,7 +13577,7 @@ function onMessageDeleted() {
 }
 
 /**
- * 消息编辑时触发 — 重新解析该消息并重建表格
+ * 訊息編輯時觸發 — 重新解析該訊息並重建表格
  */
 function onMessageEdited(messageId) {
     if (!settings.enabled) return;
@@ -13586,7 +13586,7 @@ function onMessageEdited(messageId) {
     const message = chat[messageId];
     if (!message || message.is_user) return;
     
-    // 保存摘要压缩标记 + chat[0] 全局键后重置 meta，解析完再恢复
+    // 保存摘要壓縮標記 + chat[0] 全域鍵後重置 meta，解析完再恢復
     const savedFlags = _saveCompressedFlags(message.horae_meta);
     const savedGlobal = messageId === 0 ? _saveGlobalMeta(message.horae_meta) : null;
     message.horae_meta = createEmptyMeta();
@@ -13609,19 +13609,19 @@ function onMessageEdited(messageId) {
         const meta = horaeManager.getMessageMeta(messageId);
         if (meta) {
             vectorManager.addMessage(messageId, meta).catch(err =>
-                console.warn('[Horae] 向量重建失败:', err));
+                console.warn('[Horae] 向量重建失敗:', err));
         }
     }
 }
 
-/** 注入上下文（数据+规则合并注入） */
+/** 注入上下文（數據+規則合併注入） */
 async function onPromptReady(eventData) {
     if (_isSummaryGeneration) return;
     if (!settings.enabled || !settings.injectContext) return;
     if (eventData.dryRun) return;
     
     try {
-        // swipe/regenerate检测
+        // swipe/regenerate檢測
         let skipLast = 0;
         const chat = horaeManager.getChat();
         if (chat && chat.length > 0) {
@@ -13636,20 +13636,20 @@ async function onPromptReady(eventData) {
                 (lastMsg.horae_meta.events || []).length > 0
             )) {
                 skipLast = 1;
-                console.log('[Horae] 检测到swipe/regenerate，跳过末尾消息的旧记忆');
+                console.log('[Horae] 檢測到swipe/regenerate，跳過末尾訊息的舊記憶');
             }
         }
 
         const dataPrompt = horaeManager.generateCompactPrompt(skipLast);
 
         let recallPrompt = '';
-        console.log(`[Horae] 向量检查: vectorEnabled=${settings.vectorEnabled}, isReady=${vectorManager.isReady}, vectors=${vectorManager.vectors.size}`);
+        console.log(`[Horae] 向量檢查: vectorEnabled=${settings.vectorEnabled}, isReady=${vectorManager.isReady}, vectors=${vectorManager.vectors.size}`);
         if (settings.vectorEnabled && vectorManager.isReady) {
             try {
                 recallPrompt = await vectorManager.generateRecallPrompt(horaeManager, skipLast, settings);
-                console.log(`[Horae] 向量召回结果: ${recallPrompt ? recallPrompt.length + ' 字符' : '空'}`);
+                console.log(`[Horae] 向量召回結果: ${recallPrompt ? recallPrompt.length + ' 字元' : '空'}`);
             } catch (err) {
-                console.error('[Horae] 向量召回失败:', err);
+                console.error('[Horae] 向量召回失敗:', err);
             }
         }
 
@@ -13662,7 +13662,7 @@ async function onPromptReady(eventData) {
                     const cleaned = chat[i].mes.replace(/<horae>[\s\S]*?<\/horae>/gi, '').replace(/<horaeevent>[\s\S]*?<\/horaeevent>/gi, '').trim();
                     if (cleaned) {
                         const truncated = cleaned.length > 2000 ? cleaned.slice(0, 2000) + '…' : cleaned;
-                        antiParaRef = `\n【反转述参考 - USER上一条消息内容】\n${truncated}\n（请将以上USER行为一并纳入本条<horae>结算）`;
+                        antiParaRef = `\n【反轉述參考 - USER上一條訊息內容】\n${truncated}\n（請將以上USER行為一併納入本條<horae>結算）`;
                     }
                     break;
                 }
@@ -13680,14 +13680,14 @@ async function onPromptReady(eventData) {
             eventData.chat.splice(-position, 0, { role: 'system', content: combinedPrompt });
         }
         
-        console.log(`[Horae] 已注入上下文，位置: -${position}${skipLast ? '（已跳过末尾消息）' : ''}${recallPrompt ? '（含向量召回）' : ''}`);
+        console.log(`[Horae] 已注入上下文，位置: -${position}${skipLast ? '（已跳過末尾訊息）' : ''}${recallPrompt ? '（含向量召回）' : ''}`);
     } catch (error) {
-        console.error('[Horae] 注入上下文失败:', error);
+        console.error('[Horae] 注入上下文失敗:', error);
     }
 }
 
 /**
- * 分支/聊天切换后重建全局数据，清理孤立摘要
+ * 分支/聊天切換後重建全域數據，清理孤立摘要
  */
 function _rebuildGlobalDataForCurrentChat() {
     const chat = horaeManager.getChat();
@@ -13697,7 +13697,7 @@ function _rebuildGlobalDataForCurrentChat() {
     horaeManager.rebuildLocationMemory();
     horaeManager.rebuildRpgData();
     
-    // 清理孤立摘要：range 超出当前聊天长度的条目
+    // 清理孤立摘要：range 超出目前聊天長度的條目
     const sums = chat[0]?.horae_meta?.autoSummaries;
     if (sums?.length) {
         const chatLen = chat.length;
@@ -13709,7 +13709,7 @@ function _rebuildGlobalDataForCurrentChat() {
             }
         }
         if (orphaned.length > 0) {
-            // 清理孤立摘要在消息上留下的 _compressedBy 标记
+            // 清理孤立摘要在訊息上留下的 _compressedBy 標記
             for (const s of orphaned) {
                 for (let j = 0; j < chatLen; j++) {
                     const evts = chat[j]?.horae_meta?.events;
@@ -13719,13 +13719,13 @@ function _rebuildGlobalDataForCurrentChat() {
                     }
                 }
             }
-            console.log(`[Horae] 清理了 ${orphaned.length} 条孤立摘要`);
+            console.log(`[Horae] 清理了 ${orphaned.length} 條孤立摘要`);
         }
     }
 }
 
 /**
- * 聊天切换时触发
+ * 聊天切換時觸發
  */
 async function onChatChanged() {
     if (!settings.enabled) return;
@@ -13738,7 +13738,7 @@ async function onChatChanged() {
         renderCustomTablesList();
         renderDicePanel();
     } catch (err) {
-        console.error('[Horae] onChatChanged 初始化失败:', err);
+        console.error('[Horae] onChatChanged 初始化失敗:', err);
     }
 
     if (settings.vectorEnabled && vectorManager.isReady) {
@@ -13747,9 +13747,9 @@ async function onChatChanged() {
             const chatId = ctx?.chatId || _deriveChatId(ctx);
             vectorManager.loadChat(chatId, horaeManager.getChat()).then(() => {
                 _updateVectorStatus();
-            }).catch(err => console.warn('[Horae] 加载向量索引失败:', err));
+            }).catch(err => console.warn('[Horae] 加載向量索引失敗:', err));
         } catch (err) {
-            console.warn('[Horae] 向量加载失败:', err);
+            console.warn('[Horae] 向量加載失敗:', err);
         }
     }
     
@@ -13769,12 +13769,12 @@ async function onChatChanged() {
                 }
             });
         } catch (err) {
-            console.error('[Horae] onChatChanged 面板渲染失败:', err);
+            console.error('[Horae] onChatChanged 面板彩現失敗:', err);
         }
     }, 500);
 }
 
-/** 消息渲染时触发 */
+/** 訊息彩現時觸發 */
 function onMessageRendered(messageId) {
     if (!settings.enabled || !settings.showMessagePanel) return;
     
@@ -13789,12 +13789,12 @@ function onMessageRendered(messageId) {
                 }
             }
         } catch (err) {
-            console.error(`[Horae] onMessageRendered #${messageId} 失败:`, err);
+            console.error(`[Horae] onMessageRendered #${messageId} 失敗:`, err);
         }
     }, 100);
 }
 
-/** swipe切换分页时触发 — 重置meta、重新解析并刷新所有显示 */
+/** swipe切換分頁時觸發 — 重置meta、重新解析並重新整理所有顯示 */
 function onSwipePanel(messageId) {
     if (!settings.enabled) return;
     
@@ -13819,7 +13819,7 @@ function onSwipePanel(messageId) {
             refreshAllDisplays();
             renderCustomTablesList();
         } catch (err) {
-            console.error(`[Horae] onSwipePanel #${messageId} 失败:`, err);
+            console.error(`[Horae] onSwipePanel #${messageId} 失敗:`, err);
         }
         
         if (settings.showMessagePanel) {
@@ -13834,32 +13834,32 @@ function onSwipePanel(messageId) {
 }
 
 // ============================================
-// 新用户导航教学
+// 新用戶導航教學
 // ============================================
 
 const TUTORIAL_STEPS = [
     {
-        title: '欢迎使用 Horae 时光记忆！',
-        content: `这是一个让 AI 自动追踪剧情状态的插件。<br>
-            Horae 会在 AI 回复时附带 <code>&lt;horae&gt;</code> 标签，自动记录时间、场景、角色、物品等状态变化。<br><br>
-            接下来我会带你快速了解核心功能，请跟着提示操作。`,
+        title: '歡迎使用 Horae 時光記憶！',
+        content: `這是一個讓 AI 自動追蹤劇情狀態的插件。<br>
+            Horae 會在 AI 回覆時附帶 <code>&lt;horae&gt;</code> 標籤，自動記錄時間、場景、角色、物品等狀態變化。<br><br>
+            接下來我會帶你快速瞭解核心功能，請跟著提示操作。`,
         target: null,
         action: null
     },
     {
-        title: '旧记录处理 — AI 智能摘要',
-        content: `如果你有旧聊天记录，需要先用「AI智能摘要」批量补全 <code>&lt;horae&gt;</code> 标签。<br>
-            AI 会回读历史对话并生成结构化的时间线数据。<br><br>
-            <strong>新对话无需操作</strong>，插件会自动工作。`,
+        title: '舊記錄處理 — AI 智慧摘要',
+        content: `如果你有舊聊天記錄，需要先用「AI智慧摘要」批量補全 <code>&lt;horae&gt;</code> 標籤。<br>
+            AI 會回讀歷史對話並生成結構化的時間線數據。<br><br>
+            <strong>新對話無需操作</strong>，插件會自動工作。`,
         target: '#horae-btn-ai-scan',
         action: null
     },
     {
-        title: '自动摘要 & 隐藏',
-        content: `开启后，超过阈值的旧消息会被自动摘要并隐藏，节省 Token。<br><br>
-            <strong>注意</strong>：此功能需要已有时间线数据（<code>&lt;horae&gt;</code> 标签）才能正常工作。<br>
-            旧记录请先用上一步的「AI智能摘要」补全后再开启。<br>
-            ·若是自动摘要持续出错，请去事件时间线自己多选并全文摘要。`,
+        title: '自動摘要 & 隱藏',
+        content: `開啟後，超過閾值的舊訊息會被自動摘要並隱藏，節省 Token。<br><br>
+            <strong>注意</strong>：此功能需要已有時間線數據（<code>&lt;horae&gt;</code> 標籤）才能正常工作。<br>
+            舊記錄請先用上一步的「AI智慧摘要」補全後再開啟。<br>
+            ·若是自動摘要持續出錯，請去事件時間線自己多選並全文摘要。`,
         target: '#horae-autosummary-collapse-toggle',
         action: () => {
             const body = document.getElementById('horae-autosummary-collapse-body');
@@ -13869,17 +13869,17 @@ const TUTORIAL_STEPS = [
         }
     },
     {
-        title: '向量记忆（搭配自动摘要）',
-        content: `这是给<strong>自动摘要用户</strong>准备的回忆功能。摘要压缩后旧消息的细节会丢失，向量记忆能在对话涉及历史事件时，自动从被隐藏的时间线中找回相关片段。<br><br>
-            <strong>要不要开？</strong><br>
-            · 如果你<strong>开了自动摘要</strong>且聊天楼层较高 → 建议开启<br>
-            · 如果你<strong>没开自动摘要</strong>，楼层不多、Token 充裕 → <strong>没必要开</strong><br><br>
-            <strong>来源选择</strong>：<br>
-            · <strong>本地模型</strong>：浏览器本地运算，<strong>不消耗 API 额度</strong>。首次使用会下载约 30-60MB 小模型。<br>
-            ⚠️ <strong>注意 OOM</strong>：本地模型可能因浏览器内存不足导致<strong>页面卡死/白屏/无限加载</strong>。遇到此情况请切换到 API 模式或减少索引条数。<br>
-            · <strong>API</strong>：使用远程 Embedding 模型（<strong>不是</strong>你聊天用的 LLM 大模型）。Embedding 模型是轻量级的文本向量专用模型，<strong>消耗极低</strong>。<br>
-            推荐使用<strong>硅基流动</strong>提供的免费 Embedding 模型（如 BAAI/bge-m3），注册即可免费使用，无需额外付费。<br><br>
-            <strong>全文回顾</strong>：匹配度特别高的召回结果可以发送原始正文（思维链会自动过滤），让 AI 获得完整的叙事。「全文回顾条数」和「全文回顾阈值」可自由调整，设为 0 即关闭。`,
+        title: '向量記憶（搭配自動摘要）',
+        content: `這是給<strong>自動摘要用戶</strong>準備的回憶功能。摘要壓縮後舊訊息的細節會遺失，向量記憶能在對話涉及歷史事件時，自動從被隱藏的時間線中找回相關片段。<br><br>
+            <strong>要不要開？</strong><br>
+            · 如果你<strong>開了自動摘要</strong>且聊天樓層較高 → 建議開啟<br>
+            · 如果你<strong>沒開自動摘要</strong>，樓層不多、Token 充裕 → <strong>沒必要開</strong><br><br>
+            <strong>來源選擇</strong>：<br>
+            · <strong>本地模型</strong>：瀏覽器本地運算，<strong>不消耗 API 額度</strong>。首次使用會下載約 30-60MB 小模型。<br>
+            ⚠️ <strong>注意 OOM</strong>：本地模型可能因瀏覽器主記憶體不足導致<strong>頁面卡死/白屏/無限加載</strong>。遇到此情況請切換到 API 模式或減少索引條數。<br>
+            · <strong>API</strong>：使用遠程 Embedding 模型（<strong>不是</strong>你聊天用的 LLM 大模型）。Embedding 模型是輕量級的文字向量專用模型，<strong>消耗極低</strong>。<br>
+            推薦使用<strong>硅基流動</strong>提供的免費 Embedding 模型（如 BAAI/bge-m3），註冊即可免費使用，無需額外付費。<br><br>
+            <strong>全文回顧</strong>：配對度很高的召回結果可以發送原始正文（思維鏈會自動過濾），讓 AI 獲得完整的敘事。「全文回顧條數」和「全文回顧閾值」可自由調整，設為 0 即關閉。`,
         target: '#horae-vector-collapse-toggle',
         action: () => {
             const body = document.getElementById('horae-vector-collapse-body');
@@ -13890,32 +13890,32 @@ const TUTORIAL_STEPS = [
     },
     {
         title: '上下文深度',
-        content: `控制发送给 AI 的时间线事件范围。<br><br>
-            · 预设值 <strong>15</strong> 表示只发送最近 15 楼内的「一般」事件<br>
-            · <strong>超出深度的「重要」和「关键」事件仍然会发送</strong>，不受深度限制<br>
-            · 设为 0 则只发送「重要」和「关键」事件<br><br>
-            一般无需调整。值越大发送的信息越多，Token 消耗也越高。`,
+        content: `控制發送給 AI 的時間線事件範圍。<br><br>
+            · 預設值 <strong>15</strong> 表示只發送最近 15 樓內的「一般」事件<br>
+            · <strong>超出深度的「重要」和「關鍵」事件仍然會發送</strong>，不受深度限制<br>
+            · 設為 0 則只發送「重要」和「關鍵」事件<br><br>
+            一般無需調整。值越大發送的資訊越多，Token 消耗也越高。`,
         target: '#horae-setting-context-depth',
         action: null
     },
     {
         title: '注入位置（深度）',
-        content: `控制 Horae 的状态信息注入到对话的哪个位置。<br><br>
-            · 预设值 <strong>1</strong> 表示在倒数第 1 条消息后注入<br>
-            · 如果你的预设（Preset）自带摘要或世界书等<strong>同质性功能</strong>，可能与 Horae 的时间线格式冲突，导致预设的正则替换被带偏<br>
-            · 遇到冲突时可调整此值，或<strong>关闭预设中的同质性功能</strong>（推荐）<br><br>
-            <strong>建议</strong>：同类功能不必多开，选一个用即可。`,
+        content: `控制 Horae 的狀態資訊注入到對話的哪個位置。<br><br>
+            · 預設值 <strong>1</strong> 表示在倒數第 1 條訊息後注入<br>
+            · 如果你的預設（Preset）附屬摘要或世界書等<strong>同質性功能</strong>，可能與 Horae 的時間線格式衝突，導致預設的正則替換被帶偏<br>
+            · 遇到衝突時可調整此值，或<strong>關閉預設中的同質性功能</strong>（推薦）<br><br>
+            <strong>建議</strong>：同類功能不必多開，選一個用即可。`,
         target: '#horae-setting-injection-position',
         action: null
     },
     {
-        title: '自定义提示词',
-        content: `你可以自定义各种提示词来调整 AI 的行为：<br>
-            · <strong>系统注入提示词</strong> — 控制 AI 输出 <code>&lt;horae&gt;</code> 标签的规则<br>
-            · <strong>AI 智能摘要提示词</strong> — 批量提取时间线的规则<br>
-            · <strong>AI 分析提示词</strong> — 单条消息深度分析的规则<br>
-            · <strong>剧情压缩提示词</strong> — 摘要压缩的规则<br><br>
-            建议熟悉插件后再修改。留空即使用默认值。`,
+        title: '客製化提示詞',
+        content: `你可以客製化各種提示詞來調整 AI 的行為：<br>
+            · <strong>系統注入提示詞</strong> — 控制 AI 輸出 <code>&lt;horae&gt;</code> 標籤的規則<br>
+            · <strong>AI 智慧摘要提示詞</strong> — 批量提取時間線的規則<br>
+            · <strong>AI 分析提示詞</strong> — 單條訊息深度分析的規則<br>
+            · <strong>劇情壓縮提示詞</strong> — 摘要壓縮的規則<br><br>
+            建議熟悉插件後再修改。留空即使用預設值。`,
         target: '#horae-prompt-collapse-toggle',
         action: () => {
             const body = document.getElementById('horae-prompt-collapse-body');
@@ -13925,30 +13925,30 @@ const TUTORIAL_STEPS = [
         }
     },
     {
-        title: '自定义表格',
-        content: `创建 Excel 风格表格，让 AI 按需填写信息（如技能表、势力表）。<br><br>
-            <strong>重点提示</strong>：<br>
-            · 表头必须明确填写，AI 根据表头理解要填什么<br>
-            · 每个表格的「填写要求」必须具体，AI 才能正确填写<br>
-            · 部分模型（如 Gemini 免费层级）表格辨识能力较弱，可能无法准确填写`,
+        title: '客製化表格',
+        content: `建立 Excel 風格表格，讓 AI 按需填寫資訊（如技能表、勢力表）。<br><br>
+            <strong>重點提示</strong>：<br>
+            · 表頭必須明確填寫，AI 根據表頭理解要填什麼<br>
+            · 每個表格的「填寫要求」必須具體，AI 才能正確填寫<br>
+            · 部分模型（如 Gemini 免費層級）表格辨識能力較弱，可能無法準確填寫`,
         target: '#horae-custom-tables-list',
         action: null
     },
     {
-        title: '进阶追踪功能',
-        content: `以下功能默认关闭，适合追求精细 RP 的用户：<br><br>
-            · <strong>场景记忆</strong> — 记录地点的固定物理特征描述，保持场景描写一致<br>
-            · <strong>关系网络</strong> — 追踪角色之间的关系变化（朋友、恋人、敌对等）<br>
-            · <strong>情绪追踪</strong> — 追踪角色情绪/心理状态变化<br>
-            · <strong>RPG 模式</strong> — 为角色启用属性条（HP/MP/SP）、多维属性雷达图、技能表和状态追踪。适合跑团、西幻、修真等场景。可按需开启子模块（属性条/属性面板/技能/骰子），关闭时完全不消耗 Token<br><br>
-            如有需要，可在「发送给AI的内容」中开启。`,
+        title: '進階追蹤功能',
+        content: `以下功能預設關閉，適合追求精細 RP 的用戶：<br><br>
+            · <strong>場景記憶</strong> — 記錄地點的固定物理特徵描述，保持場景描寫一致<br>
+            · <strong>關係網路</strong> — 追蹤角色之間的關係變化（朋友、戀人、敵對等）<br>
+            · <strong>情緒追蹤</strong> — 追蹤角色情緒/心理狀態變化<br>
+            · <strong>RPG 模式</strong> — 為角色啟用屬性條（HP/MP/SP）、多維屬性雷達圖、技能表和狀態追蹤。適合跑團、西幻、修真等場景。可按需開啟子模組（屬性條/屬性面板/技能/骰子），關閉時完全不消耗 Token<br><br>
+            如有需要，可在「發送給AI的內容」中開啟。`,
         target: '#horae-setting-send-location-memory',
         action: null
     },
     {
-        title: '教学完成！',
-        content: `如果你是开始新对话，无需额外操作 — 插件会自动让 AI 在回复时附带标签，自动建立时间线。<br><br>
-            如需重新查看教学，可在设置底部找到「重新开始教学」按钮。<br><br>
+        title: '教學完成！',
+        content: `如果你是開始新對話，無需額外操作 — 插件會自動讓 AI 在回覆時附帶標籤，自動建立時間線。<br><br>
+            如需重新查看教學，可在設定底部找到「重新開始教學」按鈕。<br><br>
             祝你 RP 愉快！🎉`,
         target: null,
         action: null
@@ -13962,7 +13962,7 @@ async function startTutorial() {
         const step = TUTORIAL_STEPS[i];
         const isLast = i === TUTORIAL_STEPS.length - 1;
 
-        // 首个需要面板的步骤时打开抽屉并切到设置 tab
+        // 首個需要面板的步驟時打開抽屜並切到設定 tab
         if (step.target && !drawerOpened) {
             const drawerIcon = $('#horae_drawer_icon');
             if (drawerIcon.hasClass('closedIcon')) {
@@ -13997,15 +13997,15 @@ function showTutorialStep(step, current, total, isLast) {
         document.querySelectorAll('.horae-tutorial-card').forEach(e => e.remove());
         document.querySelectorAll('.horae-tutorial-highlight').forEach(e => e.classList.remove('horae-tutorial-highlight'));
 
-        // 高亮目标并定位插入点
+        // 發光目標並定位插入點
         let highlightEl = null;
-        let insertAfterEl = null;
+        let IGertAfterEl = null;
         if (step.target) {
             const targetEl = document.querySelector(step.target);
             if (targetEl) {
                 highlightEl = targetEl.closest('.horae-settings-section') || targetEl;
                 highlightEl.classList.add('horae-tutorial-highlight');
-                insertAfterEl = highlightEl;
+                IGertAfterEl = highlightEl;
             }
         }
 
@@ -14018,24 +14018,24 @@ function showTutorialStep(step, current, total, isLast) {
             </div>
             <div class="horae-tutorial-card-body">${step.content}</div>
             <div class="horae-tutorial-card-foot">
-                <button class="horae-tutorial-skip">跳过</button>
+                <button class="horae-tutorial-skip">跳過</button>
                 <button class="horae-tutorial-next">${isLast ? '完成 ✓' : '下一步 →'}</button>
             </div>
         `;
 
-        // 紧跟在目标区域后面插入，没有目标则放到设置页顶部
-        if (insertAfterEl && insertAfterEl.parentNode) {
-            insertAfterEl.parentNode.insertBefore(card, insertAfterEl.nextSibling);
+        // 緊跟在目標區域後面插入，沒有目標則放到設定頁頂部
+        if (IGertAfterEl && IGertAfterEl.parentNode) {
+            IGertAfterEl.parentNode.IGertBefore(card, IGertAfterEl.nextSibling);
         } else {
             const container = document.getElementById('horae-tab-settings') || document.getElementById('horae_drawer_content');
             if (container) {
-                container.insertBefore(card, container.firstChild);
+                container.IGertBefore(card, container.firstChild);
             } else {
                 document.body.appendChild(card);
             }
         }
 
-        // 自动滚到高亮目标（教学卡片紧跟其后，一起可见）
+        // 自動滾到發光目標（教學卡片緊跟其後，一起可見）
         const scrollTarget = highlightEl || card;
         setTimeout(() => scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 
@@ -14053,7 +14053,7 @@ function showTutorialStep(step, current, total, isLast) {
 // ============================================
 
 jQuery(async () => {
-    console.log(`[Horae] 开始加载 v${VERSION}...`);
+    console.log(`[Horae] 開始加載 v${VERSION}...`);
 
     await initNavbarFunction();
     loadSettings();
@@ -14061,24 +14061,24 @@ jQuery(async () => {
 
     $('#extensions-settings-button').after(await getTemplate('drawer'));
 
-    // 在扩展面板中注入顶部图标开关
+    // 在擴展面板中注入頂部圖示開關
     const extToggleHtml = `
         <div id="horae-ext-settings" class="inline-drawer" style="margin-top:4px;">
             <div class="inline-drawer-toggle inline-drawer-header">
-                <b>Horae 时光记忆</b>
+                <b>Horae 時光記憶</b>
                 <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
             </div>
             <div class="inline-drawer-content">
                 <label class="checkbox_label" style="margin:6px 0;">
                     <input type="checkbox" id="horae-ext-show-top-icon" checked>
-                    <span>显示顶部导航栏图标</span>
+                    <span>顯示頂部導航欄圖示</span>
                 </label>
             </div>
         </div>
     `;
     $('#extensions_settings2').append(extToggleHtml);
     
-    // 绑定扩展面板内的图标开关（折叠切换由 SillyTavern 全局处理器自动管理）
+    // 綁定擴展面板內的圖示開關（摺疊切換由 SillyTavern 全域處理器自動管理）
     $('#horae-ext-show-top-icon').on('change', function() {
         settings.showTopIcon = this.checked;
         saveSettings();
@@ -14100,13 +14100,13 @@ jQuery(async () => {
     eventSource.on(event_types.MESSAGE_DELETED, onMessageDeleted);
     eventSource.on(event_types.MESSAGE_EDITED, onMessageEdited);
     
-    // 并行自动摘要：用户发消息时并行触发（独立API走直接HTTP，不影响主连接）
+    // 並行自動摘要：用戶發訊息時並行觸發（獨立API走直接HTTP，不影響主連接）
     if (event_types.USER_MESSAGE_RENDERED) {
         eventSource.on(event_types.USER_MESSAGE_RENDERED, () => {
             if (!settings.autoSummaryEnabled || !settings.sendTimeline) return;
             _autoSummaryRanThisTurn = true;
             checkAutoSummary().catch((e) => {
-                console.warn('[Horae] 并行自动摘要失败，将在AI回复后重试:', e);
+                console.warn('[Horae] 並行自動摘要失敗，將在AI回覆後重試:', e);
                 _autoSummaryRanThisTurn = false;
             });
         });
@@ -14120,11 +14120,11 @@ jQuery(async () => {
     
     renderDicePanel();
     
-    // 新用户导航教学（仅完全没用过 Horae 的全新用户触发）
+    // 新用戶導航教學（僅完全沒用過 Horae 的全新用戶觸發）
     if (_isFirstTimeUser) {
         setTimeout(() => startTutorial(), 800);
     }
     
     isInitialized = true;
-    console.log(`[Horae] v${VERSION} 加载完成！作者: SenriYuki`);
+    console.log(`[Horae] v${VERSION} 加載完成！作者: SenriYuki`);
 });

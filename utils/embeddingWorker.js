@@ -1,6 +1,6 @@
 /**
  * Horae - Embedding Web Worker
- * 使用 Transformers.js 在后台线程进行文本向量化
+ * 使用 Transformers.js 在後臺執行緒進行文字向量化
  */
 
 let pipeline = null;

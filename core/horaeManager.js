@@ -1,34 +1,34 @@
 /**
  * Horae - 核心管理器
- * 负责元数据的存储、解析、聚合
+ * 負責元數據的存儲、解析、聚合
  */
 
 import { parseStoryDate, calculateRelativeTime, calculateDetailedRelativeTime, generateTimeReference, formatRelativeTime, formatFullDateTime } from '../utils/timeUtils.js';
 
 /**
  * @typedef {Object} HoraeTimestamp
- * @property {string} story_date - 剧情日期，如 "10/1"
- * @property {string} story_time - 剧情时间，如 "15:00" 或 "下午"
- * @property {string} absolute - ISO格式的实际时间戳
+ * @property {string} story_date - 劇情日期，如 "10/1"
+ * @property {string} story_time - 劇情時間，如 "15:00" 或 "下午"
+ * @property {string} absolute - ISO格式的實際時間戳
  */
 
 /**
  * @typedef {Object} HoraeScene
- * @property {string} location - 场景地点
- * @property {string[]} characters_present - 在场角色列表
- * @property {string} atmosphere - 场景氛围
+ * @property {string} location - 場景地點
+ * @property {string[]} characters_present - 在場角色列表
+ * @property {string} atmosphere - 場景氛圍
  */
 
 /**
  * @typedef {Object} HoraeEvent
  * @property {boolean} is_important - 是否重要事件
- * @property {string} level - 事件级别：一般/重要/关键
+ * @property {string} level - 事件層級：一般/重要/關鍵
  * @property {string} summary - 事件摘要
  */
 
 /**
  * @typedef {Object} HoraeItemInfo
- * @property {string|null} icon - emoji图标
+ * @property {string|null} icon - emoji圖示
  * @property {string|null} holder - 持有者
  * @property {string} location - 位置描述
  */
@@ -37,14 +37,14 @@ import { parseStoryDate, calculateRelativeTime, calculateDetailedRelativeTime, g
  * @typedef {Object} HoraeMeta
  * @property {HoraeTimestamp} timestamp
  * @property {HoraeScene} scene
- * @property {Object.<string, string>} costumes - 角色服装 {角色名: 服装描述}
- * @property {Object.<string, HoraeItemInfo>} items - 物品追踪
+ * @property {Object.<string, string>} costumes - 角色服裝 {角色名: 服裝描述}
+ * @property {Object.<string, HoraeItemInfo>} items - 物品追蹤
  * @property {HoraeEvent|null} event
  * @property {Object.<string, string|number>} affection - 好感度
- * @property {Object.<string, {description: string, first_seen: string}>} npcs - 临时NPC
+ * @property {Object.<string, {description: string, first_seen: string}>} npcs - 臨時NPC
  */
 
-/** 创建空的元数据对象 */
+/** 建立空的元數據對象 */
 export function createEmptyMeta() {
     return {
         timestamp: {
@@ -70,28 +70,28 @@ export function createEmptyMeta() {
 }
 
 /**
- * 提取物品的基本名称（去掉末尾的数量括号）
- * "新鲜牛大骨(5斤)" → "新鲜牛大骨"
+ * 提取物品的基本名稱（去掉末尾的數量括號）
+ * "新鮮牛大骨(5斤)" → "新鮮牛大骨"
  * "清水(9L)" → "清水"
- * "简易急救包" → "简易急救包"（无数量，不变）
- * "简易急救包(已开封)" → 不变（非数字开头的括号不去掉）
+ * "簡易急救包" → "簡易急救包"（無數量，不變）
+ * "簡易急救包(已開封)" → 不變（非數字開頭的括號不去掉）
  */
-// 个体量词：1个 = 就一个，可省略。纯量词(个)(把)也无意义
-const COUNTING_CLASSIFIERS = '个把条块张根口份枚只颗支件套双对碗杯盘盆串束扎';
-// 容器/批量单位：1箱 = 一箱(里面有很多)，不可省略
-// 度量单位(斤/L/kg等)：有实际计量意义，不可省略
+// 個體量詞：1個 = 就一個，可省略。純量詞(個)(把)也無意義
+const COUNTING_CLASSIFIERS = '個把條塊張根口份枚只顆支件套雙對碗杯盤盆串束扎';
+// 容器/批量組織：1箱 = 一箱(裡面有很多)，不可省略
+// 度量組織(斤/L/kg等)：有實際計量意義，不可省略
 
-// 物品ID：3位数字左补零，如 001, 002, ...
+// 物品ID：3位數字左補零，如 001, 002, ...
 function padItemId(id) { return String(id).padStart(3, '0'); }
 
 export function getItemBaseName(name) {
     return name
-        .replace(/[\(（][\d][\d\.\/]*[a-zA-Z\u4e00-\u9fff]*[\)）]$/, '')  // 数字+任意单位
-        .replace(new RegExp(`[\\(（][${COUNTING_CLASSIFIERS}][\\)）]$`), '')  // 纯个体量词（AI错误格式）
+        .replace(/[\(（][\d][\d\.\/]*[a-zA-Z\u4e00-\u9fff]*[\)）]$/, '')  // 數字+任意組織
+        .replace(new RegExp(`[\\(（][${COUNTING_CLASSIFIERS}][\\)）]$`), '')  // 純個體量詞（AI錯誤格式）
         .trim();
 }
 
-/** 按基本名查找已有物品 */
+/** 按基本名搜尋已有物品 */
 function findExistingItemByBaseName(stateItems, newName) {
     const newBase = getItemBaseName(newName);
     if (stateItems[newName]) return newName;
@@ -116,26 +116,26 @@ class HoraeManager {
         this.settings = settings;
     }
 
-    /** 获取当前聊天记录 */
+    /** 獲取目前聊天記錄 */
     getChat() {
         return this.context?.chat || [];
     }
 
-    /** 获取消息元数据 */
+    /** 獲取訊息元數據 */
     getMessageMeta(messageIndex) {
         const chat = this.getChat();
         if (messageIndex < 0 || messageIndex >= chat.length) return null;
         return chat[messageIndex].horae_meta || null;
     }
 
-    /** 设置消息元数据 */
+    /** 設定訊息元數據 */
     setMessageMeta(messageIndex, meta) {
         const chat = this.getChat();
         if (messageIndex < 0 || messageIndex >= chat.length) return;
         chat[messageIndex].horae_meta = meta;
     }
 
-    /** 聚合所有消息元数据，获取最新状态 */
+    /** 聚合所有訊息元數據，獲取最新狀態 */
     getLatestState(skipLast = 0) {
         const chat = this.getChat();
         const state = createEmptyMeta();
@@ -169,32 +169,32 @@ class HoraeManager {
                 Object.assign(state.costumes, meta.costumes);
             }
             
-            // 物品：合并更新
+            // 物品：合併更新
             if (meta.items) {
                 for (let [name, newInfo] of Object.entries(meta.items)) {
-                    // 去掉无意义的数量标记
-                    // (1) 裸数字1 → 去掉
+                    // 去掉無意義的數量標記
+                    // (1) 裸數字1 → 去掉
                     name = name.replace(/[\(（]1[\)）]$/, '').trim();
-                    // 个体量词+数字1 → 去掉
+                    // 個體量詞+數字1 → 去掉
                     name = name.replace(new RegExp(`[\\(（]1[${COUNTING_CLASSIFIERS}][\\)）]$`), '').trim();
-                    // 纯个体量词 → 去掉
+                    // 純個體量詞 → 去掉
                     name = name.replace(new RegExp(`[\\(（][${COUNTING_CLASSIFIERS}][\\)）]$`), '').trim();
-                    // 度量/容器单位保留
+                    // 度量/容器組織保留
                     
-                    // 数量为0视为消耗，自动删除
+                    // 數量為0視為消耗，自動刪除
                     const zeroMatch = name.match(/[\(（]0[a-zA-Z\u4e00-\u9fff]*[\)）]$/);
                     if (zeroMatch) {
                         const baseName = getItemBaseName(name);
                         for (const itemName of Object.keys(state.items)) {
                             if (getItemBaseName(itemName).toLowerCase() === baseName.toLowerCase()) {
                                 delete state.items[itemName];
-                                console.log(`[Horae] 物品数量归零自动删除: ${itemName}`);
+                                console.log(`[Horae] 物品數量歸零自動刪除: ${itemName}`);
                             }
                         }
                         continue;
                     }
                     
-                    // 检测消耗状态标记，视为删除
+                    // 檢測消耗狀態標記，視為刪除
                     const consumedPatterns = /[\(（](已消耗|已用完|已销毁|消耗殆尽|消耗|用尽)[\)）]/;
                     const holderConsumed = /^(消耗|已消耗|已用完|消耗殆尽|用尽|无)$/;
                     if (consumedPatterns.test(name) || holderConsumed.test(newInfo.holder || '')) {
@@ -203,13 +203,13 @@ class HoraeManager {
                         for (const itemName of Object.keys(state.items)) {
                             if (getItemBaseName(itemName).toLowerCase() === baseName.toLowerCase()) {
                                 delete state.items[itemName];
-                                console.log(`[Horae] 物品已消耗自动删除: ${itemName}`);
+                                console.log(`[Horae] 物品已消耗自動刪除: ${itemName}`);
                             }
                         }
                         continue;
                     }
                     
-                    // 基本名匹配已有物品
+                    // 基本名配對已有物品
                     const existingKey = findExistingItemByBaseName(state.items, name);
                     
                     if (existingKey) {
@@ -240,7 +240,7 @@ class HoraeManager {
                 }
             }
             
-            // 处理已删除物品
+            // 處理已刪除物品
             if (meta.deletedItems && meta.deletedItems.length > 0) {
                 for (const deletedItem of meta.deletedItems) {
                     const deleteBase = getItemBaseName(deletedItem).toLowerCase();
@@ -254,7 +254,7 @@ class HoraeManager {
                 }
             }
             
-            // 好感度：支持绝对值和相对值
+            // 好感度：支援絕對值和相對值
             if (meta.affection) {
                 for (const [key, value] of Object.entries(meta.affection)) {
                     if (typeof value === 'object' && value !== null) {
@@ -266,16 +266,16 @@ class HoraeManager {
                             state.affection[key] = (state.affection[key] || 0) + delta;
                         }
                     } else {
-                        // 旧格式兼容
+                        // 舊格式相容
                         const numValue = typeof value === 'number' ? value : parseFloat(value) || 0;
                         state.affection[key] = (state.affection[key] || 0) + numValue;
                     }
                 }
             }
             
-            // NPC：逐字段合并，保留_id
+            // NPC：逐資料欄合併，保留_id
             if (meta.npcs) {
-                // 可更新字段 vs 受保护字段
+                // 可更新資料欄 vs 受保護資料欄
                 const updatableFields = ['appearance', 'personality', 'relationship', 'age', 'job', 'note'];
                 const protectedFields = ['gender', 'race', 'birthday'];
                 for (const [name, newNpc] of Object.entries(meta.npcs)) {
@@ -284,7 +284,7 @@ class HoraeManager {
                         for (const field of updatableFields) {
                             if (newNpc[field] !== undefined) existing[field] = newNpc[field];
                         }
-                        // age变更时记录剧情日期作为基准
+                        // age變更時記錄劇情日期作為基準
                         if (newNpc.age !== undefined && newNpc.age !== '') {
                             if (!existing._ageRefDate) {
                                 existing._ageRefDate = state.timestamp.story_date || '';
@@ -295,7 +295,7 @@ class HoraeManager {
                                 existing._ageRefDate = state.timestamp.story_date || '';
                             }
                         }
-                        // 受保护字段：仅在未设定时才填入
+                        // 受保護資料欄：僅在未設定時才填入
                         for (const field of protectedFields) {
                             if (newNpc[field] !== undefined && !existing[field]) {
                                 existing[field] = newNpc[field];
@@ -320,7 +320,7 @@ class HoraeManager {
                     }
                 }
             }
-            // 情绪状态（覆盖式）
+            // 情緒狀態（覆蓋式）
             if (meta.mood) {
                 for (const [charName, emotion] of Object.entries(meta.mood)) {
                     state.mood[charName] = emotion;
@@ -328,7 +328,7 @@ class HoraeManager {
             }
         }
         
-        // 过滤用户已删除的NPC（防回滚）
+        // 過濾用戶已刪除的NPC（防還原）
         const deletedNpcs = chat[0]?.horae_meta?._deletedNpcs;
         if (deletedNpcs?.length) {
             for (const name of deletedNpcs) {
@@ -342,7 +342,7 @@ class HoraeManager {
             }
         }
         
-        // 为无ID物品分配ID
+        // 為無ID物品分配ID
         let maxId = 0;
         for (const info of Object.values(state.items)) {
             if (info._id) {
@@ -357,7 +357,7 @@ class HoraeManager {
             }
         }
         
-        // 为无ID的NPC分配ID
+        // 為無ID的NPC分配ID
         let maxNpcId = 0;
         for (const info of Object.values(state.npcs)) {
             if (info._id) {
@@ -375,7 +375,7 @@ class HoraeManager {
         return state;
     }
 
-    /** 解析生日字符串，支持 yyyy-mm-dd / yyyy/mm/dd / mm-dd / mm/dd */
+    /** 解析生日字元串，支援 yyyy-mm-dd / yyyy/mm/dd / mm-dd / mm/dd */
     _parseBirthday(str) {
         if (!str) return null;
         let m = str.match(/(\d{2,4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
@@ -385,7 +385,7 @@ class HoraeManager {
         return null;
     }
 
-    /** 根据剧情时间推移计算NPC当前年龄（优先使用生日精确计算） */
+    /** 根據劇情時間推移計算NPC目前年齡（優先使用生日精確計算） */
     calcCurrentAge(npcInfo, currentStoryDate) {
         const original = npcInfo.age || '';
         if (!original || !currentStoryDate) {
@@ -404,7 +404,7 @@ class HoraeManager {
 
         const bdParsed = this._parseBirthday(npcInfo.birthday);
 
-        // ── 有完整生日(含年份)：精确计算 ──
+        // ── 有完整生日(含年份)：精確計算 ──
         if (bdParsed?.year) {
             let age = curParsed.year - bdParsed.year;
             if (bdParsed.month && curParsed.month) {
@@ -417,7 +417,7 @@ class HoraeManager {
             return { display: String(age), original, changed: age !== ageNum };
         }
 
-        // 以下两种情况都需要 _ageRefDate
+        // 以下兩種情況都需要 _ageRefDate
         const refDate = npcInfo._ageRefDate || '';
         if (!refDate) return { display: original, original, changed: false };
 
@@ -426,7 +426,7 @@ class HoraeManager {
             return { display: original, original, changed: false };
         }
 
-        // ── 仅有月日生日：用 refDate+age 推算出生年，再精确计算 ──
+        // ── 僅有月日生日：用 refDate+age 推算出生年，再精確計算 ──
         if (bdParsed?.month) {
             let birthYear = refParsed.year - ageNum;
             if (refParsed.month) {
@@ -444,7 +444,7 @@ class HoraeManager {
             return { display: String(currentAge), original, changed: true };
         }
 
-        // ── 无生日：退回旧逻辑 ──
+        // ── 無生日：退回舊邏輯 ──
         let yearDiff = curParsed.year - refParsed.year;
         if (refParsed.month && curParsed.month) {
             if (curParsed.month < refParsed.month ||
@@ -456,7 +456,7 @@ class HoraeManager {
         return { display: String(ageNum + yearDiff), original, changed: true };
     }
 
-    /** 通过ID查找物品 */
+    /** 透過ID搜尋物品 */
     findItemById(items, id) {
         const normalizedId = id.replace(/^#/, '').trim();
         for (const [name, info] of Object.entries(items)) {
@@ -467,7 +467,7 @@ class HoraeManager {
         return null;
     }
 
-    /** 获取事件列表（limit=0表示不限制数量） */
+    /** 獲取事件列表（limit=0表示不限制數量） */
     getEvents(limit = 0, filterLevel = 'all', skipLast = 0) {
         const chat = this.getChat();
         const end = Math.max(0, chat.length - skipLast);
@@ -502,44 +502,44 @@ class HoraeManager {
         return events;
     }
 
-    /** 获取重要事件列表（兼容旧调用） */
+    /** 獲取重要事件列表（相容舊呼叫） */
     getImportantEvents(limit = 0) {
         return this.getEvents(limit, 'all');
     }
 
-    /** 生成紧凑的上下文注入内容（skipLast: swipe时跳过末尾N条消息） */
+    /** 生成緊湊的上下文注入內容（skipLast: swipe時跳過末尾N條訊息） */
     generateCompactPrompt(skipLast = 0) {
         const state = this.getLatestState(skipLast);
         const lines = [];
         
-        // 状态快照头
-        lines.push('[当前状态快照——对比本回合剧情，仅在<horae>中输出发生实质变化的字段]');
+        // 狀態快照頭
+        lines.push('[目前狀態快照——對比本回合劇情，僅在<horae>中輸出發生實質變化的資料欄]');
         
         const sendTimeline = this.settings?.sendTimeline !== false;
         const sendCharacters = this.settings?.sendCharacters !== false;
         const sendItems = this.settings?.sendItems !== false;
         
-        // 时间
+        // 時間
         if (state.timestamp.story_date) {
             const fullDateTime = formatFullDateTime(state.timestamp.story_date, state.timestamp.story_time);
-            lines.push(`[时间|${fullDateTime}]`);
+            lines.push(`[時間|${fullDateTime}]`);
             
-            // 时间参考
+            // 時間參考
             if (sendTimeline) {
                 const timeRef = generateTimeReference(state.timestamp.story_date);
                 if (timeRef && timeRef.type === 'standard') {
-                    // 标准日历
-                    lines.push(`[时间参考|昨天=${timeRef.yesterday}|前天=${timeRef.dayBefore}|3天前=${timeRef.threeDaysAgo}]`);
+                    // 標準日曆
+                    lines.push(`[時間參考|昨天=${timeRef.yesterday}|前天=${timeRef.dayBefore}|3天前=${timeRef.threeDaysAgo}]`);
                 } else if (timeRef && timeRef.type === 'fantasy') {
-                    // 奇幻日历
-                    lines.push(`[时间参考|奇幻日历模式，参见剧情轨迹中的相对时间标记]`);
+                    // 奇幻日曆
+                    lines.push(`[時間參考|奇幻日曆模式，參見劇情軌跡中的相對時間標記]`);
                 }
             }
         }
         
-        // 场景
+        // 場景
         if (state.scene.location) {
-            let sceneStr = `[场景|${state.scene.location}`;
+            let sceneStr = `[場景|${state.scene.location}`;
             if (state.scene.atmosphere) {
                 sceneStr += `|${state.scene.atmosphere}`;
             }
@@ -551,27 +551,27 @@ class HoraeManager {
                 const loc = state.scene.location;
                 const entry = this._findLocationMemory(loc, locMem, state._previousLocation);
                 if (entry?.desc) {
-                    lines.push(`[场景记忆|${entry.desc}]`);
+                    lines.push(`[場景記憶|${entry.desc}]`);
                 }
-                // 附带父级地点描述（如「酒馆·大厅」→ 同时发送「酒馆」的描述）
+                // 附帶父級地點描述（如「酒館·大廳」→ 同時發送「酒館」的描述）
                 const sepMatch = loc.match(/[·・\-\/\|]/);
                 if (sepMatch) {
                     const parent = loc.substring(0, sepMatch.index).trim();
                     if (parent && locMem[parent] && locMem[parent].desc && parent !== entry?._matchedName) {
-                        lines.push(`[场景记忆:${parent}|${locMem[parent].desc}]`);
+                        lines.push(`[場景記憶:${parent}|${locMem[parent].desc}]`);
                     }
                 }
             }
         }
         
-        // 在场角色和服装
+        // 在場角色和服裝
         if (sendCharacters) {
             const presentChars = state.scene.characters_present || [];
             
             if (presentChars.length > 0) {
                 const charStrs = [];
                 for (const char of presentChars) {
-                    // 模糊匹配服装
+                    // 模糊配對服裝
                     const costumeKey = Object.keys(state.costumes || {}).find(
                         k => k === char || k.includes(char) || char.includes(k)
                     );
@@ -581,10 +581,10 @@ class HoraeManager {
                         charStrs.push(char);
                     }
                 }
-                lines.push(`[在场|${charStrs.join('|')}]`);
+                lines.push(`[在場|${charStrs.join('|')}]`);
             }
             
-            // 情绪状态（仅在场角色，变化驱动）
+            // 情緒狀態（僅在場角色，變化驅動）
             if (this.settings?.sendMood) {
                 const moodEntries = [];
                 for (const char of presentChars) {
@@ -593,15 +593,15 @@ class HoraeManager {
                     }
                 }
                 if (moodEntries.length > 0) {
-                    lines.push(`[情绪|${moodEntries.join('|')}]`);
+                    lines.push(`[情緒|${moodEntries.join('|')}]`);
                 }
             }
             
-            // 关系网络（仅在场角色相关的关系，从 chat[0] 读取，零AI输出token）
+            // 關係網路（僅在場角色相關的關係，從 chat[0] 讀取，零AI輸出token）
             if (this.settings?.sendRelationships) {
                 const rels = this.getRelationshipsForCharacters(presentChars);
                 if (rels.length > 0) {
-                    lines.push('\n[关系网络]');
+                    lines.push('\n[關係網路]');
                     for (const r of rels) {
                         const noteStr = r.note ? `(${r.note})` : '';
                         lines.push(`${r.from}→${r.to}: ${r.type}${noteStr}`);
@@ -610,10 +610,10 @@ class HoraeManager {
             }
         }
         
-        // 物品（已装备的物品不在此处显示，避免重复）
+        // 物品（已裝備的物品不在此處顯示，避免重複）
         if (sendItems) {
             const items = Object.entries(state.items);
-            // 收集已装备物品名集合
+            // 收集已裝備物品名集合
             const equippedNames = new Set();
             if (this.settings?.rpgMode && !!this.settings.sendRpgEquipment) {
                 const rpgData = this.getRpgStateAt(skipLast);
@@ -625,11 +625,11 @@ class HoraeManager {
             }
             const unequipped = items.filter(([name]) => !equippedNames.has(name));
             if (unequipped.length > 0) {
-                lines.push('\n[物品清单]');
+                lines.push('\n[物品清單]');
                 for (const [name, info] of unequipped) {
                     const id = info._id || '???';
                     const icon = info.icon || '';
-                    const imp = info.importance === '!!' ? '关键' : info.importance === '!' ? '重要' : '';
+                    const imp = info.importance === '!!' ? '關鍵' : info.importance === '!' ? '重要' : '';
                     const desc = info.description ? ` | ${info.description}` : '';
                     const holder = info.holder || '';
                     const loc = info.location ? `@${info.location}` : '';
@@ -637,7 +637,7 @@ class HoraeManager {
                     lines.push(`#${id} ${icon}${name}${impTag}${desc} = ${holder}${loc}`);
                 }
             } else {
-                lines.push('\n[物品清单] (空)');
+                lines.push('\n[物品清單] (空)');
             }
         }
         
@@ -649,7 +649,7 @@ class HoraeManager {
                 lines.push(`[好感|${affStr}]`);
             }
             
-            // NPC信息
+            // NPC資訊
             const npcs = Object.entries(state.npcs);
             if (npcs.length > 0) {
                 lines.push('\n[已知NPC]');
@@ -658,30 +658,30 @@ class HoraeManager {
                     const app = info.appearance || '';
                     const per = info.personality || '';
                     const rel = info.relationship || '';
-                    // 主体：N编号 名｜外貌=性格@关系
+                    // 主體：N編號 名｜外貌=個性@關係
                     let npcStr = `N${id} ${name}`;
                     if (app || per || rel) {
                         npcStr += `｜${app}=${per}@${rel}`;
                     }
-                    // 扩展字段
+                    // 擴展資料欄
                     const extras = [];
                     if (info._aliases?.length) extras.push(`曾用名:${info._aliases.join('/')}`);
-                    if (info.gender) extras.push(`性别:${info.gender}`);
+                    if (info.gender) extras.push(`性別:${info.gender}`);
                     if (info.age) {
                         const ageResult = this.calcCurrentAge(info, state.timestamp.story_date);
-                        extras.push(`年龄:${ageResult.display}`);
+                        extras.push(`年齡:${ageResult.display}`);
                     }
-                    if (info.race) extras.push(`种族:${info.race}`);
-                    if (info.job) extras.push(`职业:${info.job}`);
+                    if (info.race) extras.push(`種族:${info.race}`);
+                    if (info.job) extras.push(`職業:${info.job}`);
                     if (info.birthday) extras.push(`生日:${info.birthday}`);
-                    if (info.note) extras.push(`补充:${info.note}`);
+                    if (info.note) extras.push(`補充:${info.note}`);
                     if (extras.length > 0) npcStr += `~${extras.join('~')}`;
                     lines.push(npcStr);
                 }
             }
         }
         
-        // 待办事项
+        // 待辦事項
         const chatForAgenda = this.getChat();
         const allAgendaItems = [];
         const seenTexts = new Set();
@@ -694,7 +694,7 @@ class HoraeManager {
                 seenTexts.add(item.text);
             }
         }
-        // AI写入的（swipe时跳过末尾消息）
+        // AI寫入的（swipe時跳過末尾訊息）
         const agendaEnd = Math.max(0, (chatForAgenda?.length || 0) - skipLast);
         if (chatForAgenda) {
             for (let i = 1; i < agendaEnd; i++) {
@@ -712,25 +712,25 @@ class HoraeManager {
         }
         const activeAgenda = allAgendaItems.filter(a => !a.done);
         if (activeAgenda.length > 0) {
-            lines.push('\n[待办事项]');
+            lines.push('\n[待辦事項]');
             for (const item of activeAgenda) {
                 const datePrefix = item.date ? `${item.date} ` : '';
                 lines.push(`· ${datePrefix}${item.text}`);
             }
         }
         
-        // RPG 状态（仅启用时注入，按在场角色过滤）
+        // RPG 狀態（僅啟用時注入，按在場角色過濾）
         if (this.settings?.rpgMode) {
             const rpg = this.getRpgStateAt(skipLast);
             const sendBars = this.settings?.sendRpgBars !== false;
             const sendSkills = this.settings?.sendRpgSkills !== false;
 
-            // 属性条名称映射
+            // 屬性條名稱映射
             const _barCfg = this.settings?.rpgBarConfig || [];
             const _barNames = {};
             for (const b of _barCfg) _barNames[b.key] = b.name;
 
-            // 按在场角色过滤 RPG 数据（无场景数据时发送全部）
+            // 按在場角色過濾 RPG 數據（無場景數據時發送全部）
             const presentChars = state.scene.characters_present || [];
             const userName = this.context?.name1 || '';
             const _cUoB = !!this.settings?.rpgBarsUserOnly;
@@ -760,7 +760,7 @@ class HoraeManager {
                 }
             }
             const filterRpg = rpgAllowed.size > 0;
-            // userOnly时构建行不带角色名前缀
+            // userOnly時構建行不帶角色名前綴
             const _ctxPre = (name, isUo) => {
                 if (isUo) return '';
                 const npc = state.npcs[name];
@@ -768,7 +768,7 @@ class HoraeManager {
             };
 
             if (sendBars && Object.keys(rpg.bars).length > 0) {
-                lines.push('\n[RPG状态]');
+                lines.push('\n[RPG狀態]');
                 for (const [name, bars] of Object.entries(rpg.bars)) {
                     if (_cUoB && name !== userName) continue;
                     if (filterRpg && !rpgAllowed.has(name)) continue;
@@ -778,14 +778,14 @@ class HoraeManager {
                         parts.push(`${label} ${val[0]}/${val[1]}`);
                     }
                     const sts = rpg.status?.[name];
-                    if (sts?.length > 0) parts.push(`状态:${sts.join('/')}`);
+                    if (sts?.length > 0) parts.push(`狀態:${sts.join('/')}`);
                     if (parts.length > 0) lines.push(`${_ctxPre(name, _cUoB)}${parts.join(' | ')}`);
                 }
                 for (const [name, effects] of Object.entries(rpg.status || {})) {
                     if (rpg.bars[name] || effects.length === 0) continue;
                     if (_cUoB && name !== userName) continue;
                     if (filterRpg && !rpgAllowed.has(name)) continue;
-                    lines.push(`${_ctxPre(name, _cUoB)}状态:${effects.join('/')}`);
+                    lines.push(`${_ctxPre(name, _cUoB)}狀態:${effects.join('/')}`);
                 }
             }
 
@@ -815,7 +815,7 @@ class HoraeManager {
             const sendAttrs = this.settings?.sendRpgAttributes !== false;
             const attrCfg = this.settings?.rpgAttributeConfig || [];
             if (sendAttrs && attrCfg.length > 0 && Object.keys(rpg.attributes || {}).length > 0) {
-                lines.push('\n[多维属性]');
+                lines.push('\n[多維屬性]');
                 for (const [name, vals] of Object.entries(rpg.attributes)) {
                     if (_cUoA && name !== userName) continue;
                     if (filterRpg && !rpgAllowed.has(name)) continue;
@@ -824,7 +824,7 @@ class HoraeManager {
                 }
             }
 
-            // 装备（按角色独立格位，包含完整物品描述以节省 token）
+            // 裝備（按角色獨立格位，包含完整物品描述以節省 token）
             const sendEq = !!this.settings?.sendRpgEquipment;
             const eqPerChar = (rpg.equipmentConfig?.perChar) || {};
             const storedEq = this.getChat()?.[0]?.horae_meta?.rpg?.equipment || {};
@@ -850,13 +850,13 @@ class HoraeManager {
                         }
                     }
                     if (parts.length > 0) {
-                        if (!hasEqData) { lines.push('\n[装备]'); hasEqData = true; }
+                        if (!hasEqData) { lines.push('\n[裝備]'); hasEqData = true; }
                         lines.push(`${_ctxPre(name, _cUoE)}${parts.join(' | ')}`);
                     }
                 }
             }
 
-            // 声望（需开关开启）
+            // 聲望（需開關開啟）
             const sendRep = !!this.settings?.sendRpgReputation;
             const repConfig = rpg.reputationConfig || { categories: [] };
             if (sendRep && repConfig.categories.length > 0 && Object.keys(rpg.reputation || {}).length > 0) {
@@ -872,13 +872,13 @@ class HoraeManager {
                         parts.push(`${catName}:${data.value}`);
                     }
                     if (parts.length > 0) {
-                        if (!hasRepData) { lines.push('\n[声望]'); hasRepData = true; }
+                        if (!hasRepData) { lines.push('\n[聲望]'); hasRepData = true; }
                         lines.push(`${_ctxPre(name, _cUoR)}${parts.join(' | ')}`);
                     }
                 }
             }
 
-            // 等级
+            // 等級
             const sendLvl = !!this.settings?.sendRpgLevel;
             if (sendLvl && (Object.keys(rpg.levels || {}).length > 0 || Object.keys(rpg.xp || {}).length > 0)) {
                 const allLvlNames = new Set([...Object.keys(rpg.levels || {}), ...Object.keys(rpg.xp || {})]);
@@ -889,14 +889,14 @@ class HoraeManager {
                     const lv = rpg.levels?.[name];
                     const xp = rpg.xp?.[name];
                     if (lv == null && !xp) continue;
-                    if (!hasLvlData) { lines.push('\n[等级]'); hasLvlData = true; }
+                    if (!hasLvlData) { lines.push('\n[等級]'); hasLvlData = true; }
                     let lvStr = lv != null ? `Lv.${lv}` : '';
-                    if (xp) lvStr += ` (经验: ${xp[0]}/${xp[1]})`;
+                    if (xp) lvStr += ` (經驗: ${xp[0]}/${xp[1]})`;
                     lines.push(`${_ctxPre(name, _cUoL)}${lvStr.trim()}`);
                 }
             }
 
-            // 货币
+            // 貨幣
             const sendCur = !!this.settings?.sendRpgCurrency;
             const curConfig = rpg.currencyConfig || { denominations: [] };
             if (sendCur && curConfig.denominations.length > 0 && Object.keys(rpg.currency || {}).length > 0) {
@@ -910,17 +910,17 @@ class HoraeManager {
                         if (val != null) parts.push(`${d.name}×${val}`);
                     }
                     if (parts.length > 0) {
-                        if (!hasCurData) { lines.push('\n[货币]'); hasCurData = true; }
+                        if (!hasCurData) { lines.push('\n[貨幣]'); hasCurData = true; }
                         lines.push(`${_ctxPre(name, _cUoC)}${parts.join(', ')}`);
                     }
                 }
             }
 
-            // 据点
+            // 據點
             if (!!this.settings?.sendRpgStronghold) {
                 const shNodes = rpg.strongholds || [];
                 if (shNodes.length > 0) {
-                    lines.push('\n[据点]');
+                    lines.push('\n[據點]');
                     function _shTreeStr(nodes, parentId, indent) {
                         const children = nodes.filter(n => (n.parent || null) === parentId);
                         let str = '';
@@ -938,26 +938,26 @@ class HoraeManager {
             }
         }
 
-        // 剧情轨迹
+        // 劇情軌跡
         if (sendTimeline) {
             const allEvents = this.getEvents(0, 'all', skipLast);
-            // 过滤掉被活跃摘要覆盖的原始事件（_compressedBy 且摘要为 active）
+            // 過濾掉被活躍摘要覆蓋的原始事件（_compressedBy 且摘要為 active）
             const timelineChat = this.getChat();
             const autoSums = timelineChat?.[0]?.horae_meta?.autoSummaries || [];
             const activeSumIds = new Set(autoSums.filter(s => s.active).map(s => s.id));
-            // 被活跃摘要压缩的事件不发送；摘要为 inactive 时其 _summaryId 事件不发送
+            // 被活躍摘要壓縮的事件不發送；摘要為 inactive 時其 _summaryId 事件不發送
             const events = allEvents.filter(e => {
                 if (e.event?._compressedBy && activeSumIds.has(e.event._compressedBy)) return false;
                 if (e.event?._summaryId && !activeSumIds.has(e.event._summaryId)) return false;
                 return true;
             });
             if (events.length > 0) {
-                lines.push('\n[剧情轨迹]');
+                lines.push('\n[劇情軌跡]');
                 
                 const currentDate = state.timestamp?.story_date || '';
                 
                 const getLevelMark = (level) => {
-                    if (level === '关键') return '★';
+                    if (level === '關鍵') return '★';
                     if (level === '重要') return '●';
                     return '○';
                 };
@@ -974,20 +974,20 @@ class HoraeManager {
                     if (days === 2) return '(前天)';
                     if (days === 3) return '(大前天)';
                     if (days === -1) return '(明天)';
-                    if (days === -2) return '(后天)';
-                    if (days === -3) return '(大后天)';
+                    if (days === -2) return '(後天)';
+                    if (days === -3) return '(大後天)';
                     
                     if (days >= 4 && days <= 13 && fromDate) {
                         const WEEKDAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'];
                         const weekday = fromDate.getDay();
-                        return `(上周${WEEKDAY_NAMES[weekday]})`;
+                        return `(上週${WEEKDAY_NAMES[weekday]})`;
                     }
                     
                     if (days >= 20 && days < 60 && fromDate && toDate) {
                         const fromMonth = fromDate.getMonth();
                         const toMonth = toDate.getMonth();
                         if (fromMonth !== toMonth) {
-                            return `(上个月${fromDate.getDate()}号)`;
+                            return `(上個月${fromDate.getDate()}號)`;
                         }
                     }
                     
@@ -1001,7 +1001,7 @@ class HoraeManager {
                     }
                     
                     if (days > 0 && days < 30) return `(${days}天前)`;
-                    if (days > 0) return `(${Math.round(days / 30)}个月前)`;
+                    if (days > 0) return `(${Math.round(days / 30)}個月前)`;
                     if (days === -999 || days === -998 || days === -997) return '';
                     return '';
                 };
@@ -1011,7 +1011,7 @@ class HoraeManager {
                 });
                 
                 const criticalAndImportant = sortedEvents.filter(e => 
-                    e.event?.level === '关键' || e.event?.level === '重要' || e.event?.level === '摘要' || e.event?.isSummary
+                    e.event?.level === '關鍵' || e.event?.level === '重要' || e.event?.level === '摘要' || e.event?.isSummary
                 );
                 const contextDepth = this.settings?.contextDepth ?? 15;
                 const normalAll = sortedEvents.filter(e => 
@@ -1022,7 +1022,7 @@ class HoraeManager {
                 const allToShow = [...criticalAndImportant, ...normalEvents]
                     .sort((a, b) => (a.messageIndex || 0) - (b.messageIndex || 0));
                 
-                // 预构建 summaryId→日期范围 映射，让摘要事件带上时间跨度
+                // 預構建 summaryId→日期範圍 映射，讓摘要事件帶上時間跨度
                 const _sumDateRanges = {};
                 for (const s of autoSums) {
                     if (!s.active || !s.originalEvents?.length) continue;
@@ -1053,7 +1053,7 @@ class HoraeManager {
             }
         }
         
-        // 自定义表格数据（合并全局和本地）
+        // 客製化表格數據（合併全域和本地）
         const chat = this.getChat();
         const firstMsg = chat?.[0];
         const localTables = firstMsg?.horae_meta?.customTables || [];
@@ -1064,19 +1064,19 @@ class HoraeManager {
             const cols = table.cols || 2;
             const data = table.data || {};
             
-            // 有内容或有填表说明才输出
+            // 有內容或有填表說明才輸出
             const hasContent = Object.values(data).some(v => v && v.trim());
             const hasPrompt = table.prompt && table.prompt.trim();
             if (!hasContent && !hasPrompt) continue;
             
-            const tableName = table.name || '自定义表格';
+            const tableName = table.name || '客製化表格';
             lines.push(`\n[${tableName}](${rows - 1}行×${cols - 1}列)`);
             
             if (table.prompt && table.prompt.trim()) {
-                lines.push(`(填写要求: ${table.prompt.trim()})`);
+                lines.push(`(填寫要求: ${table.prompt.trim()})`);
             }
             
-            // 检测最后有内容的行（含行标题列）
+            // 檢測最後有內容的行（含行標題列）
             let lastDataRow = 0;
             for (let r = rows - 1; r >= 1; r--) {
                 for (let c = 0; c < cols; c++) {
@@ -1093,16 +1093,16 @@ class HoraeManager {
             const lockedCols = new Set(table.lockedCols || []);
             const lockedCells = new Set(table.lockedCells || []);
 
-            // 输出表头行（带坐标标注）
+            // 輸出表頭行（帶座標標註）
             const headerRow = [];
             for (let c = 0; c < cols; c++) {
-                const label = data[`0-${c}`] || (c === 0 ? '表头' : `列${c}`);
+                const label = data[`0-${c}`] || (c === 0 ? '表頭' : `列${c}`);
                 const coord = `[0,${c}]`;
                 headerRow.push(lockedCols.has(c) ? `${coord}${label}🔒` : `${coord}${label}`);
             }
             lines.push(headerRow.join(' | '));
 
-            // 输出数据行（带坐标标注）
+            // 輸出數據行（帶座標標註）
             for (let r = 1; r <= lastDataRow; r++) {
                 const rowData = [];
                 for (let c = 0; c < cols; c++) {
@@ -1118,12 +1118,12 @@ class HoraeManager {
                 lines.push(rowData.join(' | '));
             }
             
-            // 标注被省略的尾部空行
+            // 標註被省略的尾部空行
             if (lastDataRow < rows - 1) {
-                lines.push(`(共${rows - 1}行，第${lastDataRow + 1}-${rows - 1}行暂无数据)`);
+                lines.push(`(共${rows - 1}行，第${lastDataRow + 1}-${rows - 1}行暫無數據)`);
             }
 
-            // 提示完全空的数据列
+            // 提示完全空的數據列
             const emptyCols = [];
             for (let c = 1; c < cols; c++) {
                 let colHasData = false;
@@ -1134,30 +1134,30 @@ class HoraeManager {
             }
             if (emptyCols.length > 0) {
                 const emptyColNames = emptyCols.map(c => data[`0-${c}`] || `列${c}`);
-                lines.push(`(${emptyColNames.join('、')}：暂无数据，如剧情中已有相关信息请填写)`);
+                lines.push(`(${emptyColNames.join('、')}：暫無數據，如劇情中已有相關資訊請填寫)`);
             }
         }
         
         return lines.join('\n');
     }
 
-    /** 获取好感度等级描述 */
+    /** 獲取好感度等級描述 */
     getAffectionLevel(value) {
-        if (value >= 80) return '挚爱';
-        if (value >= 60) return '亲密';
+        if (value >= 80) return '摯愛';
+        if (value >= 60) return '親密';
         if (value >= 40) return '好感';
         if (value >= 20) return '友好';
         if (value >= 0) return '中立';
         if (value >= -20) return '冷淡';
-        if (value >= -40) return '厌恶';
-        if (value >= -60) return '敌视';
+        if (value >= -40) return '厭惡';
+        if (value >= -60) return '敵視';
         return '仇恨';
     }
 
     /**
-     * 根据用户配置的标签列表（逗号分隔），
-     * 整段移除对应标签及其内容（含可选属性），
-     * 防止小剧场等自定义区块内的 horae 标签污染正文解析。
+     * 根據用戶配置的標籤列表（逗號分隔），
+     * 整段移除對應標籤及其內容（含可選屬性），
+     * 防止小劇場等客製化區塊內的 horae 標籤汙染正文解析。
      */
     _stripCustomTags(text, tagList) {
         if (!text || !tagList) return text;
@@ -1169,11 +1169,11 @@ class HoraeManager {
         return text;
     }
 
-    /** 解析AI回复中的horae标签 */
+    /** 解析AI回覆中的horae標籤 */
     parseHoraeTag(message) {
         if (!message) return null;
         
-        // 提取所有 <horae> 块并选择包含有效字段的块（防止其他插件生成的同名标签干扰）
+        // 提取所有 <horae> 塊並選擇包含有效資料欄的塊（防止其他插件生成的同名標籤干擾）
         let match = null;
         const allHoraeMatches = [...message.matchAll(/<horae>([\s\S]*?)<\/horae>/gi)];
         const horaeFieldPattern = /^(time|timestamp|location|atmosphere|scene_desc|characters|costume|item[!]*|item-|event|affection|npc|agenda|agenda-|rel|mood):/m;
@@ -1218,29 +1218,29 @@ class HoraeManager {
             const trimmedLine = line.trim();
             if (!trimmedLine) continue;
             
-            // time:10/1 15:00 或 time:小镇历永夜2931年 2月1日(五) 20:30
+            // time:10/1 15:00 或 time:小鎮歷永夜2931年 2月1日(五) 20:30
             if (trimmedLine.startsWith('time:')) {
                 const timeStr = trimmedLine.substring(5).trim();
-                // 从末尾分离 HH:MM 时钟时间
+                // 從末尾分離 HH:MM 時鐘時間
                 const clockMatch = timeStr.match(/\b(\d{1,2}:\d{2})\s*$/);
                 if (clockMatch) {
                     result.timestamp.story_time = clockMatch[1];
                     result.timestamp.story_date = timeStr.substring(0, timeStr.lastIndexOf(clockMatch[1])).trim();
                 } else {
-                    // 无时钟时间，整个字符串作为日期
+                    // 無時鐘時間，整個字元串作為日期
                     result.timestamp.story_date = timeStr;
                     result.timestamp.story_time = '';
                 }
             }
-            // location:咖啡馆二楼
+            // location:咖啡館二樓
             else if (trimmedLine.startsWith('location:')) {
                 result.scene.location = trimmedLine.substring(9).trim();
             }
-            // atmosphere:轻松
+            // atmosphere:輕鬆
             else if (trimmedLine.startsWith('atmosphere:')) {
                 result.scene.atmosphere = trimmedLine.substring(11).trim();
             }
-            // scene_desc:地点的固定物理特征描述（支持同一回复多场景配对）
+            // scene_desc:地點的固定物理特徵描述（支援同一回覆多場景配對）
             else if (trimmedLine.startsWith('scene_desc:')) {
                 const desc = trimmedLine.substring(11).trim();
                 result.scene.scene_desc = desc;
@@ -1249,12 +1249,12 @@ class HoraeManager {
                     result.scene._descPairs.push({ location: result.scene.location, desc });
                 }
             }
-            // characters:爱丽丝,鲍勃
+            // characters:愛麗絲,鮑勃
             else if (trimmedLine.startsWith('characters:')) {
                 const chars = trimmedLine.substring(11).trim();
                 result.scene.characters_present = chars.split(/[,，]/).map(c => c.trim()).filter(Boolean);
             }
-            // costume:爱丽丝=白色连衣裙
+            // costume:愛麗絲=白色連衣裙
             else if (trimmedLine.startsWith('costume:')) {
                 const costumeStr = trimmedLine.substring(8).trim();
                 const eqIndex = costumeStr.indexOf('=');
@@ -1264,7 +1264,7 @@ class HoraeManager {
                     result.costumes[char] = costume;
                 }
             }
-            // item-:物品名 表示物品已消耗/删除
+            // item-:物品名 表示物品已消耗/刪除
             else if (trimmedLine.startsWith('item-:')) {
                 const itemName = trimmedLine.substring(6).trim();
                 const cleanName = itemName.replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u, '').trim();
@@ -1272,12 +1272,12 @@ class HoraeManager {
                     result.deletedItems.push(cleanName);
                 }
             }
-            // item:🍺劣质麦酒|描述=酒馆@吧台 / item!:📜重要物品|特殊功能描述=角色@位置 / item!!:💎关键物品=@位置
+            // item:🍺劣質麥酒|描述=酒館@吧檯 / item!:📜重要物品|特殊功能描述=角色@位置 / item!!:💎關鍵物品=@位置
             else if (trimmedLine.startsWith('item!!:') || trimmedLine.startsWith('item!:') || trimmedLine.startsWith('item:')) {
-                let importance = '';  // 一般用空字符串
+                let importance = '';  // 一般用空字元串
                 let itemStr;
                 if (trimmedLine.startsWith('item!!:')) {
-                    importance = '!!';  // 关键
+                    importance = '!!';  // 關鍵
                     itemStr = trimmedLine.substring(7).trim();
                 } else if (trimmedLine.startsWith('item!:')) {
                     importance = '!';   // 重要
@@ -1293,7 +1293,7 @@ class HoraeManager {
                     
                     let icon = null;
                     let itemName = itemNamePart;
-                    let description = undefined;  // undefined = 合并时不覆盖原有描述
+                    let description = undefined;  // undefined = 合併時不覆蓋原有描述
                     
                     const emojiMatch = itemNamePart.match(/^([\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{231A}-\u{231B}]|[\u{23E9}-\u{23F3}]|[\u{23F8}-\u{23FA}]|[\u{25AA}-\u{25AB}]|[\u{25B6}]|[\u{25C0}]|[\u{25FB}-\u{25FE}]|[\u{2614}-\u{2615}]|[\u{2648}-\u{2653}]|[\u{267F}]|[\u{2693}]|[\u{26A1}]|[\u{26AA}-\u{26AB}]|[\u{26BD}-\u{26BE}]|[\u{26C4}-\u{26C5}]|[\u{26CE}]|[\u{26D4}]|[\u{26EA}]|[\u{26F2}-\u{26F3}]|[\u{26F5}]|[\u{26FA}]|[\u{26FD}]|[\u{2702}]|[\u{2705}]|[\u{2708}-\u{270D}]|[\u{270F}]|[\u{2712}]|[\u{2714}]|[\u{2716}]|[\u{271D}]|[\u{2721}]|[\u{2728}]|[\u{2733}-\u{2734}]|[\u{2744}]|[\u{2747}]|[\u{274C}]|[\u{274E}]|[\u{2753}-\u{2755}]|[\u{2757}]|[\u{2763}-\u{2764}]|[\u{2795}-\u{2797}]|[\u{27A1}]|[\u{27B0}]|[\u{27BF}]|[\u{2934}-\u{2935}]|[\u{2B05}-\u{2B07}]|[\u{2B1B}-\u{2B1C}]|[\u{2B50}]|[\u{2B55}]|[\u{3030}]|[\u{303D}]|[\u{3297}]|[\u{3299}])/u);
                     if (emojiMatch) {
@@ -1310,7 +1310,7 @@ class HoraeManager {
                         itemName = itemNamePart;
                     }
                     
-                    // 去掉无意义的数量标记
+                    // 去掉無意義的數量標記
                     itemName = itemName.replace(/[\(（]1[\)）]$/, '').trim();
                     itemName = itemName.replace(new RegExp(`[\\(（]1[${COUNTING_CLASSIFIERS}][\\)）]$`), '').trim();
                     itemName = itemName.replace(new RegExp(`[\\(（][${COUNTING_CLASSIFIERS}][\\)）]$`), '').trim();
@@ -1326,7 +1326,7 @@ class HoraeManager {
                     result.items[itemName] = itemInfo;
                 }
             }
-            // event:重要|爱丽丝坦白了秘密
+            // event:重要|愛麗絲坦白了秘密
             else if (trimmedLine.startsWith('event:')) {
                 const eventStr = trimmedLine.substring(6).trim();
                 const parts = eventStr.split('|');
@@ -1335,31 +1335,31 @@ class HoraeManager {
                     const summary = parts.slice(1).join('|').trim();
                     
                     let level = '一般';
-                    if (levelRaw === '关键' || levelRaw.toLowerCase() === 'critical') {
-                        level = '关键';
+                    if (levelRaw === '關鍵' || levelRaw.toLowerCase() === 'critical') {
+                        level = '關鍵';
                     } else if (levelRaw === '重要' || levelRaw.toLowerCase() === 'important') {
                         level = '重要';
                     }
                     
                     result.events.push({
-                        is_important: level === '重要' || level === '关键',
+                        is_important: level === '重要' || level === '關鍵',
                         level: level,
                         summary: summary
                     });
                 }
             }
-            // affection:鲍勃=65 或 affection:鲍勃+5（兼容新旧格式）
-            // 容忍AI附加注解如 affection:汤姆=18(+0)|观察到xxx，只提取名字和数值
+            // affection:鮑勃=65 或 affection:鮑勃+5（相容新舊格式）
+            // 容忍AI附加註解如 affection:湯姆=18(+0)|觀察到xxx，只提取名字和數值
             else if (trimmedLine.startsWith('affection:')) {
                 const affStr = trimmedLine.substring(10).trim();
-                // 新格式：角色名=数值（绝对值，允许带正负号如 =+28 或 =-15）
+                // 新格式：角色名=數值（絕對值，允許帶正負號如 =+28 或 =-15）
                 const absoluteMatch = affStr.match(/^(.+?)=\s*([+\-]?\d+\.?\d*)/);
                 if (absoluteMatch) {
                     const key = absoluteMatch[1].trim();
                     const value = parseFloat(absoluteMatch[2]);
                     result.affection[key] = { type: 'absolute', value: value };
                 } else {
-                    // 旧格式：角色名+/-数值（相对值，无=号）— 允许数值后跟任意注解
+                    // 舊格式：角色名+/-數值（相對值，無=號）— 允許數值後跟任意註解
                     const relativeMatch = affStr.match(/^(.+?)([+\-]\d+\.?\d*)/);
                     if (relativeMatch) {
                         const key = relativeMatch[1].trim();
@@ -1368,8 +1368,8 @@ class HoraeManager {
                     }
                 }
             }
-            // npc:名|外貌=性格@关系~性别:男~年龄:25~种族:人类~职业:佣兵~补充:xxx
-            // 使用 ~ 分隔扩展字段（key:value），不依赖顺序
+            // npc:名|外貌=個性@關係~性別:男~年齡:25~種族:人類~職業:傭兵~補充:xxx
+            // 使用 ~ 分隔擴展資料欄（key:value），不依賴順序
             else if (trimmedLine.startsWith('npc:')) {
                 const npcStr = trimmedLine.substring(4).trim();
                 const npcInfo = this._parseNpcFields(npcStr);
@@ -1384,7 +1384,7 @@ class HoraeManager {
                     result.npcs[name] = npcInfo;
                 }
             }
-            // agenda-:已完成待办内容 / agenda:订立日期|内容
+            // agenda-:已完成待辦內容 / agenda:訂立日期|內容
             else if (trimmedLine.startsWith('agenda-:')) {
                 const delStr = trimmedLine.substring(8).trim();
                 if (delStr) {
@@ -1406,7 +1406,7 @@ class HoraeManager {
                     text = agendaStr;
                 }
                 if (text) {
-                    // 检测 AI 用括号标记完成的情况，自动归入 deletedAgenda
+                    // 檢測 AI 用括號標記完成的情況，自動歸入 deletedAgenda
                     const doneMatch = text.match(/[\(（](完成|已完成|done|finished|completed|失效|取消|已取消)[\)）]\s*$/i);
                     if (doneMatch) {
                         const cleanText = text.substring(0, text.length - doneMatch[0].length).trim();
@@ -1416,7 +1416,7 @@ class HoraeManager {
                     }
                 }
             }
-            // rel:角色A>角色B=关系类型|备注
+            // rel:角色A>角色B=關係類型|備註
             else if (trimmedLine.startsWith('rel:')) {
                 const relStr = trimmedLine.substring(4).trim();
                 const arrowIdx = relStr.indexOf('>');
@@ -1433,7 +1433,7 @@ class HoraeManager {
                     }
                 }
             }
-            // mood:角色名=情绪状态
+            // mood:角色名=情緒狀態
             else if (trimmedLine.startsWith('mood:')) {
                 const moodStr = trimmedLine.substring(5).trim();
                 const eqIdx = moodStr.indexOf('=');
@@ -1447,7 +1447,7 @@ class HoraeManager {
             }
         }
 
-        // 解析自定义表格数据
+        // 解析客製化表格數據
         if (tableMatches.length > 0) {
             result.tableUpdates = [];
             for (const tm of tableMatches) {
@@ -1461,7 +1461,7 @@ class HoraeManager {
             }
         }
 
-        // 解析 RPG 数据
+        // 解析 RPG 數據
         if (rpgMatches.length > 0) {
             result.rpg = { bars: {}, status: {}, skills: [], removedSkills: [], attributes: {}, reputation: {}, equipment: [], unequip: [], levels: {}, xp: {}, currency: [], baseChanges: [] };
             for (const rm of rpgMatches) {
@@ -1476,7 +1476,7 @@ class HoraeManager {
         return result;
     }
 
-    /** 将解析结果合并到元数据 */
+    /** 將解析結果合併到元數據 */
     mergeParsedToMeta(baseMeta, parsed) {
         const meta = baseMeta ? JSON.parse(JSON.stringify(baseMeta)) : createEmptyMeta();
         
@@ -1514,11 +1514,11 @@ class HoraeManager {
             meta.deletedItems = [...new Set([...meta.deletedItems, ...parsed.deletedItems])];
         }
         
-        // 支持新格式（events数组）和旧格式（单个event）
+        // 支援新格式（events數組）和舊格式（單個event）
         if (parsed.events && parsed.events.length > 0) {
             meta.events = parsed.events;
         } else if (parsed.event) {
-            // 兼容旧格式：转换为数组
+            // 相容舊格式：轉換為數組
             meta.events = [parsed.event];
         }
         
@@ -1530,7 +1530,7 @@ class HoraeManager {
             Object.assign(meta.npcs, parsed.npcs);
         }
         
-        // 追加AI写入的待办（跳过用户已手动删除的）
+        // 追加AI寫入的待辦（跳過用戶已手動刪除的）
         if (parsed.agenda && parsed.agenda.length > 0) {
             if (!meta.agenda) meta.agenda = [];
             const chat0 = this.getChat()?.[0];
@@ -1544,19 +1544,19 @@ class HoraeManager {
             }
         }
         
-        // 关系网络：存入当前消息（后续由 processAIResponse 合并到 chat[0]）
+        // 關係網路：存入目前訊息（後續由 processAIResponse 合併到 chat[0]）
         if (parsed.relationships && parsed.relationships.length > 0) {
             if (!meta.relationships) meta.relationships = [];
             meta.relationships = parsed.relationships;
         }
         
-        // 情绪状态
+        // 情緒狀態
         if (parsed.mood && Object.keys(parsed.mood).length > 0) {
             if (!meta.mood) meta.mood = {};
             Object.assign(meta.mood, parsed.mood);
         }
         
-        // tableUpdates 作为副属性传递
+        // tableUpdates 作為副屬性傳遞
         if (parsed.tableUpdates) {
             meta._tableUpdates = parsed.tableUpdates;
         }
@@ -1568,7 +1568,7 @@ class HoraeManager {
         return meta;
     }
 
-    /** 解析单行 RPG 数据 */
+    /** 解析單行 RPG 數據 */
     _parseRpgLine(line, rpg) {
         const _uoName = this.context?.name1 || '主角';
         const _uoB = !!this.settings?.rpgBarsUserOnly;
@@ -1579,8 +1579,8 @@ class HoraeManager {
         const _uoL = !!this.settings?.rpgLevelUserOnly;
         const _uoC = !!this.settings?.rpgCurrencyUserOnly;
 
-        // 通用：检测行是否为无owner的userOnly格式（首段含=即正常格式，否则可能是UO格式）
-        // 属性条: 正常 key:owner=cur/max 或 userOnly key:cur/max(显示名)
+        // 通用：檢測行是否為無owner的userOnly格式（首段含=即正常格式，否則可能是UO格式）
+        // 屬性條: 正常 key:owner=cur/max 或 userOnly key:cur/max(顯示名)
         const barNormal = line.match(/^([a-zA-Z]\w*):(.+?)=(\d+)\s*\/\s*(\d+)(?:\((.+?)\))?$/i);
         const barUo = _uoB ? line.match(/^([a-zA-Z]\w*):(\d+)\s*\/\s*(\d+)(?:\((.+?)\))?$/i) : null;
         if (barNormal && !/^(status|skill)$/i.test(barNormal[1])) {
@@ -1786,8 +1786,8 @@ class HoraeManager {
             }
             return;
         }
-        // base:据点路径=等级 或 base:据点路径|desc=描述
-        // 路径用 > 分隔层级，如 base:主角庄园>锻造区>锻造炉=2
+        // base:據點路徑=等級 或 base:據點路徑|desc=描述
+        // 路徑用 > 分隔層級，如 base:主角莊園>鍛造區>鍛造爐=2
         if (line.startsWith('base:')) {
             if (!rpg.baseChanges) rpg.baseChanges = [];
             const raw = line.substring(5).trim();
@@ -1815,7 +1815,7 @@ class HoraeManager {
         }
     }
 
-    /** 通过 N编号 解析归属者的规范名称 */
+    /** 透過 N編號 解析歸屬者的規範名稱 */
     _resolveRpgOwner(ownerStr) {
         const m = ownerStr.match(/^N(\d+)\s+(.+)$/);
         if (m) {
@@ -1834,7 +1834,7 @@ class HoraeManager {
         return ownerStr.trim();
     }
 
-    /** 合并 RPG 变更到 chat[0].horae_meta.rpg */
+    /** 合併 RPG 變更到 chat[0].horae_meta.rpg */
     _mergeRpgData(changes) {
         const chat = this.getChat();
         if (!chat?.length || !changes) return;
@@ -1876,14 +1876,14 @@ class HoraeManager {
                 rpg.skills[owner] = rpg.skills[owner].filter(s => s.name !== sk.name);
             }
         }
-        // 多维属性
+        // 多維屬性
         for (const [raw, vals] of Object.entries(changes.attributes || {})) {
             const owner = this._resolveRpgOwner(raw);
             if (this.settings?.rpgAttrsUserOnly && owner !== _mUN) continue;
             if (!rpg.attributes) rpg.attributes = {};
             rpg.attributes[owner] = { ...(rpg.attributes[owner] || {}), ...vals };
         }
-        // 装备：按角色独立格位配置
+        // 裝備：按角色獨立格位配置
         if (changes.equipment?.length > 0 || changes.unequip?.length > 0) {
             if (!rpg.equipmentConfig) rpg.equipmentConfig = { locked: false, perChar: {} };
             if (!rpg.equipmentConfig.perChar) rpg.equipmentConfig.perChar = {};
@@ -1947,7 +1947,7 @@ class HoraeManager {
                 }
             }
         }
-        // 声望：只接受 reputationConfig 中已定义且未删除的分类
+        // 聲望：只接受 reputationConfig 中已定義且未刪除的分類
         if (changes.reputation && Object.keys(changes.reputation).length > 0) {
             if (!rpg.reputationConfig) rpg.reputationConfig = { categories: [], _deletedCategories: [] };
             if (!rpg.reputation) rpg.reputation = {};
@@ -1969,21 +1969,21 @@ class HoraeManager {
                 }
             }
         }
-        // 等级
+        // 等級
         for (const [raw, val] of Object.entries(changes.levels || {})) {
             const owner = this._resolveRpgOwner(raw);
             if (this.settings?.rpgLevelUserOnly && owner !== _mUN) continue;
             if (!rpg.levels) rpg.levels = {};
             rpg.levels[owner] = val;
         }
-        // 经验值
+        // 經驗值
         for (const [raw, val] of Object.entries(changes.xp || {})) {
             const owner = this._resolveRpgOwner(raw);
             if (this.settings?.rpgLevelUserOnly && owner !== _mUN) continue;
             if (!rpg.xp) rpg.xp = {};
             rpg.xp[owner] = val;
         }
-        // 货币：只接受 currencyConfig 中已定义的币种
+        // 貨幣：只接受 currencyConfig 中已定義的幣種
         if (changes.currency?.length > 0) {
             if (!rpg.currencyConfig) rpg.currencyConfig = { denominations: [] };
             if (!rpg.currency) rpg.currency = {};
@@ -2000,7 +2000,7 @@ class HoraeManager {
                 }
             }
         }
-        // 据点变更
+        // 據點變更
         if (changes.baseChanges?.length > 0) {
             if (!rpg.strongholds) rpg.strongholds = [];
             for (const bc of changes.baseChanges) {
@@ -2023,28 +2023,28 @@ class HoraeManager {
         }
     }
 
-    /** 从所有消息重建 RPG 全局数据（保留用户手动编辑） */
+    /** 從所有訊息重建 RPG 全域數據（保留用戶手動編輯） */
     rebuildRpgData() {
         const chat = this.getChat();
         if (!chat?.length) return;
         const first = chat[0];
         if (!first.horae_meta) first.horae_meta = createEmptyMeta();
         const old = first.horae_meta.rpg || {};
-        // 保留用户手动添加的技能
+        // 保留用戶手動添加的技能
         const userSkills = {};
         for (const [owner, arr] of Object.entries(old.skills || {})) {
             const ua = (arr || []).filter(s => s._userAdded);
             if (ua.length) userSkills[owner] = ua;
         }
-        // 保留用户手动删除记录和手动填写的属性
+        // 保留用戶手動刪除記錄和手動填寫的屬性
         const deletedSkills = old._deletedSkills || [];
         const userAttrs = old.attributes || {};
-        // 保留声望配置和用户设置的细项
+        // 保留聲望配置和用戶設定的細項
         const oldRepConfig = old.reputationConfig || { categories: [], _deletedCategories: [] };
         const oldReputation = old.reputation ? JSON.parse(JSON.stringify(old.reputation)) : {};
-        // 保留装备配置
+        // 保留裝備配置
         const oldEquipConfig = old.equipmentConfig || { locked: false, perChar: {} };
-        // 保留货币配置
+        // 保留貨幣配置
         const oldCurrencyConfig = old.currencyConfig || { denominations: [] };
 
         first.horae_meta.rpg = {
@@ -2058,7 +2058,7 @@ class HoraeManager {
             const changes = chat[i]?.horae_meta?._rpgChanges;
             if (changes) this._mergeRpgData(changes);
         }
-        // 回填用户手动添加的技能
+        // 回填用戶手動添加的技能
         const rpg = first.horae_meta.rpg;
         for (const [owner, arr] of Object.entries(userSkills)) {
             if (!rpg.skills[owner]) rpg.skills[owner] = [];
@@ -2066,14 +2066,14 @@ class HoraeManager {
                 if (!rpg.skills[owner].some(s => s.name === sk.name)) rpg.skills[owner].push(sk);
             }
         }
-        // 过滤用户手动删除的技能
+        // 過濾用戶手動刪除的技能
         for (const del of deletedSkills) {
             if (rpg.skills[del.owner]) {
                 rpg.skills[del.owner] = rpg.skills[del.owner].filter(s => s.name !== del.name);
                 if (!rpg.skills[del.owner].length) delete rpg.skills[del.owner];
             }
         }
-        // 回填用户设置的声望细项（AI只写主数值，细项是纯用户数据）
+        // 回填用戶設定的聲望細項（AI只寫主數值，細項是純用戶數據）
         const deletedRepCats = new Set(rpg.reputationConfig?._deletedCategories || []);
         const validRepCats = new Set((rpg.reputationConfig?.categories || []).map(c => c.name));
         for (const [owner, cats] of Object.entries(oldReputation)) {
@@ -2089,7 +2089,7 @@ class HoraeManager {
         }
     }
 
-    /** 获取 RPG 全局数据（chat[0] 累积） */
+    /** 獲取 RPG 全域數據（chat[0] 累積） */
     getRpgData() {
         return this.getChat()?.[0]?.horae_meta?.rpg || {
             bars: {}, status: {}, skills: {}, attributes: {},
@@ -2101,8 +2101,8 @@ class HoraeManager {
     }
 
     /**
-     * 构建到指定消息位置的 RPG 快照（不修改 chat[0]）
-     * @param {number} skipLast - 跳过末尾N条消息（swipe时=1）
+     * 構建到指定訊息位置的 RPG 快照（不修改 chat[0]）
+     * @param {number} skipLast - 跳過末尾N條訊息（swipe時=1）
      */
     getRpgStateAt(skipLast = 0) {
         const chat = this.getChat();
@@ -2117,7 +2117,7 @@ class HoraeManager {
             currency: JSON.parse(JSON.stringify(rpgMeta.currency || {})),
         };
 
-        // 用户手动编辑的数据
+        // 用戶手動編輯的數據
         const userSkills = {};
         for (const [owner, arr] of Object.entries(rpgMeta.skills || {})) {
             const ua = (arr || []).filter(s => s._userAdded);
@@ -2129,11 +2129,11 @@ class HoraeManager {
             userAttrs[owner] = { ...vals };
         }
 
-        // 装备格位配置（提前获取，用于循环内校验 maxCount）
+        // 裝備格位配置（提前獲取，用於循環內校驗 maxCount）
         const _eqCfg = rpgMeta.equipmentConfig || { locked: false, perChar: {} };
         const _eqPerChar = _eqCfg.perChar || {};
 
-        // 从消息中累积属性（snapshot 是独立对象，不污染 chat[0]）
+        // 從訊息中累積屬性（snapshot 是獨立對象，不汙染 chat[0]）
         const _resolve = (raw) => this._resolveRpgOwner(raw);
         for (let i = 1; i < end; i++) {
             const changes = chat[i]?.horae_meta?._rpgChanges;
@@ -2179,7 +2179,7 @@ class HoraeManager {
                     }
                 }
             }
-            // 装备
+            // 裝備
             for (const u of (changes.unequip || [])) {
                 const owner = _resolve(u.owner);
                 if (!snapshot.equipment[owner]?.[u.slot]) continue;
@@ -2202,14 +2202,14 @@ class HoraeManager {
                     snapshot.equipment[owner][eq.slot].push({ name: eq.name, attrs: eq.attrs || {} });
                 }
             }
-            // 等级/经验
+            // 等級/經驗
             for (const [raw, val] of Object.entries(changes.levels || {})) {
                 snapshot.levels[_resolve(raw)] = val;
             }
             for (const [raw, val] of Object.entries(changes.xp || {})) {
                 snapshot.xp[_resolve(raw)] = val;
             }
-            // 货币（过滤已删除/未注册的币种）
+            // 貨幣（過濾已刪除/未註冊的幣種）
             const validDenoms = new Set(
                 (rpgMeta.currencyConfig?.denominations || []).map(d => d.name)
             );
@@ -2225,28 +2225,28 @@ class HoraeManager {
             }
         }
 
-        // 合入用户手动属性（AI数据优先覆盖）
+        // 合入用戶手動屬性（AI數據優先覆蓋）
         for (const [owner, vals] of Object.entries(userAttrs)) {
             if (!snapshot.attributes[owner]) snapshot.attributes[owner] = {};
             for (const [k, v] of Object.entries(vals)) {
                 if (snapshot.attributes[owner][k] === undefined) snapshot.attributes[owner][k] = v;
             }
         }
-        // 回填用户手动技能
+        // 回填用戶手動技能
         for (const [owner, arr] of Object.entries(userSkills)) {
             if (!snapshot.skills[owner]) snapshot.skills[owner] = [];
             for (const sk of arr) {
                 if (!snapshot.skills[owner].some(s => s.name === sk.name)) snapshot.skills[owner].push(sk);
             }
         }
-        // 过滤用户手动删除
+        // 過濾用戶手動刪除
         for (const del of deletedSkills) {
             if (snapshot.skills[del.owner]) {
                 snapshot.skills[del.owner] = snapshot.skills[del.owner].filter(s => s.name !== del.name);
                 if (!snapshot.skills[del.owner].length) delete snapshot.skills[del.owner];
             }
         }
-        // 声望：合入用户细项，过滤已删除分类
+        // 聲望：合入用戶細項，過濾已刪除分類
         const repConfig = rpgMeta.reputationConfig || { categories: [], _deletedCategories: [] };
         const validRepNames = new Set((repConfig.categories || []).map(c => c.name));
         const deletedRepNames = new Set(repConfig._deletedCategories || []);
@@ -2262,7 +2262,7 @@ class HoraeManager {
                 }
             }
         }
-        // 移除快照中已删除的声望分类
+        // 移除快照中已刪除的聲望分類
         for (const [owner, cats] of Object.entries(snapshot.reputation)) {
             for (const catName of Object.keys(cats)) {
                 if (deletedRepNames.has(catName) || !validRepNames.has(catName)) {
@@ -2272,7 +2272,7 @@ class HoraeManager {
             if (!Object.keys(cats).length) delete snapshot.reputation[owner];
         }
         snapshot.reputationConfig = repConfig;
-        // 装备：按角色过滤已删除格位
+        // 裝備：按角色過濾已刪除格位
         for (const [owner, slots] of Object.entries(snapshot.equipment)) {
             const ownerCfg = _eqPerChar[owner];
             if (!ownerCfg || !Array.isArray(ownerCfg.slots)) continue;
@@ -2286,12 +2286,12 @@ class HoraeManager {
             if (!Object.keys(slots).length) delete snapshot.equipment[owner];
         }
         snapshot.equipmentConfig = _eqCfg;
-        // 货币配置
+        // 貨幣配置
         snapshot.currencyConfig = rpgMeta.currencyConfig || { denominations: [] };
         return snapshot;
     }
 
-    /** 合并关系数据到 chat[0].horae_meta */
+    /** 合併關係數據到 chat[0].horae_meta */
     _mergeRelationships(newRels) {
         const chat = this.getChat();
         if (!chat?.length || !newRels?.length) return;
@@ -2311,13 +2311,13 @@ class HoraeManager {
         }
     }
 
-    /** 从所有消息重建 chat[0] 的关系网络（用于编辑/删除后回推） */
+    /** 從所有訊息重建 chat[0] 的關係網路（用於編輯/刪除後回推） */
     rebuildRelationships() {
         const chat = this.getChat();
         if (!chat?.length) return;
         const firstMsg = chat[0];
         if (!firstMsg.horae_meta) firstMsg.horae_meta = createEmptyMeta();
-        // 保留用户手动编辑的关系，其余重建
+        // 保留用戶手動編輯的關係，其餘重建
         const userEdited = (firstMsg.horae_meta.relationships || []).filter(r => r._userEdited);
         firstMsg.horae_meta.relationships = [...userEdited];
         for (let i = 1; i < chat.length; i++) {
@@ -2326,7 +2326,7 @@ class HoraeManager {
         }
     }
 
-    /** 从所有消息重建 chat[0] 的场景记忆（用于编辑/删除/重新生成后回推） */
+    /** 從所有訊息重建 chat[0] 的場景記憶（用於編輯/刪除/重新生成後回推） */
     rebuildLocationMemory() {
         const chat = this.getChat();
         if (!chat?.length) return;
@@ -2335,7 +2335,7 @@ class HoraeManager {
         const existing = firstMsg.horae_meta.locationMemory || {};
         const rebuilt = {};
         const deletedNames = new Set();
-        // 保留用户手动创建/编辑的条目，记录已删除的条目
+        // 保留用戶手動建立/編輯的條目，記錄已刪除的條目
         for (const [name, info] of Object.entries(existing)) {
             if (info._deleted) {
                 deletedNames.add(name);
@@ -2344,7 +2344,7 @@ class HoraeManager {
             }
             if (info._userEdited) rebuilt[name] = { ...info };
         }
-        // 从消息重放 AI 写入的 scene_desc（按时间顺序，后覆盖前），跳过已删除/用户编辑的
+        // 從訊息重放 AI 寫入的 scene_desc（按時間順序，後覆蓋前），跳過已刪除/用戶編輯的
         for (let i = 1; i < chat.length; i++) {
             const meta = chat[i]?.horae_meta;
             const pairs = meta?.scene?._descPairs;
@@ -2377,7 +2377,7 @@ class HoraeManager {
         return chat?.[0]?.horae_meta?.relationships || [];
     }
 
-    /** 设置关系网络（用户手动编辑时） */
+    /** 設定關係網路（用戶手動編輯時） */
     setRelationships(relationships) {
         const chat = this.getChat();
         if (!chat?.length) return;
@@ -2386,7 +2386,7 @@ class HoraeManager {
         firstMsg.horae_meta.relationships = relationships;
     }
 
-    /** 获取指定角色相关的关系（无在场角色时返回空数组） */
+    /** 獲取指定角色相關的關係（無在場角色時返回空數組） */
     getRelationshipsForCharacters(charNames) {
         if (!charNames?.length) return [];
         const rels = this.getRelationships();
@@ -2394,14 +2394,14 @@ class HoraeManager {
         return rels.filter(r => nameSet.has(r.from) || nameSet.has(r.to));
     }
 
-    /** 全局删除已完成的待办事项 */
+    /** 全域刪除已完成的待辦事項 */
     removeCompletedAgenda(deletedTexts) {
         const chat = this.getChat();
         if (!chat || deletedTexts.length === 0) return;
 
         const isMatch = (agendaText, deleteText) => {
             if (!agendaText || !deleteText) return false;
-            // 精确匹配 或 互相包含（允许AI缩写/扩写）
+            // 精確配對 或 互相包含（允許AI縮寫/擴寫）
             return agendaText === deleteText ||
                    agendaText.includes(deleteText) ||
                    deleteText.includes(agendaText);
@@ -2422,7 +2422,7 @@ class HoraeManager {
         }
     }
 
-    /** 写入/更新场景记忆到 chat[0] */
+    /** 寫入/更新場景記憶到 chat[0] */
     _updateLocationMemory(locationName, desc) {
         const chat = this.getChat();
         if (!chat?.length || !locationName || !desc) return;
@@ -2432,7 +2432,7 @@ class HoraeManager {
         const mem = firstMsg.horae_meta.locationMemory;
         const now = new Date().toISOString();
 
-        // 子级地点去重：若子级描述的"位于"部分重复了父级的地理信息，则自动缩减
+        // 子級地點去重：若子級描述的"位於"部分重複了父級的地理資訊，則自動縮減
         const sepMatch = locationName.match(/[·・\-\/\|]/);
         if (sepMatch) {
             const parentName = locationName.substring(0, sepMatch.index).trim();
@@ -2449,19 +2449,19 @@ class HoraeManager {
         } else {
             mem[locationName] = { desc, firstSeen: now, lastUpdated: now };
         }
-        console.log(`[Horae] 场景记忆已更新: ${locationName}`);
+        console.log(`[Horae] 場景記憶已更新: ${locationName}`);
     }
 
     /**
-     * 子级描述去重：检测子级描述是否包含父级的地理位置信息，若包含则替换为相对位置
+     * 子級描述去重：檢測子級描述是否包含父級的地理位置資訊，若包含則替換為相對位置
      */
     _deduplicateChildDesc(childDesc, parentDesc, parentName) {
         if (!childDesc || !parentDesc) return childDesc;
-        // 提取父级的"位于"部分
+        // 提取父級的"位於"部分
         const parentLocMatch = parentDesc.match(/^位于(.+?)[。\.]/);
         if (!parentLocMatch) return childDesc;
         const parentLocInfo = parentLocMatch[1].trim();
-        // 若子级描述也包含父级的地理位置关键词（超过一半的字重合），则认为冗余
+        // 若子級描述也包含父級的地理位置關鍵詞（超過一半的字重合），則認為冗餘
         const parentKeywords = parentLocInfo.replace(/[，,、的]/g, ' ').split(/\s+/).filter(k => k.length >= 2);
         if (parentKeywords.length === 0) return childDesc;
         const childLocMatch = childDesc.match(/^位于(.+?)[。\.]/);
@@ -2471,24 +2471,24 @@ class HoraeManager {
         for (const kw of parentKeywords) {
             if (childLocInfo.includes(kw)) matchCount++;
         }
-        // 超过一半关键词重合，判定子级抄了父级地理位置
+        // 超過一半關鍵詞重合，判定子級抄了父級地理位置
         if (matchCount >= Math.ceil(parentKeywords.length / 2)) {
             const shortName = parentName.length > 4 ? parentName.substring(0, 4) + '…' : parentName;
             const restDesc = childDesc.substring(childLocMatch[0].length).trim();
-            return `位于${shortName}内。${restDesc}`;
+            return `位於${shortName}內。${restDesc}`;
         }
         return childDesc;
     }
 
-    /** 获取场景记忆 */
+    /** 獲取場景記憶 */
     getLocationMemory() {
         const chat = this.getChat();
         return chat?.[0]?.horae_meta?.locationMemory || {};
     }
 
     /**
-     * 智能匹配场景记忆（复合地名支持）
-     * 优先级：精确匹配 → 拆分回退父级 → 上下文推断 → 放弃
+     * 智慧配對場景記憶（複合地名支援）
+     * 優先級：精確配對 → 拆分回退父級 → 上下文推斷 → 放棄
      */
     _findLocationMemory(currentLocation, locMem, previousLocation = '') {
         if (!currentLocation || !locMem || Object.keys(locMem).length === 0) return null;
@@ -2497,7 +2497,7 @@ class HoraeManager {
 
         if (locMem[currentLocation]) return tag(currentLocation);
 
-        // 曾用名匹配：检查所有条目的 _aliases 数组
+        // 曾用名配對：檢查所有條目的 _aliases 數組
         for (const [name, info] of Object.entries(locMem)) {
             if (info._aliases?.includes(currentLocation)) return tag(name);
         }
@@ -2529,8 +2529,8 @@ class HoraeManager {
     }
 
     /**
-     * 获取全局表格的当前卡片数据（per-card overlay）
-     * 全局表格的结构（表头、名称、提示词、锁定）共享，数据按角色卡分离
+     * 獲取全域表格的目前卡片數據（per-card overlay）
+     * 全域表格的結構（表頭、名稱、提示詞、鎖定）共享，數據按角色卡分離
      */
     _getResolvedGlobalTables() {
         const templates = this.settings?.globalTables || [];
@@ -2548,7 +2548,7 @@ class HoraeManager {
             if (!name) continue;
 
             if (!perCardData[name]) {
-                // 首次在此卡使用：从模板初始化（含迁移旧数据）
+                // 首次在此卡使用：從模範初始化（含遷移舊數據）
                 const initData = JSON.parse(JSON.stringify(template.data || {}));
                 perCardData[name] = {
                     data: initData,
@@ -2559,7 +2559,7 @@ class HoraeManager {
                     baseCols: template.cols || 2,
                 };
             } else {
-                // 同步全局模板的表头到 per-card（用户可能在别处改了表头）
+                // 同步全域模範的表頭到 per-card（用戶可能在別處改了表頭）
                 const templateData = template.data || {};
                 for (const key of Object.keys(templateData)) {
                     const [r, c] = key.split('-').map(Number);
@@ -2587,17 +2587,17 @@ class HoraeManager {
         return result;
     }
 
-    /** 处理AI回复，解析标签并存储元数据 */
+    /** 處理AI回覆，解析標籤並存儲元數據 */
     processAIResponse(messageIndex, messageContent) {
-        // 根据用户配置的剔除标签，整块移除小剧场等自定义区块，防止其内部的 horae 标签污染正文解析
+        // 根據用戶配置的剔除標籤，整塊移除小劇場等客製化區塊，防止其內部的 horae 標籤汙染正文解析
         const cleanedContent = this._stripCustomTags(messageContent, this.settings?.vectorStripTags);
         let parsed = this.parseHoraeTag(cleanedContent);
         
-        // 标签解析失败时，自动 fallback 到宽松格式解析
+        // 標籤解析失敗時，自動 fallback 到寬鬆格式解析
         if (!parsed) {
             parsed = this.parseLooseFormat(cleanedContent);
             if (parsed) {
-                console.log(`[Horae] #${messageIndex} 未检测到标签，已通过宽松解析提取数据`);
+                console.log(`[Horae] #${messageIndex} 未檢測到標籤，已透過寬鬆解析提取數據`);
             }
         }
         
@@ -2605,20 +2605,20 @@ class HoraeManager {
             const existingMeta = this.getMessageMeta(messageIndex);
             const newMeta = this.mergeParsedToMeta(existingMeta, parsed);
             
-            // 处理表格更新
+            // 處理表格更新
             if (newMeta._tableUpdates) {
-                // 记录表格贡献，用于回退
+                // 記錄表格貢獻，用於回退
                 newMeta.tableContributions = newMeta._tableUpdates;
                 this.applyTableUpdates(newMeta._tableUpdates);
                 delete newMeta._tableUpdates;
             }
             
-            // 处理AI标记已完成的待办
+            // 處理AI標記已完成的待辦
             if (parsed.deletedAgenda && parsed.deletedAgenda.length > 0) {
                 this.removeCompletedAgenda(parsed.deletedAgenda);
             }
 
-            // 场景记忆：将 scene_desc 存入 locationMemory（支持同一回复多场景配对）
+            // 場景記憶：將 scene_desc 存入 locationMemory（支援同一回覆多場景配對）
             const descPairs = parsed.scene?._descPairs;
             if (descPairs?.length > 0) {
                 for (const p of descPairs) {
@@ -2628,20 +2628,20 @@ class HoraeManager {
                 this._updateLocationMemory(parsed.scene.location, parsed.scene.scene_desc);
             }
             
-            // 关系网络：合并到 chat[0].horae_meta.relationships
+            // 關係網路：合併到 chat[0].horae_meta.relationships
             if (parsed.relationships && parsed.relationships.length > 0) {
                 this._mergeRelationships(parsed.relationships);
             }
             
             this.setMessageMeta(messageIndex, newMeta);
             
-            // RPG 数据：合并到 chat[0].horae_meta.rpg
+            // RPG 數據：合併到 chat[0].horae_meta.rpg
             if (newMeta._rpgChanges) {
                 this._mergeRpgData(newMeta._rpgChanges);
             }
             return true;
         } else {
-            // 无标签，创建空元数据
+            // 無標籤，建立空元數據
             if (!this.getMessageMeta(messageIndex)) {
                 this.setMessageMeta(messageIndex, createEmptyMeta());
             }
@@ -2650,16 +2650,16 @@ class HoraeManager {
     }
 
     /**
-     * 解析NPC字段
-     * 格式: 名|外貌=性格@关系~性别:男~年龄:25~种族:人类~职业:佣兵~补充:xxx
+     * 解析NPC資料欄
+     * 格式: 名|外貌=個性@關係~性別:男~年齡:25~種族:人類~職業:傭兵~補充:xxx
      */
     _parseNpcFields(npcStr) {
         const info = {};
         if (!npcStr) return { _name: '' };
         
-        // 1. 分离扩展字段
+        // 1. 分離擴展資料欄
         const tildeParts = npcStr.split('~');
-        const mainPart = tildeParts[0].trim(); // 名|外貌=性格@关系
+        const mainPart = tildeParts[0].trim(); // 名|外貌=個性@關係
         
         for (let i = 1; i < tildeParts.length; i++) {
             const kv = tildeParts[i].trim();
@@ -2670,7 +2670,7 @@ class HoraeManager {
             const value = kv.substring(colonIdx + 1).trim();
             if (!value) continue;
             
-            // 关键词匹配
+            // 關鍵詞配對
             if (/^(性别|gender|sex)$/i.test(key)) info.gender = value;
             else if (/^(年龄|age|年纪)$/i.test(key)) info.age = value;
             else if (/^(种族|race|族裔|族群)$/i.test(key)) info.race = value;
@@ -2679,7 +2679,7 @@ class HoraeManager {
             else if (/^(补充|note|备注|其他)$/i.test(key)) info.note = value;
         }
         
-        // 2. 解析主体
+        // 2. 解析主體
         let name = '';
         const pipeIdx = mainPart.indexOf('|');
         if (pipeIdx > 0) {
@@ -2715,8 +2715,8 @@ class HoraeManager {
     }
 
     /**
-     * 解析表格单元格数据
-     * 格式: 每行一格 1,1:内容 或 单行多格用 | 分隔
+     * 解析表格單元格數據
+     * 格式: 每行一格 1,1:內容 或 單行多格用 | 分隔
      */
     _parseTableCellEntries(text) {
         const updates = {};
@@ -2740,7 +2740,7 @@ class HoraeManager {
                     const r = parseInt(m[1]);
                     const c = parseInt(m[2]);
                     const value = m[3].trim();
-                    // 过滤空标记
+                    // 過濾空標記
                     if (value && !/^[\(\（]?空[\)\）]?$/.test(value) && !/^[-—]+$/.test(value)) {
                         updates[`${r}-${c}`] = value;
                     }
@@ -2751,7 +2751,7 @@ class HoraeManager {
         return updates;
     }
 
-    /** 将表格更新写入 chat[0]（本地表格）或 per-card overlay（全局表格） */
+    /** 將表格更新寫入 chat[0]（本地表格）或 per-card overlay（全域表格） */
     applyTableUpdates(tableUpdates) {
         if (!tableUpdates || tableUpdates.length === 0) return;
 
@@ -2774,7 +2774,7 @@ class HoraeManager {
                 isGlobal = true;
             }
             if (!table) {
-                console.warn(`[Horae] 表格 "${updateName}" 不存在，跳过`);
+                console.warn(`[Horae] 表格 "${updateName}" 不存在，跳過`);
                 continue;
             }
 
@@ -2783,7 +2783,7 @@ class HoraeManager {
             const lockedCols = new Set(table.lockedCols || []);
             const lockedCells = new Set(table.lockedCells || []);
 
-            // 用户编辑快照：先清除所有数据单元格再整体写入
+            // 用戶編輯快照：先清除所有數據單元格再整體寫入
             if (update._isUserEdit) {
                 for (const key of Object.keys(table.data)) {
                     const [r, c] = key.split('-').map(Number);
@@ -2797,7 +2797,7 @@ class HoraeManager {
             for (const [key, value] of Object.entries(update.updates)) {
                 const [r, c] = key.split('-').map(Number);
 
-                // 用户编辑不受 header 保护和锁定限制
+                // 用戶編輯不受 header 保護和鎖定限制
                 if (!update._isUserEdit) {
                     if (r === 0 || c === 0) {
                         const existing = table.data[key];
@@ -2817,7 +2817,7 @@ class HoraeManager {
                 if (c + 1 > (table.cols || 2)) table.cols = c + 1;
             }
 
-            // 全局表格：将维度变更同步回 per-card overlay
+            // 全域表格：將維度變更同步回 per-card overlay
             if (isGlobal) {
                 const perCardData = firstMsg.horae_meta?.globalTableData;
                 if (perCardData?.[updateName]) {
@@ -2827,13 +2827,13 @@ class HoraeManager {
             }
 
             if (blockedCount > 0) {
-                console.log(`[Horae] 表格 "${updateName}" 拦截 ${blockedCount} 个锁定单元格的修改`);
+                console.log(`[Horae] 表格 "${updateName}" 攔截 ${blockedCount} 個鎖定單元格的修改`);
             }
-            console.log(`[Horae] 表格 "${updateName}" 已更新 ${updatedCount} 个单元格`);
+            console.log(`[Horae] 表格 "${updateName}" 已更新 ${updatedCount} 個單元格`);
         }
     }
 
-    /** 重建表格数据（消息删除/编辑后保持一致性） */
+    /** 重建表格數據（訊息刪除/編輯後保持一致性） */
     rebuildTableData(maxIndex = -1) {
         const chat = this.getChat();
         if (!chat || chat.length === 0) return;
@@ -2841,7 +2841,7 @@ class HoraeManager {
         const firstMsg = chat[0];
         const limit = maxIndex >= 0 ? Math.min(maxIndex + 1, chat.length) : chat.length;
 
-        // 辅助：重置单个表格到 baseData
+        // 輔助：重置單個表格到 baseData
         const resetTable = (table) => {
             if (table.baseData) {
                 table.data = JSON.parse(JSON.stringify(table.baseData));
@@ -2877,13 +2877,13 @@ class HoraeManager {
             resetTable(table);
         }
 
-        // 1b. 重置全局表格的 per-card overlay
+        // 1b. 重置全域表格的 per-card overlay
         const perCardData = firstMsg.horae_meta?.globalTableData || {};
         for (const overlay of Object.values(perCardData)) {
             resetTable(overlay);
         }
         
-        // 2. 预扫描：找到每个表格最后一个 _isUserEdit 所在的消息索引
+        // 2. 預掃描：找到每個表格最後一個 _isUserEdit 所在的訊息索引
         const lastUserEditIdx = new Map();
         for (let i = 0; i < limit; i++) {
             const meta = chat[i]?.horae_meta;
@@ -2896,8 +2896,8 @@ class HoraeManager {
             }
         }
 
-        // 3. 按消息顺序回放 tableContributions（截断到 limit）
-        // 防御：如果某表格存在用户编辑快照，跳过该快照之前的所有 AI 贡献
+        // 3. 按訊息順序重播 tableContributions（截斷到 limit）
+        // 防禦：如果某表格存在用戶編輯快照，跳過該快照之前的所有 AI 貢獻
         let totalApplied = 0;
         for (let i = 0; i < limit; i++) {
             const meta = chat[i]?.horae_meta;
@@ -2916,16 +2916,16 @@ class HoraeManager {
             }
         }
         
-        console.log(`[Horae] 表格数据已重建，回放了 ${totalApplied} 条消息的表格贡献（截止到#${limit - 1}）`);
+        console.log(`[Horae] 表格數據已重建，重播了 ${totalApplied} 條訊息的表格貢獻（截止到#${limit - 1}）`);
     }
 
-    /** 扫描并注入历史记录 */
+    /** 掃描並注入歷史記錄 */
     async scanAndInjectHistory(progressCallback, analyzeCallback = null) {
         const chat = this.getChat();
         let processed = 0;
         let skipped = 0;
 
-        // 需要在覆写 meta 时保留的全局/摘要相关字段
+        // 需要在覆寫 meta 時保留的全域/摘要相關資料欄
         const PRESERVE_KEYS = [
             'autoSummaries', 'customTables', 'globalTableData',
             'locationMemory', 'relationships', 'tableContributions'
@@ -2942,7 +2942,7 @@ class HoraeManager {
                 continue;
             }
 
-            // 跳过已有元数据
+            // 跳過已有元數據
             const hasEvents = message.horae_meta?.events?.length > 0 || message.horae_meta?.event?.summary;
             if (message.horae_meta && (
                 message.horae_meta.timestamp?.story_date ||
@@ -2956,14 +2956,14 @@ class HoraeManager {
                 continue;
             }
 
-            // 保留已有 meta 上的全局数据和事件标记
+            // 保留已有 meta 上的全域數據和事件標記
             const existing = message.horae_meta;
             const preserved = {};
             if (existing) {
                 for (const key of PRESERVE_KEYS) {
                     if (existing[key] !== undefined) preserved[key] = existing[key];
                 }
-                // 保留事件上的摘要标记（_compressedBy / _summaryId）
+                // 保留事件上的摘要標記（_compressedBy / _summaryId）
                 if (existing.events?.length > 0) preserved._existingEvents = existing.events;
             }
 
@@ -2975,7 +2975,7 @@ class HoraeManager {
                     meta.tableContributions = meta._tableUpdates;
                     delete meta._tableUpdates;
                 }
-                // 恢复保留字段
+                // 恢復保留資料欄
                 Object.assign(meta, preserved);
                 delete meta._existingEvents;
                 this.setMessageMeta(i, meta);
@@ -2995,7 +2995,7 @@ class HoraeManager {
                         processed++;
                     }
                 } catch (error) {
-                    console.error(`[Horae] 分析消息 #${i} 失败:`, error);
+                    console.error(`[Horae] 分析訊息 #${i} 失敗:`, error);
                 }
             } else {
                 const meta = createEmptyMeta();
@@ -3024,364 +3024,364 @@ class HoraeManager {
             return custom + this.generateLocationMemoryPrompt() + this.generateCustomTablesPrompt() + this.generateRelationshipPrompt() + this.generateMoodPrompt() + this.generateRpgPrompt();
         }
         
-        const sceneDescLine = this.settings?.sendLocationMemory ? '\nscene_desc:地点固定物理特征（见场景记忆规则，触发时才写）' : '';
-        const relLine = this.settings?.sendRelationships ? '\nrel:角色A>角色B=关系类型|备注（见关系网络规则，触发时才写）' : '';
-        const moodLine = this.settings?.sendMood ? '\nmood:角色名=情绪/心理状态（见情绪追踪规则，触发时才写）' : '';
+        const sceneDescLine = this.settings?.sendLocationMemory ? '\nscene_desc:地點固定物理特徵（見場景記憶規則，觸發時才寫）' : '';
+        const relLine = this.settings?.sendRelationships ? '\nrel:角色A>角色B=關係類型|備註（見關係網路規則，觸發時才寫）' : '';
+        const moodLine = this.settings?.sendMood ? '\nmood:角色名=情緒/心理狀態（見情緒追蹤規則，觸發時才寫）' : '';
         return `
-【Horae记忆系统】（以下示例仅为示范，勿直接原句用于正文！）
+【Horae記憶系統】（以下示例僅為示範，勿直接原句用於正文！）
 
-═══ 核心原则：变化驱动 ═══
-★★★ 在写<horae>标签前，先判断本回合哪些信息发生了实质变化 ★★★
-  ① 场景基础（time/location/characters/costume）→ 每回合必填
-  ② 其他所有字段 → 严格遵守各自的【触发条件】，无变化则完全不写该行
-  ③ 已记录的NPC/物品若无新信息 → 禁止输出！重复输出无变化的数据=浪费token
-  ④ 部分字段变化 → 使用增量更新，只写变化的部分
-  ⑤ NPC首次出场 → npc:和affection:两行都必须写！
+═══ 核心原則：變化驅動 ═══
+★★★ 在寫<horae>標籤前，先判斷本回合哪些資訊發生了實質變化 ★★★
+  ① 場景基礎（time/location/characters/costume）→ 每回合必填
+  ② 其他所有資料欄 → 嚴格遵守各自的【觸發條件】，無變化則完全不寫該行
+  ③ 已記錄的NPC/物品若無新資訊 → 禁止輸出！重複輸出無變化的數據=浪費token
+  ④ 部分資料欄變化 → 使用增量更新，只寫變化的部分
+  ⑤ NPC首次出場 → npc:和affection:兩行都必須寫！
 
-═══ 标签格式 ═══
-每次回复末尾必须写入两个标签：
+═══ 標籤格式 ═══
+每次回覆末尾必須寫入兩個標籤：
 <horae>
-time:日期 时间（必填）
-location:地点（必填。多级地点用·分隔，如「酒馆·大厅」「皇宫·王座间」。同一地点每次必须使用完全一致的名称）
-atmosphere:氛围${sceneDescLine}
-characters:在场角色名,逗号分隔（必填）
-costume:角色名=服装描述（必填，每人一行，禁止分号合并）
-item/item!/item!!:见物品规则（触发时才写）
-item-:物品名（物品消耗/丢失时删除。见物品规则，触发时才写）
-affection:角色名=好感度（★NPC首次出场必填初始值！之后仅好感变化时更新）
-npc:角色名|外貌=性格@关系~扩展字段（★NPC首次出场必填完整信息！之后仅变化时更新）
-agenda:日期|内容（新待办触发时才写）
-agenda-:内容关键词（待办已完成/失效时才写，系统自动移除匹配的待办）${relLine}${moodLine}
+time:日期 時間（必填）
+location:地點（必填。多級地點用·分隔，如「酒館·大廳」「皇宮·王座間」。同一地點每次必須使用完全一致的名稱）
+atmosphere:氛圍${sceneDescLine}
+characters:在場角色名,逗號分隔（必填）
+costume:角色名=服裝描述（必填，每人一行，禁止分號合併）
+item/item!/item!!:見物品規則（觸發時才寫）
+item-:物品名（物品消耗/遺失時刪除。見物品規則，觸發時才寫）
+affection:角色名=好感度（★NPC首次出場必填初始值！之後僅好感變化時更新）
+npc:角色名|外貌=個性@關係~擴展資料欄（★NPC首次出場必填完整資訊！之後僅變化時更新）
+agenda:日期|內容（新待辦觸發時才寫）
+agenda-:內容關鍵詞（待辦已完成/失效時才寫，系統自動移除配對的待辦）${relLine}${moodLine}
 </horae>
 <horaeevent>
-event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键，记录本条消息中的事件摘要，用于剧情追溯）
+event:重要程度|事件簡述（30-50字，重要程度：一般/重要/關鍵，記錄本條訊息中的事件摘要，用於劇情追溯）
 </horaeevent>
 
-═══ 【物品】触发条件与规则 ═══
-参照[物品清单]中的编号(#ID)，严格按以下条件决定是否输出。
+═══ 【物品】觸發條件與規則 ═══
+參照[物品清單]中的編號(#ID)，嚴格按以下條件決定是否輸出。
 
-【何时写】（满足任一条件才输出）
-  ✦ 获得新物品 → item:/item!:/item!!:
-  ✦ 已有物品的数量/归属/位置/性质发生改变 → item:（仅写变化部分）
-  ✦ 物品消耗/丢失/用完 → item-:物品名
-【何时不写】
-  ✗ 物品无任何变化 → 禁止输出任何item行
-  ✗ 物品仅被提及但无状态改变 → 不写
+【何時寫】（滿足任一條件才輸出）
+  ✦ 獲得新物品 → item:/item!:/item!!:
+  ✦ 已有物品的數量/歸屬/位置/性質發生改變 → item:（僅寫變化部分）
+  ✦ 物品消耗/遺失/用完 → item-:物品名
+【何時不寫】
+  ✗ 物品無任何變化 → 禁止輸出任何item行
+  ✗ 物品僅被提及但無狀態改變 → 不寫
 
 【格式】
-  新获得：item:emoji物品名(数量)|描述=持有者@精确位置（可省略描述字段。除非该物品有特殊含意，如礼物、纪念品，则添加描述）
-  新获得(重要)：item!:emoji物品名(数量)|描述=持有者@精确位置（重要物品，描述必填：外观+功能+来源）
-  新获得(关键)：item!!:emoji物品名(数量)|描述=持有者@精确位置（关键道具，描述必须详细）
-  已有物品变化：item:emoji物品名(新数量)=新持有者@新位置（仅更新变化的部分，不写|则保留原描述）
-  消耗/丢失：item-:物品名
+  新獲得：item:emoji物品名(數量)|描述=持有者@精確位置（可省略描述資料欄。除非該物品有特殊含意，如禮物、紀念品，則添加描述）
+  新獲得(重要)：item!:emoji物品名(數量)|描述=持有者@精確位置（重要物品，描述必填：外觀+功能+來源）
+  新獲得(關鍵)：item!!:emoji物品名(數量)|描述=持有者@精確位置（關鍵道具，描述必須詳細）
+  已有物品變化：item:emoji物品名(新數量)=新持有者@新位置（僅更新變化的部分，不寫|則保留原描述）
+  消耗/遺失：item-:物品名
 
-【字段级规则】
-  · 描述：记录物品本质属性（外观/功能/来源），普通物品可省略，重要/关键物品首次必填
-    ★ 外观特征（颜色、材质、大小等，便于后续一致性描写）
+【資料欄級規則】
+  · 描述：記錄物品本質屬性（外觀/功能/來源），普通物品可省略，重要/關鍵物品首次必填
+    ★ 外觀特徵（顏色、材質、大小等，便於後續一致性描寫）
     ★ 功能/用途
-    ★ 来源（谁给的/如何获得）
-       - 示例（以下内容中若有示例仅为示范，勿直接原句用于正文！）：
-         - 示例1：item!:🌹永生花束|深红色玫瑰永生花，黑色缎带束扎，C赠送给U的情人节礼物=U@U房间书桌上
-         - 示例2：item!:🎫幸运十连抽券|闪着金光的纸质奖券，可在系统奖池进行一次十连抽的新手福利=U@空间戒指
-         - 示例3：item!!:🏧位面货币自动兑换机|看起来像个小型的ATM机，能按即时汇率兑换各位面货币=U@酒馆吧台
-  · 数量：单件不写(1)/(1个)/(1把)等，只有计量单位才写括号如(5斤)(1L)(1箱)
-  · 位置：必须是精确固定地点
-    ❌ 某某人身前地上、某某人脚边、某某人旁边、地板、桌子上
-    ✅ 酒馆大厅地板、餐厅吧台上、家中厨房、背包里、U的房间桌子上
-  · 禁止将固定家具和建筑设施计入物品
-  · 临时借用≠归属转移
+    ★ 來源（誰給的/如何獲得）
+       - 示例（以下內容中若有示例僅為示範，勿直接原句用於正文！）：
+         - 示例1：item!:🌹永生花束|深紅色玫瑰永生花，黑色緞帶束扎，C贈送給U的情人節禮物=U@U房間書桌上
+         - 示例2：item!:🎫幸運十連抽券|閃著金光的紙質獎券，可在系統獎池進行一次十連抽的新手福利=U@空間戒指
+         - 示例3：item!!:🏧位面貨幣自動兌換機|看起來像個小型的ATM機，能按即時匯率兌換各位面貨幣=U@酒館吧檯
+  · 數量：單件不寫(1)/(1個)/(1把)等，只有計量組織才寫括號如(5斤)(1L)(1箱)
+  · 位置：必須是精確固定地點
+    ❌ 某某人身前地上、某某人腳邊、某某人旁邊、地板、桌子上
+    ✅ 酒館大廳地板、餐廳吧檯上、家中廚房、揹包裡、U的房間桌子上
+  · 禁止將固定傢俱和建築設施計入物品
+  · 臨時借用≠歸屬轉移
 
 
-示例（麦酒生命周期）：
-  获得：item:🍺陈酿麦酒(50L)|杂物间翻出的麦酒，口感酸涩=U@酒馆后厨食材柜
-  量变：item:🍺陈酿麦酒(25L)=U@酒馆后厨食材柜
-  用完：item-:陈酿麦酒
+示例（麥酒生命週期）：
+  獲得：item:🍺陳釀麥酒(50L)|雜物間翻出的麥酒，口感酸澀=U@酒館後廚食材櫃
+  量變：item:🍺陳釀麥酒(25L)=U@酒館後廚食材櫃
+  用完：item-:陳釀麥酒
 
-═══ 【NPC】触发条件与规则 ═══
-格式：npc:名|外貌=性格@与${userName}的关系~性别:值~年龄:值~种族:值~职业:值~生日:值
-分隔符：| 分名字，= 分外貌与性格，@ 分关系，~ 分扩展字段(key:value)
+═══ 【NPC】觸發條件與規則 ═══
+格式：npc:名|外貌=個性@與${userName}的關係~性別:值~年齡:值~種族:值~職業:值~生日:值
+分隔符：| 分名字，= 分外貌與個性，@ 分關係，~ 分擴展資料欄(key:value)
 
-【何时写】（满足任一条件才输出该NPC的npc:行）
-  ✦ 首次出场 → 完整格式，全部字段+全部~扩展字段（性别/年龄/种族/职业），缺一不可
-  ✦ 外貌永久变化（如受伤留疤、换了发型、穿戴改变）→ 只写外貌字段
-  ✦ 性格发生转变（如经历重大事件后性格改变）→ 只写性格字段
-  ✦ 与${userName}的关系定位改变（如从客人变成朋友）→ 只写关系字段
-  ✦ 获得关于该NPC的新信息（之前不知道的身高/体重等）→ 追加到对应字段
-  ✦ ~扩展字段本身发生变化（如职业变了）→ 只写变化的~扩展字段
-【何时不写】
-  ✗ NPC在场但无新信息 → 禁止写npc:行
-  ✗ NPC暂时离场后回来，信息无变化 → 禁止重写
-  ✗ 想用同义词/缩写重写已有描述 → 严禁！
-    ❌ "肌肉发达/满身战斗伤痕"→"肌肉强壮/伤疤"（换词≠更新）
-    ✅ "肌肉发达/满身战斗伤痕/重伤"→"肌肉发达/满身战斗伤痕"（伤愈，移除过时状态）
+【何時寫】（滿足任一條件才輸出該NPC的npc:行）
+  ✦ 首次出場 → 完整格式，全部資料欄+全部~擴展資料欄（性別/年齡/種族/職業），缺一不可
+  ✦ 外貌永久變化（如受傷留疤、換了髮型、穿戴改變）→ 只寫外貌資料欄
+  ✦ 個性發生轉變（如經歷重大事件後個性改變）→ 只寫個性資料欄
+  ✦ 與${userName}的關係定位改變（如從客人變成朋友）→ 只寫關係資料欄
+  ✦ 獲得關於該NPC的新資訊（之前不知道的身高/體重等）→ 追加到對應資料欄
+  ✦ ~擴展資料欄本身發生變化（如職業變了）→ 只寫變化的~擴展資料欄
+【何時不寫】
+  ✗ NPC在場但無新資訊 → 禁止寫npc:行
+  ✗ NPC暫時離場後回來，資訊無變化 → 禁止重寫
+  ✗ 想用同義詞/縮寫重寫已有描述 → 嚴禁！
+    ❌ "肌肉發達/滿身戰鬥傷痕"→"肌肉強壯/傷疤"（換詞≠更新）
+    ✅ "肌肉發達/滿身戰鬥傷痕/重傷"→"肌肉發達/滿身戰鬥傷痕"（傷愈，移除過時狀態）
 
-【增量更新示例】（以NPC沃尔为例）
-  首次：npc:沃尔|银灰色披毛/绿眼睛/身高220cm/满身战斗伤痕=沉默寡言的重装佣兵@${userName}的第一个客人~性别:男~年龄:约35~种族:狼兽人~职业:佣兵
-  只更新关系：npc:沃尔|=@${userName}的男朋友
-  只追加外貌：npc:沃尔|银灰色披毛/绿眼睛/身高220cm/满身战斗伤痕/左臂绷带
-  只更新性格：npc:沃尔|=不再沉默/偶尔微笑
-  只改职业：npc:沃尔|~职业:退役佣兵
-（注意：未变化的字段和~扩展字段完全不写！系统自动保留原有数据！）
+【增量更新示例】（以NPC沃爾為例）
+  首次：npc:沃爾|銀灰色披毛/綠眼睛/身高220cm/滿身戰鬥傷痕=沉默寡言的重裝傭兵@${userName}的第一個客人~性別:男~年齡:約35~種族:狼獸人~職業:傭兵
+  只更新關係：npc:沃爾|=@${userName}的男朋友
+  只追加外貌：npc:沃爾|銀灰色披毛/綠眼睛/身高220cm/滿身戰鬥傷痕/左臂繃帶
+  只更新個性：npc:沃爾|=不再沉默/偶爾微笑
+  只改職業：npc:沃爾|~職業:退役傭兵
+（注意：未變化的資料欄和~擴展資料欄完全不寫！系統自動保留原有數據！）
 
-【生日字段（可选扩展字段）】
-  格式：~生日:yyyy/mm/dd 或 ~生日:mm/dd（无年份时仅写月日）
-  ⚠ 仅当角色设定/人物描述中明确提及生日日期时才写！严禁猜测或捏造！
-  ⚠ 没有明确出处的生日一律不写此字段——留空由用户自行填写。
+【生日資料欄（可選擴展資料欄）】
+  格式：~生日:yyyy/mm/dd 或 ~生日:mm/dd（無年份時僅寫月日）
+  ⚠ 僅當角色設定/人物描述中明確提及生日日期時才寫！嚴禁猜測或捏造！
+  ⚠ 沒有明確出處的生日一律不寫此資料欄——留空由用戶自行填寫。
 
-【关系描述规范】
-  必须包含对象名且准确：❌客人 ✅${userName}的新访客 / ❌债主 ✅持有${userName}欠条的人 / ❌房东 ✅${userName}的房东 / ❌男朋友 ✅${userName}的男朋友 / ❌恩人 ✅救了${userName}一命的人 / ❌霸凌者 ✅欺负${userName}的人 / ❌暗恋者 ✅暗恋${userName}的人 / ❌仇人 ✅被${userName}杀掉了生父
-  附属关系需写出所属NPC名：✅伊凡的猎犬; ${userName}客人的宠物 / 伊凡的女朋友; ${userName}的客人 / ${userName}的闺蜜; 伊凡的妻子 / ${userName}的继父; 伊凡的父亲 / ${userName}的情夫; 伊凡的弟弟 / ${userName}的闺蜜; ${userName}的丈夫的情妇; 插足${userName}与伊凡夫妻关系的第三者
+【關係描述規範】
+  必須包含對象名且準確：❌客人 ✅${userName}的新訪客 / ❌債主 ✅持有${userName}欠條的人 / ❌房東 ✅${userName}的房東 / ❌男朋友 ✅${userName}的男朋友 / ❌恩人 ✅救了${userName}一命的人 / ❌霸凌者 ✅欺負${userName}的人 / ❌暗戀者 ✅暗戀${userName}的人 / ❌仇人 ✅被${userName}殺掉了生父
+  附屬關係需寫出所屬NPC名：✅伊凡的獵犬; ${userName}客人的寵物 / 伊凡的女朋友; ${userName}的客人 / ${userName}的閨蜜; 伊凡的妻子 / ${userName}的繼父; 伊凡的父親 / ${userName}的情夫; 伊凡的弟弟 / ${userName}的閨蜜; ${userName}的丈夫的情婦; 插足${userName}與伊凡夫妻關係的第三者
 
-═══ 【好感度】触发条件 ═══
-仅记录NPC对${userName}的好感度（禁止记录${userName}自己）。每人一行，禁止数值后加注解。
+═══ 【好感度】觸發條件 ═══
+僅記錄NPC對${userName}的好感度（禁止記錄${userName}自己）。每人一行，禁止數值後加註解。
 
-【何时写】
-  ✦ NPC首次出场 → 按关系判定初始值（陌生0-20/熟人30-50/朋友50-70/恋人70-90）
-  ✦ 互动导致好感度实质变化 → affection:名=新总值
-【何时不写】
-  ✗ 好感度无变化 → 不写
+【何時寫】
+  ✦ NPC首次出場 → 按關係判定初始值（陌生0-20/熟人30-50/朋友50-70/戀人70-90）
+  ✦ 互動導致好感度實質變化 → affection:名=新總值
+【何時不寫】
+  ✗ 好感度無變化 → 不寫
 
-═══ 【待办事项】触发条件 ═══
-【何时写（新增）】
-  ✦ 剧情中出现新的约定/计划/行程/任务/伏笔 → agenda:日期|内容
-  格式：agenda:订立日期|内容（相对时间须括号标注绝对日期）
-  示例：agenda:2026/02/10|艾伦邀请${userName}情人节晚上约会(2026/02/14 18:00)
-【何时写（完成删除）— 极重要！】
-  ✦ 待办事项已完成/已失效/已取消 → 必须用 agenda-: 标记删除
-  格式：agenda-:待办内容（写入已完成事项的内容关键词即可自动移除）
-  示例：agenda-:艾伦邀请${userName}情人节晚上约会
-  ⚠ 严禁用 agenda:内容(完成) 这种方式！必须用 agenda-: 前缀！
-  ⚠ 严禁重复写入已存在的待办内容！
-【何时不写】
-  ✗ 已有待办无变化 → 禁止每回合重复已有待办
-  ✗ 待办已完成 → 禁止用 agenda: 加括号标注完成，必须用 agenda-:
+═══ 【待辦事項】觸發條件 ═══
+【何時寫（新增）】
+  ✦ 劇情中出現新的約定/計劃/行程/任務/伏筆 → agenda:日期|內容
+  格式：agenda:訂立日期|內容（相對時間須括號標註絕對日期）
+  示例：agenda:2026/02/10|艾倫邀請${userName}情人節晚上約會(2026/02/14 18:00)
+【何時寫（完成刪除）— 極重要！】
+  ✦ 待辦事項已完成/已失效/已取消 → 必須用 agenda-: 標記刪除
+  格式：agenda-:待辦內容（寫入已完成事項的內容關鍵詞即可自動移除）
+  示例：agenda-:艾倫邀請${userName}情人節晚上約會
+  ⚠ 嚴禁用 agenda:內容(完成) 這種方式！必須用 agenda-: 前綴！
+  ⚠ 嚴禁重複寫入已存在的待辦內容！
+【何時不寫】
+  ✗ 已有待辦無變化 → 禁止每回合重複已有待辦
+  ✗ 待辦已完成 → 禁止用 agenda: 加括號標註完成，必須用 agenda-:
 
-═══ 时间格式规则 ═══
-禁止"Day 1"/"第X天"等模糊格式，必须使用具体日历日期。
-- 现代：年/月/日 时:分（如 2026/2/4 15:00）
-- 历史：该年代日期（如 1920/3/15 14:00）
-- 奇幻/架空：该世界观日历（如 霜降月第三日 黄昏）
+═══ 時間格式規則 ═══
+禁止"Day 1"/"第X天"等模糊格式，必須使用具體日曆日期。
+- 現代：年/月/日 時:分（如 2026/2/4 15:00）
+- 歷史：該年代日期（如 1920/3/15 14:00）
+- 奇幻/架空：該世界觀日曆（如 霜降月第三日 黃昏）
 ${this.generateLocationMemoryPrompt()}${this.generateCustomTablesPrompt()}${this.generateRelationshipPrompt()}${this.generateMoodPrompt()}${this.generateRpgPrompt()}${this._generateAntiParaphrasePrompt()}
-═══ 最终强制提醒 ═══
+═══ 最終強制提醒 ═══
 ${this._generateMustTagsReminder()}
 
-【每回合必写字段——缺任何一项=不合格！】
-  ✅ time: ← 当前日期时间
-  ✅ location: ← 当前地点
-  ✅ atmosphere: ← 氛围
-  ✅ characters: ← 当前在场所有角色名，逗号分隔（绝对不能省略！）
-  ✅ costume: ← 每个在场角色各一行服装描述
+【每回合必寫資料欄——缺任何一項=不合格！】
+  ✅ time: ← 目前日期時間
+  ✅ location: ← 目前地點
+  ✅ atmosphere: ← 氛圍
+  ✅ characters: ← 目前在場所有角色名，逗號分隔（絕對不能省略！）
+  ✅ costume: ← 每個在場角色各一行服裝描述
   ✅ event: ← 重要程度|事件摘要
 
-【NPC首次登场时额外必写——缺一不可！】
-  ✅ npc:名|外貌=性格@关系~性别:值~年龄:值~种族:值~职业:值~生日:值(仅已知时写，未知不写)
-  ✅ affection:该NPC名=初始好感度（陌生0-20/熟人30-50/朋友50-70/恋人70-90）
+【NPC首次登場時額外必寫——缺一不可！】
+  ✅ npc:名|外貌=個性@關係~性別:值~年齡:值~種族:值~職業:值~生日:值(僅已知時寫，未知不寫)
+  ✅ affection:該NPC名=初始好感度（陌生0-20/熟人30-50/朋友50-70/戀人70-90）
 
-以上字段不存在"可写可不写"的情况——它们是强制性的。
+以上資料欄不存在"可寫可不寫"的情況——它們是強制性的。
 `;
     }
 
     getDefaultSystemPrompt() {
-        const sceneDescLine = this.settings?.sendLocationMemory ? '\nscene_desc:地点固定物理特征（见场景记忆规则，触发时才写）' : '';
-        const relLine = this.settings?.sendRelationships ? '\nrel:角色A>角色B=关系类型|备注（见关系网络规则，触发时才写）' : '';
-        const moodLine = this.settings?.sendMood ? '\nmood:角色名=情绪/心理状态（见情绪追踪规则，触发时才写）' : '';
-        return `【Horae记忆系统】（以下示例仅为示范，勿直接原句用于正文！）
+        const sceneDescLine = this.settings?.sendLocationMemory ? '\nscene_desc:地點固定物理特徵（見場景記憶規則，觸發時才寫）' : '';
+        const relLine = this.settings?.sendRelationships ? '\nrel:角色A>角色B=關係類型|備註（見關係網路規則，觸發時才寫）' : '';
+        const moodLine = this.settings?.sendMood ? '\nmood:角色名=情緒/心理狀態（見情緒追蹤規則，觸發時才寫）' : '';
+        return `【Horae記憶系統】（以下示例僅為示範，勿直接原句用於正文！）
 
-═══ 核心原则：变化驱动 ═══
-★★★ 在写<horae>标签前，先判断本回合哪些信息发生了实质变化 ★★★
-  ① 场景基础（time/location/characters/costume）→ 每回合必填
-  ② 其他所有字段 → 严格遵守各自的【触发条件】，无变化则完全不写该行
-  ③ 已记录的NPC/物品若无新信息 → 禁止输出！重复输出无变化的数据=浪费token
-  ④ 部分字段变化 → 使用增量更新，只写变化的部分
-  ⑤ NPC首次出场 → npc:和affection:两行都必须写！
+═══ 核心原則：變化驅動 ═══
+★★★ 在寫<horae>標籤前，先判斷本回合哪些資訊發生了實質變化 ★★★
+  ① 場景基礎（time/location/characters/costume）→ 每回合必填
+  ② 其他所有資料欄 → 嚴格遵守各自的【觸發條件】，無變化則完全不寫該行
+  ③ 已記錄的NPC/物品若無新資訊 → 禁止輸出！重複輸出無變化的數據=浪費token
+  ④ 部分資料欄變化 → 使用增量更新，只寫變化的部分
+  ⑤ NPC首次出場 → npc:和affection:兩行都必須寫！
 
-═══ 标签格式 ═══
-每次回复末尾必须写入两个标签：
+═══ 標籤格式 ═══
+每次回覆末尾必須寫入兩個標籤：
 <horae>
-time:日期 时间（必填）
-location:地点（必填。多级地点用·分隔，如「酒馆·大厅」「皇宫·王座间」。同一地点每次必须使用完全一致的名称）
-atmosphere:氛围${sceneDescLine}
-characters:在场角色名,逗号分隔（必填）
-costume:角色名=服装描述（必填，每人一行，禁止分号合并）
-item/item!/item!!:见物品规则（触发时才写）
-item-:物品名（物品消耗/丢失时删除。见物品规则，触发时才写）
-affection:角色名=好感度（★NPC首次出场必填初始值！之后仅好感变化时更新）
-npc:角色名|外貌=性格@关系~扩展字段（★NPC首次出场必填完整信息！之后仅变化时更新）
-agenda:日期|内容（新待办触发时才写）
-agenda-:内容关键词（待办已完成/失效时才写，系统自动移除匹配的待办）${relLine}${moodLine}
+time:日期 時間（必填）
+location:地點（必填。多級地點用·分隔，如「酒館·大廳」「皇宮·王座間」。同一地點每次必須使用完全一致的名稱）
+atmosphere:氛圍${sceneDescLine}
+characters:在場角色名,逗號分隔（必填）
+costume:角色名=服裝描述（必填，每人一行，禁止分號合併）
+item/item!/item!!:見物品規則（觸發時才寫）
+item-:物品名（物品消耗/遺失時刪除。見物品規則，觸發時才寫）
+affection:角色名=好感度（★NPC首次出場必填初始值！之後僅好感變化時更新）
+npc:角色名|外貌=個性@關係~擴展資料欄（★NPC首次出場必填完整資訊！之後僅變化時更新）
+agenda:日期|內容（新待辦觸發時才寫）
+agenda-:內容關鍵詞（待辦已完成/失效時才寫，系統自動移除配對的待辦）${relLine}${moodLine}
 </horae>
 <horaeevent>
-event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键，记录本条消息中的事件摘要，用于剧情追溯）
+event:重要程度|事件簡述（30-50字，重要程度：一般/重要/關鍵，記錄本條訊息中的事件摘要，用於劇情追溯）
 </horaeevent>
 
-═══ 【物品】触发条件与规则 ═══
-参照[物品清单]中的编号(#ID)，严格按以下条件决定是否输出。
+═══ 【物品】觸發條件與規則 ═══
+參照[物品清單]中的編號(#ID)，嚴格按以下條件決定是否輸出。
 
-【何时写】（满足任一条件才输出）
-  ✦ 获得新物品 → item:/item!:/item!!:
-  ✦ 已有物品的数量/归属/位置/性质发生改变 → item:（仅写变化部分）
-  ✦ 物品消耗/丢失/用完 → item-:物品名
-【何时不写】
-  ✗ 物品无任何变化 → 禁止输出任何item行
-  ✗ 物品仅被提及但无状态改变 → 不写
+【何時寫】（滿足任一條件才輸出）
+  ✦ 獲得新物品 → item:/item!:/item!!:
+  ✦ 已有物品的數量/歸屬/位置/性質發生改變 → item:（僅寫變化部分）
+  ✦ 物品消耗/遺失/用完 → item-:物品名
+【何時不寫】
+  ✗ 物品無任何變化 → 禁止輸出任何item行
+  ✗ 物品僅被提及但無狀態改變 → 不寫
 
 【格式】
-  新获得：item:emoji物品名(数量)|描述=持有者@精确位置（可省略描述字段。除非该物品有特殊含意，如礼物、纪念品，则添加描述）
-  新获得(重要)：item!:emoji物品名(数量)|描述=持有者@精确位置（重要物品，描述必填：外观+功能+来源）
-  新获得(关键)：item!!:emoji物品名(数量)|描述=持有者@精确位置（关键道具，描述必须详细）
-  已有物品变化：item:emoji物品名(新数量)=新持有者@新位置（仅更新变化的部分，不写|则保留原描述）
-  消耗/丢失：item-:物品名
+  新獲得：item:emoji物品名(數量)|描述=持有者@精確位置（可省略描述資料欄。除非該物品有特殊含意，如禮物、紀念品，則添加描述）
+  新獲得(重要)：item!:emoji物品名(數量)|描述=持有者@精確位置（重要物品，描述必填：外觀+功能+來源）
+  新獲得(關鍵)：item!!:emoji物品名(數量)|描述=持有者@精確位置（關鍵道具，描述必須詳細）
+  已有物品變化：item:emoji物品名(新數量)=新持有者@新位置（僅更新變化的部分，不寫|則保留原描述）
+  消耗/遺失：item-:物品名
 
-【字段级规则】
-  · 描述：记录物品本质属性（外观/功能/来源），普通物品可省略，重要/关键物品首次必填
-    ★ 外观特征（颜色、材质、大小等，便于后续一致性描写）
+【資料欄級規則】
+  · 描述：記錄物品本質屬性（外觀/功能/來源），普通物品可省略，重要/關鍵物品首次必填
+    ★ 外觀特徵（顏色、材質、大小等，便於後續一致性描寫）
     ★ 功能/用途
-    ★ 来源（谁给的/如何获得）
-       - 示例（以下内容中若有示例仅为示范，勿直接原句用于正文！）：
-         - 示例1：item!:🌹永生花束|深红色玫瑰永生花，黑色缎带束扎，C赠送给U的情人节礼物=U@U房间书桌上
-         - 示例2：item!:🎫幸运十连抽券|闪着金光的纸质奖券，可在系统奖池进行一次十连抽的新手福利=U@空间戒指
-         - 示例3：item!!:🏧位面货币自动兑换机|看起来像个小型的ATM机，能按即时汇率兑换各位面货币=U@酒馆吧台
-  · 数量：单件不写(1)/(1个)/(1把)等，只有计量单位才写括号如(5斤)(1L)(1箱)
-  · 位置：必须是精确固定地点
-    ❌ 某某人身前地上、某某人脚边、某某人旁边、地板、桌子上
-    ✅ 酒馆大厅地板、餐厅吧台上、家中厨房、背包里、U的房间桌子上
-  · 禁止将固定家具和建筑设施计入物品
-  · 临时借用≠归属转移
+    ★ 來源（誰給的/如何獲得）
+       - 示例（以下內容中若有示例僅為示範，勿直接原句用於正文！）：
+         - 示例1：item!:🌹永生花束|深紅色玫瑰永生花，黑色緞帶束扎，C贈送給U的情人節禮物=U@U房間書桌上
+         - 示例2：item!:🎫幸運十連抽券|閃著金光的紙質獎券，可在系統獎池進行一次十連抽的新手福利=U@空間戒指
+         - 示例3：item!!:🏧位面貨幣自動兌換機|看起來像個小型的ATM機，能按即時匯率兌換各位面貨幣=U@酒館吧檯
+  · 數量：單件不寫(1)/(1個)/(1把)等，只有計量組織才寫括號如(5斤)(1L)(1箱)
+  · 位置：必須是精確固定地點
+    ❌ 某某人身前地上、某某人腳邊、某某人旁邊、地板、桌子上
+    ✅ 酒館大廳地板、餐廳吧檯上、家中廚房、揹包裡、U的房間桌子上
+  · 禁止將固定傢俱和建築設施計入物品
+  · 臨時借用≠歸屬轉移
 
 
-示例（麦酒生命周期）：
-  获得：item:🍺陈酿麦酒(50L)|杂物间翻出的麦酒，口感酸涩=U@酒馆后厨食材柜
-  量变：item:🍺陈酿麦酒(25L)=U@酒馆后厨食材柜
-  用完：item-:陈酿麦酒
+示例（麥酒生命週期）：
+  獲得：item:🍺陳釀麥酒(50L)|雜物間翻出的麥酒，口感酸澀=U@酒館後廚食材櫃
+  量變：item:🍺陳釀麥酒(25L)=U@酒館後廚食材櫃
+  用完：item-:陳釀麥酒
 
-═══ 【NPC】触发条件与规则 ═══
-格式：npc:名|外貌=性格@与{{user}}的关系~性别:值~年龄:值~种族:值~职业:值~生日:值
-分隔符：| 分名字，= 分外貌与性格，@ 分关系，~ 分扩展字段(key:value)
+═══ 【NPC】觸發條件與規則 ═══
+格式：npc:名|外貌=個性@與{{user}}的關係~性別:值~年齡:值~種族:值~職業:值~生日:值
+分隔符：| 分名字，= 分外貌與個性，@ 分關係，~ 分擴展資料欄(key:value)
 
-【何时写】（满足任一条件才输出该NPC的npc:行）
-  ✦ 首次出场 → 完整格式，全部字段+全部~扩展字段（性别/年龄/种族/职业），缺一不可
-  ✦ 外貌永久变化（如受伤留疤、换了发型、穿戴改变）→ 只写外貌字段
-  ✦ 性格发生转变（如经历重大事件后性格改变）→ 只写性格字段
-  ✦ 与{{user}}的关系定位改变（如从客人变成朋友）→ 只写关系字段
-  ✦ 获得关于该NPC的新信息（之前不知道的身高/体重等）→ 追加到对应字段
-  ✦ ~扩展字段本身发生变化（如职业变了）→ 只写变化的~扩展字段
-【何时不写】
-  ✗ NPC在场但无新信息 → 禁止写npc:行
-  ✗ NPC暂时离场后回来，信息无变化 → 禁止重写
-  ✗ 想用同义词/缩写重写已有描述 → 严禁！
-    ❌ "肌肉发达/满身战斗伤痕"→"肌肉强壮/伤疤"（换词≠更新）
-    ✅ "肌肉发达/满身战斗伤痕/重伤"→"肌肉发达/满身战斗伤痕"（伤愈，移除过时状态）
+【何時寫】（滿足任一條件才輸出該NPC的npc:行）
+  ✦ 首次出場 → 完整格式，全部資料欄+全部~擴展資料欄（性別/年齡/種族/職業），缺一不可
+  ✦ 外貌永久變化（如受傷留疤、換了髮型、穿戴改變）→ 只寫外貌資料欄
+  ✦ 個性發生轉變（如經歷重大事件後個性改變）→ 只寫個性資料欄
+  ✦ 與{{user}}的關係定位改變（如從客人變成朋友）→ 只寫關係資料欄
+  ✦ 獲得關於該NPC的新資訊（之前不知道的身高/體重等）→ 追加到對應資料欄
+  ✦ ~擴展資料欄本身發生變化（如職業變了）→ 只寫變化的~擴展資料欄
+【何時不寫】
+  ✗ NPC在場但無新資訊 → 禁止寫npc:行
+  ✗ NPC暫時離場後回來，資訊無變化 → 禁止重寫
+  ✗ 想用同義詞/縮寫重寫已有描述 → 嚴禁！
+    ❌ "肌肉發達/滿身戰鬥傷痕"→"肌肉強壯/傷疤"（換詞≠更新）
+    ✅ "肌肉發達/滿身戰鬥傷痕/重傷"→"肌肉發達/滿身戰鬥傷痕"（傷愈，移除過時狀態）
 
-【增量更新示例】（以NPC沃尔为例）
-  首次：npc:沃尔|银灰色披毛/绿眼睛/身高220cm/满身战斗伤痕=沉默寡言的重装佣兵@{{user}}的第一个客人~性别:男~年龄:约35~种族:狼兽人~职业:佣兵
-  只更新关系：npc:沃尔|=@{{user}}的男朋友
-  只追加外貌：npc:沃尔|银灰色披毛/绿眼睛/身高220cm/满身战斗伤痕/左臂绷带
-  只更新性格：npc:沃尔|=不再沉默/偶尔微笑
-  只改职业：npc:沃尔|~职业:退役佣兵
-（注意：未变化的字段和~扩展字段完全不写！系统自动保留原有数据！）
+【增量更新示例】（以NPC沃爾為例）
+  首次：npc:沃爾|銀灰色披毛/綠眼睛/身高220cm/滿身戰鬥傷痕=沉默寡言的重裝傭兵@{{user}}的第一個客人~性別:男~年齡:約35~種族:狼獸人~職業:傭兵
+  只更新關係：npc:沃爾|=@{{user}}的男朋友
+  只追加外貌：npc:沃爾|銀灰色披毛/綠眼睛/身高220cm/滿身戰鬥傷痕/左臂繃帶
+  只更新個性：npc:沃爾|=不再沉默/偶爾微笑
+  只改職業：npc:沃爾|~職業:退役傭兵
+（注意：未變化的資料欄和~擴展資料欄完全不寫！系統自動保留原有數據！）
 
-【生日字段（可选扩展字段）】
-  格式：~生日:yyyy/mm/dd 或 ~生日:mm/dd（无年份时仅写月日）
-  ⚠ 仅当角色设定/人物描述中明确提及生日日期时才写！严禁猜测或捏造！
-  ⚠ 没有明确出处的生日一律不写此字段——留空由用户自行填写。
+【生日資料欄（可選擴展資料欄）】
+  格式：~生日:yyyy/mm/dd 或 ~生日:mm/dd（無年份時僅寫月日）
+  ⚠ 僅當角色設定/人物描述中明確提及生日日期時才寫！嚴禁猜測或捏造！
+  ⚠ 沒有明確出處的生日一律不寫此資料欄——留空由用戶自行填寫。
 
-【关系描述规范】
-  必须包含对象名且准确：❌客人 ✅{{user}}的新访客 / ❌债主 ✅持有{{user}}欠条的人 / ❌房东 ✅{{user}}的房东 / ❌男朋友 ✅{{user}}的男朋友 / ❌恩人 ✅救了{{user}}一命的人 / ❌霸凌者 ✅欺负{{user}}的人 / ❌暗恋者 ✅暗恋{{user}}的人 / ❌仇人 ✅被{{user}}杀掉了生父
-  附属关系需写出所属NPC名：✅伊凡的猎犬; {{user}}客人的宠物 / 伊凡的女朋友; {{user}}的客人 / {{user}}的闺蜜; 伊凡的妻子 / {{user}}的继父; 伊凡的父亲 / {{user}}的情夫; 伊凡的弟弟 / {{user}}的闺蜜; {{user}}的丈夫的情妇; 插足{{user}}与伊凡夫妻关系的第三者
+【關係描述規範】
+  必須包含對象名且準確：❌客人 ✅{{user}}的新訪客 / ❌債主 ✅持有{{user}}欠條的人 / ❌房東 ✅{{user}}的房東 / ❌男朋友 ✅{{user}}的男朋友 / ❌恩人 ✅救了{{user}}一命的人 / ❌霸凌者 ✅欺負{{user}}的人 / ❌暗戀者 ✅暗戀{{user}}的人 / ❌仇人 ✅被{{user}}殺掉了生父
+  附屬關係需寫出所屬NPC名：✅伊凡的獵犬; {{user}}客人的寵物 / 伊凡的女朋友; {{user}}的客人 / {{user}}的閨蜜; 伊凡的妻子 / {{user}}的繼父; 伊凡的父親 / {{user}}的情夫; 伊凡的弟弟 / {{user}}的閨蜜; {{user}}的丈夫的情婦; 插足{{user}}與伊凡夫妻關係的第三者
 
-═══ 【好感度】触发条件 ═══
-仅记录NPC对{{user}}的好感度（禁止记录{{user}}自己）。每人一行，禁止数值后加注解。
+═══ 【好感度】觸發條件 ═══
+僅記錄NPC對{{user}}的好感度（禁止記錄{{user}}自己）。每人一行，禁止數值後加註解。
 
-【何时写】
-  ✦ NPC首次出场 → 按关系判定初始值（陌生0-20/熟人30-50/朋友50-70/恋人70-90）
-  ✦ 互动导致好感度实质变化 → affection:名=新总值
-【何时不写】
-  ✗ 好感度无变化 → 不写
+【何時寫】
+  ✦ NPC首次出場 → 按關係判定初始值（陌生0-20/熟人30-50/朋友50-70/戀人70-90）
+  ✦ 互動導致好感度實質變化 → affection:名=新總值
+【何時不寫】
+  ✗ 好感度無變化 → 不寫
 
-═══ 【待办事项】触发条件 ═══
-【何时写（新增）】
-  ✦ 剧情中出现新的约定/计划/行程/任务/伏笔 → agenda:日期|内容
-  格式：agenda:订立日期|内容（相对时间须括号标注绝对日期）
-  示例：agenda:2026/02/10|艾伦邀请{{user}}情人节晚上约会(2026/02/14 18:00)
-【何时写（完成删除）— 极重要！】
-  ✦ 待办事项已完成/已失效/已取消 → 必须用 agenda-: 标记删除
-  格式：agenda-:待办内容（写入已完成事项的内容关键词即可自动移除）
-  示例：agenda-:艾伦邀请{{user}}情人节晚上约会
-  ⚠ 严禁用 agenda:内容(完成) 这种方式！必须用 agenda-: 前缀！
-  ⚠ 严禁重复写入已存在的待办内容！
-【何时不写】
-  ✗ 已有待办无变化 → 禁止每回合重复已有待办
-  ✗ 待办已完成 → 禁止用 agenda: 加括号标注完成，必须用 agenda-:
+═══ 【待辦事項】觸發條件 ═══
+【何時寫（新增）】
+  ✦ 劇情中出現新的約定/計劃/行程/任務/伏筆 → agenda:日期|內容
+  格式：agenda:訂立日期|內容（相對時間須括號標註絕對日期）
+  示例：agenda:2026/02/10|艾倫邀請{{user}}情人節晚上約會(2026/02/14 18:00)
+【何時寫（完成刪除）— 極重要！】
+  ✦ 待辦事項已完成/已失效/已取消 → 必須用 agenda-: 標記刪除
+  格式：agenda-:待辦內容（寫入已完成事項的內容關鍵詞即可自動移除）
+  示例：agenda-:艾倫邀請{{user}}情人節晚上約會
+  ⚠ 嚴禁用 agenda:內容(完成) 這種方式！必須用 agenda-: 前綴！
+  ⚠ 嚴禁重複寫入已存在的待辦內容！
+【何時不寫】
+  ✗ 已有待辦無變化 → 禁止每回合重複已有待辦
+  ✗ 待辦已完成 → 禁止用 agenda: 加括號標註完成，必須用 agenda-:
 
-═══ 时间格式规则 ═══
-禁止"Day 1"/"第X天"等模糊格式，必须使用具体日历日期。
-- 现代：年/月/日 时:分（如 2026/2/4 15:00）
-- 历史：该年代日期（如 1920/3/15 14:00）
-- 奇幻/架空：该世界观日历（如 霜降月第三日 黄昏）
+═══ 時間格式規則 ═══
+禁止"Day 1"/"第X天"等模糊格式，必須使用具體日曆日期。
+- 現代：年/月/日 時:分（如 2026/2/4 15:00）
+- 歷史：該年代日期（如 1920/3/15 14:00）
+- 奇幻/架空：該世界觀日曆（如 霜降月第三日 黃昏）
 
-═══ 最终强制提醒 ═══
-你的回复末尾必须包含 <horae>...</horae> 和 <horaeevent>...</horaeevent> 两个标签。
-缺少任何一个标签=不合格。
+═══ 最終強制提醒 ═══
+你的回覆末尾必須包含 <horae>...</horae> 和 <horaeevent>...</horaeevent> 兩個標籤。
+缺少任何一個標籤=不合格。
 
-【每回合必写字段——缺任何一项=不合格！】
-  ✅ time: ← 当前日期时间
-  ✅ location: ← 当前地点
-  ✅ atmosphere: ← 氛围
-  ✅ characters: ← 当前在场所有角色名，逗号分隔（绝对不能省略！）
-  ✅ costume: ← 每个在场角色各一行服装描述
+【每回合必寫資料欄——缺任何一項=不合格！】
+  ✅ time: ← 目前日期時間
+  ✅ location: ← 目前地點
+  ✅ atmosphere: ← 氛圍
+  ✅ characters: ← 目前在場所有角色名，逗號分隔（絕對不能省略！）
+  ✅ costume: ← 每個在場角色各一行服裝描述
   ✅ event: ← 重要程度|事件摘要
 
-【NPC首次登场时额外必写——缺一不可！】
-  ✅ npc:名|外貌=性格@关系~性别:值~年龄:值~种族:值~职业:值~生日:值(仅已知时写，未知不写)
-  ✅ affection:该NPC名=初始好感度（陌生0-20/熟人30-50/朋友50-70/恋人70-90）
+【NPC首次登場時額外必寫——缺一不可！】
+  ✅ npc:名|外貌=個性@關係~性別:值~年齡:值~種族:值~職業:值~生日:值(僅已知時寫，未知不寫)
+  ✅ affection:該NPC名=初始好感度（陌生0-20/熟人30-50/朋友50-70/戀人70-90）
 
-以上字段不存在"可写可不写"的情况——它们是强制性的。`;
+以上資料欄不存在"可寫可不寫"的情況——它們是強制性的。`;
     }
 
     getDefaultTablesPrompt() {
-        return `═══ 自定义表格规则 ═══
-上方有用户自定义表格，根据"填写要求"填写数据。
-★ 格式：<horaetable:表格名> 标签内，每行一个单元格 → 行,列:内容
-★★ 坐标说明：第0行和第0列是表头，数据从1,1开始。行号=数据行序号，列号=数据列序号
-★★★ 填写原则 ★★★
-  - 空单元格且剧情中已有对应信息 → 必须填写！不要遗漏！
-  - 已有内容且无变化 → 不重复写
-  - 该行/列确实无对应剧情信息 → 留空
-  - 禁止输出"(空)""-""无"等占位符
-  - 🔒标记的行/列为只读数据，禁止修改其内容
-  - 新增行请在现有最大行号之后追加，新增列请在现有最大列号之后追加`;
+        return `═══ 客製化表格規則 ═══
+上方有用戶客製化表格，根據"填寫要求"填寫數據。
+★ 格式：<horaetable:表格名> 標籤內，每行一個單元格 → 行,列:內容
+★★ 座標說明：第0行和第0列是表頭，數據從1,1開始。行號=數據行序號，列號=數據列序號
+★★★ 填寫原則 ★★★
+  - 空單元格且劇情中已有對應資訊 → 必須填寫！不要遺漏！
+  - 已有內容且無變化 → 不重複寫
+  - 該行/列確實無對應劇情資訊 → 留空
+  - 禁止輸出"(空)""-""無"等佔位符
+  - 🔒標記的行/列為只讀數據，禁止修改其內容
+  - 新增行請在現有最大行號之後追加，新增列請在現有最大列號之後追加`;
     }
 
     getDefaultLocationPrompt() {
-        return `═══ 【场景记忆】触发条件 ═══
-格式：scene_desc:位于…。该地点的固定物理特征描述（50-150字）
-场景记忆记录地点的核心布局和永久性特征（建筑结构、固定家具、空间特点），用于保持跨回合的场景描写一致性。
+        return `═══ 【場景記憶】觸發條件 ═══
+格式：scene_desc:位於…。該地點的固定物理特徵描述（50-150字）
+場景記憶記錄地點的核心格局和永久性特徵（建築結構、固定傢俱、空間特點），用於保持跨回合的場景描寫一致性。
 
-【地点／位于 格式】★★★ 严格遵守层级规则 ★★★
-  · 描述开头先写「位于」标明该地点相对于直接上级的方位，再写该地点自身的物理特征
-  · 子级地点（含·分隔符的地名）：「位于」只写相对于父级建筑内部的方位（如哪一楼、哪个方向），绝对禁止包含父级的外部地理位置
-  · 父级/顶级地点：「位于」才写外部地理位置（如哪个大陆、哪片森林旁）
-  · 系统会自动同时发送父级描述给AI，子级无需也不应重复父级信息
-    ✓ 无名酒馆·客房203 → scene_desc:位于2楼东侧。边间，采光佳，单人木床靠墙，窗户朝东
-    ✓ 无名酒馆·大厅 → scene_desc:位于1楼。挑高木质空间，正中是长吧台，散落数张圆桌
-    ✓ 无名酒馆 → scene_desc:位于OO大陆北方XX森林边上。两层木石结构，一楼大厅和吧台，二楼客房区
-    ✗ 无名酒馆·客房203 → scene_desc:位于OO大陆北方XX森林边上的无名酒馆2楼…（❌ 子级禁止写父级的外部地理信息）
-    ✗ 无名酒馆·大厅 → scene_desc:位于森林边上的无名酒馆1楼…（❌ 同上）
-【地名规范】
-  · 多级地点用·分隔：建筑·区域（如「无名酒馆·大厅」「皇宫·地牢」）
-  · 同一地点必须始终使用与上方[场景|...]中完全一致的名称，禁止缩写或改写
-  · 不同建筑的同名区域各自独立记录（如「无名酒馆·大厅」和「皇宫·大厅」是不同地点）
-【何时写】
-  ✦ 首次到达一个新地点 → 必须写scene_desc，描述该地点的固定物理特征
-  ✦ 地点发生永久性物理变化（如被破坏、重新装修）→ 写更新后的scene_desc
-【何时不写】
-  ✗ 回到已记录的旧地点且无物理变化 → 不写
-  ✗ 季节/天气/氛围变化 → 不写（这些是临时变化，不属于固定特征）
-【描述规范】
-  · 只写固定/永久性的物理特征：空间结构、建筑材质、固定家具、窗户朝向、标志性装饰
-  · 不写临时性状态：当前光照、天气、人群、季节装饰、临时摆放的物品
-  · 禁止照搬场景记忆原文到正文，将其作为背景参考，以当前时间/天气/光线/角色视角重新描写
-  · 上方[场景记忆|...]是系统已记录的该地点特征，描写该场景时保持这些核心要素不变，同时根据时间/季节/剧情自由发挥变化细节`;
+【地點／位於 格式】★★★ 嚴格遵守層級規則 ★★★
+  · 描述開頭先寫「位於」標明該地點相對於直接上級的方位，再寫該地點自身的物理特徵
+  · 子級地點（含·分隔符的地名）：「位於」只寫相對於父級建築內部的方位（如哪一樓、哪個方向），絕對禁止包含父級的外部地理位置
+  · 父級/頂級地點：「位於」才寫外部地理位置（如哪個大陸、哪片森林旁）
+  · 系統會自動同時發送父級描述給AI，子級無需也不應重複父級資訊
+    ✓ 無名酒館·客房203 → scene_desc:位於2樓東側。邊間，採光佳，單人木床靠牆，窗戶朝東
+    ✓ 無名酒館·大廳 → scene_desc:位於1樓。挑高木質空間，正中是長吧檯，散落數張圓桌
+    ✓ 無名酒館 → scene_desc:位於OO大陸北方XX森林邊上。兩層木石結構，一樓大廳和吧檯，二樓客房區
+    ✗ 無名酒館·客房203 → scene_desc:位於OO大陸北方XX森林邊上的無名酒館2樓…（❌ 子級禁止寫父級的外部地理資訊）
+    ✗ 無名酒館·大廳 → scene_desc:位於森林邊上的無名酒館1樓…（❌ 同上）
+【地名規範】
+  · 多級地點用·分隔：建築·區域（如「無名酒館·大廳」「皇宮·地牢」）
+  · 同一地點必須始終使用與上方[場景|...]中完全一致的名稱，禁止縮寫或改寫
+  · 不同建築的同名區域各自獨立記錄（如「無名酒館·大廳」和「皇宮·大廳」是不同地點）
+【何時寫】
+  ✦ 首次到達一個新地點 → 必須寫scene_desc，描述該地點的固定物理特徵
+  ✦ 地點發生永久性物理變化（如被破壞、重新裝修）→ 寫更新後的scene_desc
+【何時不寫】
+  ✗ 回到已記錄的舊地點且無物理變化 → 不寫
+  ✗ 季節/天氣/氛圍變化 → 不寫（這些是臨時變化，不屬於固定特徵）
+【描述規範】
+  · 只寫固定/永久性的物理特徵：空間結構、建築材質、固定傢俱、窗戶朝向、標誌性裝飾
+  · 不寫臨時性狀態：目前光照、天氣、人群、季節裝飾、臨時擺放的物品
+  · 禁止照搬場景記憶原文到正文，將其作為背景參考，以目前時間/天氣/光線/角色視角重新描寫
+  · 上方[場景記憶|...]是系統已記錄的該地點特徵，描寫該場景時保持這些核心要素不變，同時根據時間/季節/劇情自由發揮變化細節`;
     }
 
     generateLocationMemoryPrompt() {
@@ -3405,17 +3405,17 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
 
         let prompt = '\n' + (this.settings?.customTablesPrompt || this.getDefaultTablesPrompt());
 
-        // 为每个表格生成带坐标的示例
+        // 為每個表格生成帶座標的示例
         for (const table of allTables) {
-            const tableName = table.name || '自定义表格';
+            const tableName = table.name || '客製化表格';
             const rows = table.rows || 2;
             const cols = table.cols || 2;
-            prompt += `\n★ 表格「${tableName}」尺寸：${rows - 1}行×${cols - 1}列（数据区行号1-${rows - 1}，列号1-${cols - 1}）`;
-            prompt += `\n示例（填写空单元格或更新有变化的单元格）：
+            prompt += `\n★ 表格「${tableName}」尺寸：${rows - 1}行×${cols - 1}列（數據區行號1-${rows - 1}，列號1-${cols - 1}）`;
+            prompt += `\n示例（填寫空單元格或更新有變化的單元格）：
 <horaetable:${tableName}>
-1,1:内容A
-1,2:内容B
-2,1:内容C
+1,1:內容A
+1,2:內容B
+2,1:內容C
 </horaetable>`;
             break;
         }
@@ -3425,43 +3425,43 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
 
     getDefaultRelationshipPrompt() {
         const userName = this.context?.name1 || '{{user}}';
-        return `═══ 【关系网络】触发条件 ═══
-格式：rel:角色A>角色B=关系类型|备注
-系统会自动记录和显示角色间的关系网络，当角色间关系发生变化时输出。
+        return `═══ 【關係網路】觸發條件 ═══
+格式：rel:角色A>角色B=關係類型|備註
+系統會自動記錄和顯示角色間的關係網路，當角色間關係發生變化時輸出。
 
-【何时写】（满足任一条件才输出）
-  ✦ 两个角色之间确立/定义了新关系 → rel:角色A>角色B=关系类型
-  ✦ 已有关系发生变化（如从同事变成朋友）→ rel:角色A>角色B=新关系类型
-  ✦ 关系中有重要细节需要备注 → 加|备注
-【何时不写】
-  ✗ 关系无变化 → 不写
-  ✗ 已记录过的关系且无更新 → 不写
+【何時寫】（滿足任一條件才輸出）
+  ✦ 兩個角色之間確立/定義了新關係 → rel:角色A>角色B=關係類型
+  ✦ 已有關係發生變化（如從同事變成朋友）→ rel:角色A>角色B=新關係類型
+  ✦ 關係中有重要細節需要備註 → 加|備註
+【何時不寫】
+  ✗ 關係無變化 → 不寫
+  ✗ 已記錄過的關係且無更新 → 不寫
 
-【规范】
-  · 角色A和角色B都必须使用准确全名
-  · 关系类型用简洁词描述：朋友、恋人、上下级、师徒、宿敌、合作伙伴等
-  · 备注字段可选，记录关系的特殊细节
-  · 包含${userName}的关系也要记录
+【規範】
+  · 角色A和角色B都必須使用準確全名
+  · 關係類型用簡潔詞描述：朋友、戀人、上下級、師徒、宿敵、合作伙伴等
+  · 備註資料欄可選，記錄關係的特殊細節
+  · 包含${userName}的關係也要記錄
   示例：
-    rel:${userName}>沃尔=雇佣关系|${userName}经营酒馆，沃尔是常客
-    rel:沃尔>艾拉=暗恋|沃尔对艾拉有好感但未表白
-    rel:${userName}>艾拉=闺蜜`;
+    rel:${userName}>沃爾=僱傭關係|${userName}經營酒館，沃爾是常客
+    rel:沃爾>艾拉=暗戀|沃爾對艾拉有好感但未表白
+    rel:${userName}>艾拉=閨蜜`;
     }
 
     getDefaultMoodPrompt() {
-        return `═══ 【情绪/心理状态追踪】触发条件 ═══
-格式：mood:角色名=情绪状态（简洁词组，如"紧张/不安"、"开心/期待"、"愤怒"、"平静但警惕"）
-系统会追踪在场角色的情绪变化，帮助保持角色心理状态的连贯性。
+        return `═══ 【情緒/心理狀態追蹤】觸發條件 ═══
+格式：mood:角色名=情緒狀態（簡潔詞組，如"緊張/不安"、"開心/期待"、"憤怒"、"平靜但警惕"）
+系統會追蹤在場角色的情緒變化，幫助保持角色心理狀態的連貫性。
 
-【何时写】（满足任一条件才输出）
-  ✦ 角色情绪发生明显变化（如从平静变为愤怒）→ mood:角色名=新情绪
-  ✦ 角色首次出场时有明显的情绪特征 → mood:角色名=当前情绪
-【何时不写】
-  ✗ 角色情绪无变化 → 不写
-  ✗ 角色不在场 → 不写
-【规范】
-  · 情绪描述用1-4个词，用/分隔复合情绪
-  · 只记录在场角色的情绪`;
+【何時寫】（滿足任一條件才輸出）
+  ✦ 角色情緒發生明顯變化（如從平靜變為憤怒）→ mood:角色名=新情緒
+  ✦ 角色首次出場時有明顯的情緒特徵 → mood:角色名=目前情緒
+【何時不寫】
+  ✗ 角色情緒無變化 → 不寫
+  ✗ 角色不在場 → 不寫
+【規範】
+  · 情緒描述用1-4個詞，用/分隔複合情緒
+  · 只記錄在場角色的情緒`;
     }
 
     generateRelationshipPrompt() {
@@ -3479,14 +3479,14 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
         if (!this.settings?.antiParaphraseMode) return '';
         const userName = this.context?.name1 || '主角';
         return `
-═══ 反转述模式（Anti-Paraphrase） ═══
-当前用户使用反转述写法：${userName}的行动/对话由${userName}自行在USER消息中描写，你（AI）不再重复描述${userName}的部分。
-因此，你在撰写本回合的<horae>标签时，必须把"紧接在你这条回复之前的那条USER消息"中发生的情节也一并纳入结算：
-  ✦ USER消息中出现的物品获取/消耗 → 写入对应item:/item-:行
-  ✦ USER消息中出现的场景转移 → 更新location:
-  ✦ USER消息中出现的NPC互动/好感变化 → 更新affection:
-  ✦ USER消息中出现的情节推进 → 在<horaeevent>中一并概括
-  ✦ 总之：本条<horae>应同时覆盖"上一条USER消息"和"你本条AI回复"两部分的所有变化
+═══ 反轉述模式（Anti-Paraphrase） ═══
+目前用戶使用反轉述寫法：${userName}的行動/對話由${userName}自行在USER訊息中描寫，你（AI）不再重複描述${userName}的部分。
+因此，你在撰寫本回合的<horae>標籤時，必須把"緊接在你這條回覆之前的那條USER訊息"中發生的情節也一併納入結算：
+  ✦ USER訊息中出現的物品獲取/消耗 → 寫入對應item:/item-:行
+  ✦ USER訊息中出現的場景轉移 → 更新location:
+  ✦ USER訊息中出現的NPC互動/好感變化 → 更新affection:
+  ✦ USER訊息中出現的情節推進 → 在<horaeevent>中一併概括
+  ✦ 總之：本條<horae>應同時覆蓋"上一條USER訊息"和"你本條AI回覆"兩部分的所有變化
 `;
     }
 
@@ -3501,10 +3501,10 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
         return '\n' + this.getDefaultMoodPrompt();
     }
 
-    /** RPG 提示词（rpgMode 开启才注入） */
+    /** RPG 提示詞（rpgMode 開啟才注入） */
     generateRpgPrompt() {
         if (!this.settings?.rpgMode) return '';
-        // 自定义提示词优先
+        // 客製化提示詞優先
         if (this.settings.customRpgPrompt) {
             return '\n' + this.settings.customRpgPrompt
                 .replace(/\{\{user\}\}/gi, this.context?.name1 || '主角')
@@ -3513,7 +3513,7 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
         return '\n' + this.getDefaultRpgPrompt();
     }
 
-    /** RPG 默认提示词 */
+    /** RPG 預設提示詞 */
     getDefaultRpgPrompt() {
         const sendBars = this.settings?.sendRpgBars !== false;
         const sendSkills = this.settings?.sendRpgSkills !== false;
@@ -3538,53 +3538,53 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
             { key: 'hp', name: 'HP' }, { key: 'mp', name: 'MP' }, { key: 'sp', name: 'SP' }
         ];
         const attrCfg = this.settings?.rpgAttributeConfig || [];
-        let p = `═══ 【RPG】 ═══\n你的回复末尾必须包含<horaerpg>标签。`;
+        let p = `═══ 【RPG】 ═══\n你的回覆末尾必須包含<horaerpg>標籤。`;
         if (allUo) {
-            p += `所有RPG数据仅追踪${userName}一人，格式中不含归属字段。禁止为NPC输出任何RPG行。\n`;
+            p += `所有RPG數據僅追蹤${userName}一人，格式中不含歸屬資料欄。禁止為NPC輸出任何RPG行。\n`;
         } else if (anyUo) {
-            p += `归属格式同NPC编号：N编号 全名，${userName}直接写名字不加N。部分模块仅追踪${userName}（以下会标注）。\n`;
+            p += `歸屬格式同NPC編號：N編號 全名，${userName}直接寫名字不加N。部分模組僅追蹤${userName}（以下會標註）。\n`;
         } else {
-            p += `归属格式同NPC编号：N编号 全名，${userName}直接写名字不加N。\n`;
+            p += `歸屬格式同NPC編號：N編號 全名，${userName}直接寫名字不加N。\n`;
         }
         if (sendBars) {
-            p += `\n【属性条——每回合必写，缺少=不合格！】\n`;
+            p += `\n【屬性條——每回合必寫，缺少=不合格！】\n`;
             if (uoBars) {
-                p += `仅输出${userName}的属性条和状态：\n`;
+                p += `僅輸出${userName}的屬性條和狀態：\n`;
                 for (const bar of barCfg) {
-                    p += `  ✅ ${bar.key}:当前/最大(${bar.name})  ← 首次必须标注显示名\n`;
+                    p += `  ✅ ${bar.key}:目前/最大(${bar.name})  ← 首次必須標註顯示名\n`;
                 }
-                p += `  ✅ status:效果1/效果2  ← 无异常写 正常\n`;
+                p += `  ✅ status:效果1/效果2  ← 無異常寫 正常\n`;
             } else {
-                p += `必须为 characters: 中每个在场角色输出全部属性条和状态：\n`;
+                p += `必須為 characters: 中每個在場角色輸出全部屬性條和狀態：\n`;
                 for (const bar of barCfg) {
-                    p += `  ✅ ${bar.key}:归属=当前/最大(${bar.name})  ← 首次必须标注显示名\n`;
+                    p += `  ✅ ${bar.key}:歸屬=目前/最大(${bar.name})  ← 首次必須標註顯示名\n`;
                 }
-                p += `  ✅ status:归属=效果1/效果2  ← 无异常写 =正常\n`;
+                p += `  ✅ status:歸屬=效果1/效果2  ← 無異常寫 =正常\n`;
             }
-            p += `规则：\n`;
-            p += `  - 战斗/受伤/施法/消耗 → 合理扣减；恢复/休息 → 合理回增\n`;
+            p += `規則：\n`;
+            p += `  - 戰鬥/受傷/施法/消耗 → 合理扣減；恢復/休息 → 合理回增\n`;
             if (!uoBars) {
-                p += `  - 每个在场角色的每个属性条都必须写，漏写任何一人=不合格\n`;
+                p += `  - 每個在場角色的每個屬性條都必須寫，漏寫任何一人=不合格\n`;
             }
-            p += `  - 即使本回合数值无变化，也必须写出当前值\n`;
+            p += `  - 即使本回合數值無變化，也必須寫出目前值\n`;
         }
         if (sendAttrs && attrCfg.length > 0) {
-            p += `\n【多维属性】仅首次登场或属性变化时写，无变化可省略\n`;
+            p += `\n【多維屬性】僅首次登場或屬性變化時寫，無變化可省略\n`;
             if (uoAttrs) {
                 p += `  attr:${attrCfg.map(a => `${a.key}=数值`).join('|')}\n`;
             } else {
-                p += `  attr:归属|${attrCfg.map(a => `${a.key}=数值`).join('|')}\n`;
+                p += `  attr:歸屬|${attrCfg.map(a => `${a.key}=数值`).join('|')}\n`;
             }
-            p += `  数值范围0-100。属性含义：${attrCfg.map(a => `${a.key}(${a.name})`).join('、')}\n`;
+            p += `  數值範圍0-100。屬性含義：${attrCfg.map(a => `${a.key}(${a.name})`).join('、')}\n`;
         }
         if (sendSkills) {
-            p += `\n【技能】仅习得/升级/失去时写，无变化可省略\n`;
+            p += `\n【技能】僅習得/更新/失去時寫，無變化可省略\n`;
             if (uoSkills) {
-                p += `  skill:技能名|等级|效果描述\n`;
+                p += `  skill:技能名|等級|效果描述\n`;
                 p += `  skill-:技能名\n`;
             } else {
-                p += `  skill:归属|技能名|等级|效果描述\n`;
-                p += `  skill-:归属|技能名\n`;
+                p += `  skill:歸屬|技能名|等級|效果描述\n`;
+                p += `  skill-:歸屬|技能名\n`;
             }
         }
         if (sendEq) {
@@ -3593,18 +3593,18 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
             const present = new Set(this.getLatestState()?.scene?.characters_present || []);
             const hasAnySlots = Object.values(perChar).some(c => c.slots?.length > 0);
             if (hasAnySlots) {
-                p += `\n【装备】角色穿戴/卸下装备时写，无变化可省略\n`;
+                p += `\n【裝備】角色穿戴/卸下裝備時寫，無變化可省略\n`;
                 if (uoEq) {
-                    p += `  equip:格位名|装备名|属性1=值,属性2=值\n`;
-                    p += `  unequip:格位名|装备名\n`;
+                    p += `  equip:格位名|裝備名|屬性1=值,屬性2=值\n`;
+                    p += `  unequip:格位名|裝備名\n`;
                     const userCfg = perChar[userName];
                     if (userCfg?.slots?.length) {
                         const slotNames = userCfg.slots.map(s => `${s.name}(×${s.maxCount ?? 1})`).join('、');
                         p += `  格位: ${slotNames}\n`;
                     }
                 } else {
-                    p += `  equip:归属|格位名|装备名|属性1=值,属性2=值\n`;
-                    p += `  unequip:归属|格位名|装备名\n`;
+                    p += `  equip:歸屬|格位名|裝備名|屬性1=值,屬性2=值\n`;
+                    p += `  unequip:歸屬|格位名|裝備名\n`;
                     for (const [owner, cfg] of Object.entries(perChar)) {
                         if (!cfg.slots?.length) continue;
                         if (present.size > 0 && !present.has(owner)) continue;
@@ -3612,77 +3612,77 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
                         p += `  ${owner} 格位: ${slotNames}\n`;
                     }
                 }
-                p += `  ⚠ 每个角色只能使用其已注册的格位。属性值为整数。\n`;
-                p += `  ⚠ 普通衣物非赋魔或特殊材料不应有高属性值。\n`;
+                p += `  ⚠ 每個角色只能使用其已註冊的格位。屬性值為整數。\n`;
+                p += `  ⚠ 普通衣物非賦魔或特殊材料不應有高屬性值。\n`;
             }
         }
         if (sendRep) {
             const repConfig = this._getRpgReputationConfig();
             if (repConfig.categories.length > 0) {
                 const catNames = repConfig.categories.map(c => c.name).join('、');
-                p += `\n【声望】仅声望变化时写，无变化可省略\n`;
+                p += `\n【聲望】僅聲望變化時寫，無變化可省略\n`;
                 if (uoRep) {
-                    p += `  rep:声望分类名=当前值\n`;
+                    p += `  rep:聲望分類名=目前值\n`;
                 } else {
-                    p += `  rep:归属|声望分类名=当前值\n`;
+                    p += `  rep:歸屬|聲望分類名=目前值\n`;
                 }
-                p += `  已注册的声望分类: ${catNames}\n`;
-                p += `  ⚠ 禁止创造新的声望分类。只允许使用上述已注册的分类名。\n`;
+                p += `  已註冊的聲望分類: ${catNames}\n`;
+                p += `  ⚠ 禁止創造新的聲望分類。只允許使用上述已註冊的分類名。\n`;
             }
         }
         if (sendLvl) {
-            p += `\n【等级与经验值】仅升级/降级或经验变化时写，无变化可省略\n`;
+            p += `\n【等級與經驗值】僅更新/降級或經驗變化時寫，無變化可省略\n`;
             if (uoLvl) {
-                p += `  level:等级数值\n`;
-                p += `  xp:当前经验/升级所需\n`;
+                p += `  level:等級數值\n`;
+                p += `  xp:目前經驗/更新所需\n`;
             } else {
-                p += `  level:归属=等级数值\n`;
-                p += `  xp:归属=当前经验/升级所需\n`;
+                p += `  level:歸屬=等級數值\n`;
+                p += `  xp:歸屬=目前經驗/更新所需\n`;
             }
-            p += `  经验值获取参考：\n`;
-            p += `  - 与角色等级相近或更强的挑战：获得较多经验(10~50+)\n`;
-            p += `  - 等级差 ≥10 的低级挑战：仅得 1 点经验\n`;
-            p += `  - 日常活动/对话/探索：少量经验(1~5)\n`;
-            p += `  - 升级所需经验随等级递增：建议 升级所需 = 等级 × 100\n`;
+            p += `  經驗值獲取參考：\n`;
+            p += `  - 與角色等級相近或更強的挑戰：獲得較多經驗(10~50+)\n`;
+            p += `  - 等級差 ≥10 的低級挑戰：僅得 1 點經驗\n`;
+            p += `  - 日常活動/對話/探索：少量經驗(1~5)\n`;
+            p += `  - 更新所需經驗隨等級遞增：建議 更新所需 = 等級 × 100\n`;
         }
         if (sendCur) {
             const curConfig = this._getRpgCurrencyConfig();
             if (curConfig.denominations.length > 0) {
                 const denomNames = curConfig.denominations.map(d => d.name).join('、');
-                p += `\n【货币——发生交易/拾取/消费时必写！】\n`;
+                p += `\n【貨幣——發生交易/拾取/消費時必寫！】\n`;
                 if (uoCur) {
-                    p += `格式: currency:币名=±变化量\n`;
+                    p += `格式: currency:幣名=±變化量\n`;
                     p += `示例:\n`;
                     p += `  currency:${curConfig.denominations[0].name}=+10\n`;
                     p += `  currency:${curConfig.denominations[0].name}=-3\n`;
                     if (curConfig.denominations.length > 1) {
                         p += `  currency:${curConfig.denominations[1].name}=+50\n`;
                     }
-                    p += `也可写绝对值: currency:币名=数量\n`;
+                    p += `也可寫絕對值: currency:幣名=數量\n`;
                 } else {
-                    p += `格式: currency:归属|币名=±变化量\n`;
+                    p += `格式: currency:歸屬|幣名=±變化量\n`;
                     p += `示例:\n`;
                     p += `  currency:${userName}|${curConfig.denominations[0].name}=+10\n`;
                     p += `  currency:${userName}|${curConfig.denominations[0].name}=-3\n`;
                     if (curConfig.denominations.length > 1) {
                         p += `  currency:${userName}|${curConfig.denominations[1].name}=+50\n`;
                     }
-                    p += `也可写绝对值: currency:归属|币名=数量\n`;
+                    p += `也可寫絕對值: currency:歸屬|幣名=數量\n`;
                 }
-                p += `已注册币种: ${denomNames}\n`;
-                p += `⚠ 禁止使用未注册的币种名。任何涉及金钱的行为（买卖/拾取/奖赏/偷窃）都必须写 currency 行。\n`;
+                p += `已註冊幣種: ${denomNames}\n`;
+                p += `⚠ 禁止使用未註冊的幣種名。任何涉及金錢的行為（買賣/拾取/獎賞/偷竊）都必須寫 currency 行。\n`;
             }
         }
         if (!!this.settings?.sendRpgStronghold) {
             const rpg = this.getChat()?.[0]?.horae_meta?.rpg;
             const nodes = rpg?.strongholds || [];
-            p += `\n【据点/基地】据点状态变化时写（升级/建造/损毁/描述变更），无变化可省略\n`;
-            p += `格式: base:据点路径=等级 或 base:据点路径|desc=描述\n`;
-            p += `路径用 > 分隔层级\n`;
+            p += `\n【據點/基地】據點狀態變化時寫（更新/建造/損毀/描述變更），無變化可省略\n`;
+            p += `格式: base:據點路徑=等級 或 base:據點路徑|desc=描述\n`;
+            p += `路徑用 > 分隔層級\n`;
             p += `示例:\n`;
-            p += `  base:主角庄园=3\n`;
-            p += `  base:主角庄园>锻造区>锻造炉=2\n`;
-            p += `  base:主角庄园|desc=坐落于河谷的石砌庄园，配有围墙和瞭望塔\n`;
+            p += `  base:主角莊園=3\n`;
+            p += `  base:主角莊園>鍛造區>鍛造爐=2\n`;
+            p += `  base:主角莊園|desc=坐落於河谷的石砌莊園，配有圍牆和瞭望塔\n`;
             if (nodes.length > 0) {
                 const rootNodes = nodes.filter(n => !n.parent);
                 const summary = rootNodes.map(r => {
@@ -3690,31 +3690,31 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
                     const kidStr = kids.length > 0 ? `(${kids.map(k => k.name).join('、')})` : '';
                     return `${r.name}${r.level != null ? ' Lv.' + r.level : ''}${kidStr}`;
                 }).join('；');
-                p += `当前据点: ${summary}\n`;
+                p += `目前據點: ${summary}\n`;
             }
         }
         return p;
     }
 
-    /** 获取当前对话的装备配置 */
+    /** 獲取目前對話的裝備配置 */
     _getRpgEquipmentConfig() {
         const rpg = this.getChat()?.[0]?.horae_meta?.rpg;
         return rpg?.equipmentConfig || { locked: false, perChar: {} };
     }
 
-    /** 获取当前对话的声望配置 */
+    /** 獲取目前對話的聲望配置 */
     _getRpgReputationConfig() {
         const rpg = this.getChat()?.[0]?.horae_meta?.rpg;
         return rpg?.reputationConfig || { categories: [], _deletedCategories: [] };
     }
 
-    /** 获取当前对话的货币配置 */
+    /** 獲取目前對話的貨幣配置 */
     _getRpgCurrencyConfig() {
         const rpg = this.getChat()?.[0]?.horae_meta?.rpg;
         return rpg?.currencyConfig || { denominations: [] };
     }
 
-    /** 动态生成必须包含的标签提醒（RPG 开启时追加 <horaerpg>） */
+    /** 動態生成必須包含的標籤提醒（RPG 開啟時追加 <horaerpg>） */
     _generateMustTagsReminder() {
         const tags = ['<horae>...</horae>', '<horaeevent>...</horaeevent>'];
         const rpgActive = this.settings?.rpgMode &&
@@ -3723,23 +3723,23 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
              !!this.settings.sendRpgEquipment || !!this.settings.sendRpgLevel || !!this.settings.sendRpgCurrency ||
              !!this.settings.sendRpgStronghold);
         if (rpgActive) tags.push('<horaerpg>...</horaerpg>');
-        const count = tags.length === 2 ? '两个' : `${tags.length}个`;
-        return `你的回复末尾必须包含 ${tags.join(' 和 ')} ${count}标签。\n缺少任何一个标签=不合格。`;
+        const count = tags.length === 2 ? '兩個' : `${tags.length}個`;
+        return `你的回覆末尾必須包含 ${tags.join(' 和 ')} ${count}標籤。\n缺少任何一個標籤=不合格。`;
     }
 
-    /** 宽松正则解析（不需要标签包裹） */
+    /** 寬鬆正則解析（不需要標籤包裹） */
     parseLooseFormat(message) {
         const result = {
             timestamp: {},
             costumes: {},
             items: {},
             deletedItems: [],
-            events: [],  // 支持多个事件
+            events: [],  // 支援多個事件
             affection: {},
             npcs: {},
             scene: {},
-            agenda: [],   // 待办事项
-            deletedAgenda: []  // 已完成的待办事项
+            agenda: [],   // 待辦事項
+            deletedAgenda: []  // 已完成的待辦事項
         };
 
         let hasAnyData = false;
@@ -3808,8 +3808,8 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
         while ((match = patterns.item.exec(message)) !== null) {
             const exclamations = match[1] || '';
             const itemStr = match[2].trim();
-            let importance = '';  // 一般用空字符串
-            if (exclamations === '!!') importance = '!!';  // 关键
+            let importance = '';  // 一般用空字元串
+            if (exclamations === '!!') importance = '!!';  // 關鍵
             else if (exclamations === '!') importance = '!';  // 重要
             
             const eqIndex = itemStr.indexOf('=');
@@ -3825,15 +3825,15 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
                     itemName = itemNamePart.substring(icon.length).trim();
                 }
                 
-                let description = undefined;  // undefined = 没有描述字段，合并时不覆盖原有描述
+                let description = undefined;  // undefined = 沒有描述資料欄，合併時不覆蓋原有描述
                 const pipeIdx = itemName.indexOf('|');
                 if (pipeIdx > 0) {
                     const descText = itemName.substring(pipeIdx + 1).trim();
-                    if (descText) description = descText;  // 只有非空才设置
+                    if (descText) description = descText;  // 只有非空才設定
                     itemName = itemName.substring(0, pipeIdx).trim();
                 }
                 
-                // 去掉无意义的数量标记
+                // 去掉無意義的數量標記
                 itemName = itemName.replace(/[\(（]1[\)）]$/, '').trim();
                 itemName = itemName.replace(new RegExp(`[\\(（]1[${COUNTING_CLASSIFIERS}][\\)）]$`), '').trim();
                 itemName = itemName.replace(new RegExp(`[\\(（][${COUNTING_CLASSIFIERS}][\\)）]$`), '').trim();
@@ -3869,14 +3869,14 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
                 const summary = parts.slice(1).join('|').trim();
                 
                 let level = '一般';
-                if (levelRaw === '关键' || levelRaw.toLowerCase() === 'critical') {
-                    level = '关键';
+                if (levelRaw === '關鍵' || levelRaw.toLowerCase() === 'critical') {
+                    level = '關鍵';
                 } else if (levelRaw === '重要' || levelRaw.toLowerCase() === 'important') {
                     level = '重要';
                 }
                 
                 result.events.push({
-                    is_important: level === '重要' || level === '关键',
+                    is_important: level === '重要' || level === '關鍵',
                     level: level,
                     summary: summary
                 });
@@ -3887,13 +3887,13 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
         // affection
         while ((match = patterns.affection.exec(message)) !== null) {
             const affStr = match[1].trim();
-            // 绝对值格式
+            // 絕對值格式
             const absMatch = affStr.match(/^(.+?)=\s*([+\-]?\d+\.?\d*)/);
             if (absMatch) {
                 result.affection[absMatch[1].trim()] = { type: 'absolute', value: parseFloat(absMatch[2]) };
                 hasAnyData = true;
             } else {
-                // 相对值格式 name+/-数值（无=号）
+                // 相對值格式 name+/-數值（無=號）
                 const relMatch = affStr.match(/^(.+?)([+\-]\d+\.?\d*)/);
                 if (relMatch) {
                     result.affection[relMatch[1].trim()] = { type: 'relative', value: relMatch[2] };
@@ -3916,7 +3916,7 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
             }
         }
 
-        // agenda-:（须在 agenda 之前解析）
+        // agenda-:（須在 agenda 之前解析）
         while ((match = patterns.agendaDelete.exec(message)) !== null) {
             const delStr = match[1].trim();
             if (delStr) {
@@ -3972,5 +3972,5 @@ event:重要程度|事件简述（30-50字，重要程度：一般/重要/关键
     }
 }
 
-// 导出单例
+// 導出單例
 export const horaeManager = new HoraeManager();
