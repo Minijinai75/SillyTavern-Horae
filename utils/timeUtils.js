@@ -1,12 +1,12 @@
-/** Horae - 時間工具函數 */
+/** Horae - 時間工具函式 */
 
-/** 中文周幾映射 */
+/** 中文周幾對映 */
 const WEEKDAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'];
 
 /** 季節名稱 */
 const SEASONS = ['冬季', '冬季', '春季', '春季', '春季', '夏季', '夏季', '夏季', '秋季', '秋季', '秋季', '冬季'];
 
-/** 中文數字映射 */
+/** 中文數字對映 */
 const CHINESE_NUMS = {
     '零': 0, '〇': 0,
     '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
@@ -18,7 +18,7 @@ const CHINESE_NUMS = {
     '三十一': 31, '卅': 30, '卅一': 31
 };
 
-/** 從日期字元串中提取日數 */
+/** 從日期字串中提取日數 */
 function extractDayNumber(dateStr) {
     if (!dateStr) return null;
     
@@ -50,7 +50,7 @@ function extractDayNumber(dateStr) {
     return null;
 }
 
-/** 從日期字元串中提取月份標識 */
+/** 從日期字串中提取月份標識 */
 function extractMonthIdentifier(dateStr) {
     if (!dateStr) return null;
     
@@ -64,7 +64,7 @@ function extractMonthIdentifier(dateStr) {
     return null;
 }
 
-/** 解析劇情日期字元串 */
+/** 解析劇情日期字串 */
 export function parseStoryDate(dateStr) {
     if (!dateStr) return null;
     
@@ -111,7 +111,7 @@ export function parseStoryDate(dateStr) {
         const month = parseInt(yearCnMatch[2]);
         const day = parseInt(yearCnMatch[3]);
         if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-            // 提取曆法前綴
+            // 提取曆法字首
             const fullMatchStr = yearCnMatch[0];
             const prefixEnd = cleanStr.indexOf(fullMatchStr);
             const calendarPrefix = cleanStr.substring(0, prefixEnd).trim() || undefined;
@@ -294,7 +294,7 @@ export function formatRelativeTime(days, options = {}) {
 /** 格式化劇情日期為標準格式 */
 export function formatStoryDate(dateObj, includeWeekday = false) {
     if (!dateObj) return '';
-    // 奇幻日曆保留原始字元串
+    // 奇幻日曆保留原始字串
     if (dateObj.raw && !dateObj.month) {
         let result = dateObj.raw;
         if (includeWeekday && dateObj.aiWeekday && !result.includes(`(${dateObj.aiWeekday})`)) {
@@ -308,7 +308,7 @@ export function formatStoryDate(dateObj, includeWeekday = false) {
     
     if (dateObj.year) {
         if (prefix) {
-            // 保留曆法前綴
+            // 保留曆法字首
             dateStr = `${prefix}${dateObj.year}年${dateObj.month}月${dateObj.day}日`;
         } else {
             dateStr = `${dateObj.year}/${dateObj.month}/${dateObj.day}`;
@@ -356,7 +356,7 @@ export function generateTimeReference(currentDate) {
         return {
             current: currentDate,
             type: 'fantasy',
-            note: '奇幻日曆模式，相對日期由插件自動計算'
+            note: '奇幻日曆模式，相對日期由外掛自動計算'
         };
     }
     

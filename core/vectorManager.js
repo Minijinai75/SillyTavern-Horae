@@ -2,7 +2,7 @@
  * Horae - 向量記憶管理器
  * 基於 Transformers.js 的本地向量檢索系統
  *
- * 數據按 chatId 隔離，向量存 IndexedDB，輕量索引存 chat[0].horae_meta.vectorIndex
+ * 資料按 chatId 隔離，向量存 IndexedDB，輕量索引存 chat[0].horae_meta.vectorIndex
  */
 
 import { calculateDetailedRelativeTime } from '../utils/timeUtils.js';
@@ -72,7 +72,7 @@ export class VectorManager {
             this.worker = new Worker(workerUrl, { type: 'module' });
 
             await new Promise((resolve, reject) => {
-                const timeout = setTimeout(() => reject(new Error('模型加載超時（5分鐘）')), 300000);
+                const timeout = setTimeout(() => reject(new Error('模型載入超時（5分鐘）')), 300000);
 
                 this.worker.onmessage = (e) => {
                     const { type, data, dimensions: dims } = e.data;
@@ -97,7 +97,7 @@ export class VectorManager {
 
                 this.worker.onerror = (err) => {
                     clearTimeout(timeout);
-                    reject(new Error(err.message || 'Worker 加載失敗'));
+                    reject(new Error(err.message || 'Worker 載入失敗'));
                 };
 
                 this.worker.postMessage({ type: 'init', data: { model, dtype: dtype || 'q8' } });
@@ -115,7 +115,7 @@ export class VectorManager {
                 }
             };
 
-            console.log(`[Horae Vector] 模型已加載: ${model} (${this.dimensions}維)`);
+            console.log(`[Horae Vector] 模型已載入: ${model} (${this.dimensions}維)`);
         } finally {
             this.isLoading = false;
         }
@@ -141,7 +141,7 @@ export class VectorManager {
             // 探測維度：發一條測試文字
             const testResult = await this._embedApi(['test']);
             if (!testResult?.vectors?.[0]) {
-                throw new Error('API 連接失敗或返回格式異常，請檢查地址、密鑰和模型名稱是否正確');
+                throw new Error('API 連線失敗或返回格式異常，請檢查地址、金鑰和模型名稱是否正確');
             }
             this.dimensions = testResult.vectors[0].length;
             this.isReady = true;
@@ -177,7 +177,7 @@ export class VectorManager {
     }
 
     /**
-     * 切換聊天：加載對應 chatId 的向量索引
+     * 切換聊天：載入對應 chatId 的向量索引
      */
     async loadChat(chatId, chat) {
         this.chatId = chatId;
@@ -213,14 +213,14 @@ export class VectorManager {
                 for (const idx of staleKeys) await this._deleteVector(idx);
                 console.log(`[Horae Vector] 清理了 ${staleKeys.length} 條過期/分支外向量`);
             }
-            console.log(`[Horae Vector] 已加載 ${this.vectors.size} 條向量 (chatId: ${chatId})`);
+            console.log(`[Horae Vector] 已載入 ${this.vectors.size} 條向量 (chatId: ${chatId})`);
         } catch (err) {
-            console.warn('[Horae Vector] 加載向量索引失敗:', err);
+            console.warn('[Horae Vector] 載入向量索引失敗:', err);
         }
     }
 
     // ========================================
-    // 說明文件構建
+    // 資料構建
     // ========================================
 
     /**
@@ -333,7 +333,7 @@ export class VectorManager {
     }
 
     /**
-     * 批量建索引（用於歷史記錄）
+     * 批次建索引（用於歷史記錄）
      * @returns {{ indexed: number, skipped: number }}
      */
     async batchIndex(chat, onProgress) {
@@ -401,11 +401,11 @@ export class VectorManager {
     }
 
     // ========================================
-    // 查詢與召回
+    // 搜尋與召回
     // ========================================
 
     /**
-     * 構建狀態查詢文字（目前場景/角色/事件）
+     * 構建狀態搜尋文字（目前場景/角色/事件）
      */
     buildStateQuery(currentState, lastMeta) {
         const parts = [];
@@ -428,7 +428,7 @@ export class VectorManager {
     }
 
     /**
-     * 清理用戶訊息為查詢文字
+     * 清理使用者訊息為搜尋文字
      */
     cleanUserMessage(rawMessage) {
         if (!rawMessage) return '';
@@ -451,7 +451,7 @@ export class VectorManager {
         if (!this.isReady || !queryText || this.vectors.size === 0) return [];
 
         const prepared = this._prepareText(queryText, true);
-        console.log('[Horae Vector] 開始 embedding 查詢...');
+        console.log('[Horae Vector] 開始 embedding 搜尋...');
         const result = await this._embed([prepared]);
         if (!result?.vectors?.[0]) {
             console.warn('[Horae Vector] embedding 返回空結果:', result);
@@ -459,7 +459,7 @@ export class VectorManager {
         }
 
         const queryVec = result.vectors[0];
-        console.log(`[Horae Vector] 查詢向量維度: ${queryVec.length}，開始對比 ${this.vectors.size} 條...`);
+        console.log(`[Horae Vector] 搜尋向量維度: ${queryVec.length}，開始對比 ${this.vectors.size} 條...`);
 
         const scored = [];
         const allScored = [];
@@ -477,7 +477,7 @@ export class VectorManager {
 
         allScored.sort((a, b) => b.similarity - a.similarity);
         const bestSim = allScored.length > 0 ? allScored[0].similarity : 0;
-        console.log(`[Horae Vector] 搜索了 ${searchedCount} 條 | 最高相似度=${bestSim.toFixed(4)} | 超過閾值(${threshold}): ${scored.length} 條`);
+        console.log(`[Horae Vector] 搜尋了 ${searchedCount} 條 | 最高相似度=${bestSim.toFixed(4)} | 超過閾值(${threshold}): ${scored.length} 條`);
         if (scored.length === 0 && allScored.length > 0) {
             console.log(`[Horae Vector] 閾值下 Top-5 候選:`);
             for (const c of allScored.slice(0, 5)) {
@@ -498,7 +498,7 @@ export class VectorManager {
 
     /**
      * 策略B：高頻內容懲罰
-     * 只在說明文件中 >80% 的詞都是公共詞（出現在 >60% 說明文件中）時才輕微提高閾值，
+     * 只在資料中 >80% 的詞都是公共詞（出現在 >60% 資料中）時才輕微提高閾值，
      * 避免角色名等必然高頻詞誤殺有效結果。
      */
     _adjustThresholdByFrequency(results, baseThreshold) {
@@ -553,7 +553,7 @@ export class VectorManager {
     // ========================================
 
     /**
-     * 智慧召回：結構化查詢 + 向量搜索並行，合併結果
+     * 智慧召回：結構化搜尋 + 向量搜尋並行，合併結果
      */
     async generateRecallPrompt(horaeManager, skipLast, settings) {
         const chat = horaeManager.getChat();
@@ -576,16 +576,16 @@ export class VectorManager {
         const merged = new Map();
 
         const pureMode = !!settings.vectorPureMode;
-        if (pureMode) console.log('[Horae Vector] 純向量模式已啟用，跳過關鍵詞啟發式');
+        if (pureMode) console.log('[Horae Vector] 純向量模式已打開，跳過關鍵詞啟發式');
 
         const structuredResults = this._structuredQuery(userQuery, chat, state, excludeIndices, topK, pureMode);
-        console.log(`[Horae Vector] 結構化查詢: ${structuredResults.length} 條命中`);
+        console.log(`[Horae Vector] 結構化搜尋: ${structuredResults.length} 條命中`);
         for (const r of structuredResults) {
             merged.set(r.messageIndex, r);
         }
 
         const hybridResults = await this._hybridSearch(userQuery, state, horaeManager, skipLast, settings, excludeIndices, topK, threshold, pureMode);
-        console.log(`[Horae Vector] 向量混合搜索: ${hybridResults.length} 條命中`);
+        console.log(`[Horae Vector] 向量混合搜尋: ${hybridResults.length} 條命中`);
         for (const r of hybridResults) {
             if (!merged.has(r.messageIndex)) {
                 merged.set(r.messageIndex, r);
@@ -593,7 +593,7 @@ export class VectorManager {
         }
 
         // 多人卡角色相關性加權：
-        // 收集"相關角色" = 用戶訊息中提到的角色 + 目前在場角色
+        // 收集"相關角色" = 使用者訊息中提到的角色 + 目前在場角色
         // 對涉及相關角色的結果施加小幅正向加權，優先召回相關事件
         // 不過濾任何結果，確保跨角色引用（如向A提起B）仍能召回
         const relevantChars = new Set(state.scene?.characters_present || []);
@@ -688,11 +688,11 @@ export class VectorManager {
     }
 
     // ========================================
-    // 結構化查詢（精準，不需要向量）
+    // 結構化搜尋（精準，不需要向量）
     // ========================================
 
     /**
-     * 從用戶訊息解析意圖，直接查詢 horae_meta 結構化數據
+     * 從使用者訊息解析意圖，直接搜尋 horae_meta 結構化資料
      */
     _structuredQuery(userQuery, chat, state, excludeIndices, topK, pureMode = false) {
         if (!userQuery || chat.length === 0) return [];
@@ -731,7 +731,7 @@ export class VectorManager {
                 const idx = this._findFirstAppearance(chat, charName, excludeIndices);
                 if (idx !== -1) {
                     results.push({ messageIndex: idx, similarity: 1.0, document: `[結構化] ${charName}首次出現`, source: 'structured' });
-                    console.log(`[Horae Vector] 結構化查詢: "${charName}" 首次出現於 #${idx}`);
+                    console.log(`[Horae Vector] 結構化搜尋: "${charName}" 首次出現於 #${idx}`);
                 }
             }
         }
@@ -743,7 +743,7 @@ export class VectorManager {
                     const idx = this._findLastCostume(chat, charName, costumeKw, excludeIndices);
                     if (idx !== -1) {
                         results.push({ messageIndex: idx, similarity: 1.0, document: `[結構化] ${charName}穿${costumeKw}`, source: 'structured' });
-                        console.log(`[Horae Vector] 結構化查詢: "${charName}" 上次穿 "${costumeKw}" 於 #${idx}`);
+                        console.log(`[Horae Vector] 結構化搜尋: "${charName}" 上次穿 "${costumeKw}" 於 #${idx}`);
                     }
                 }
             }
@@ -766,7 +766,7 @@ export class VectorManager {
                 const idx = this._findLastMood(chat, targetChar, moodKw, excludeIndices);
                 if (idx !== -1) {
                     results.push({ messageIndex: idx, similarity: 1.0, document: `[結構化] 情緒配對:${moodKw}`, source: 'structured' });
-                    console.log(`[Horae Vector] 結構化查詢: 上次 "${moodKw}" 於 #${idx}`);
+                    console.log(`[Horae Vector] 結構化搜尋: 上次 "${moodKw}" 於 #${idx}`);
                 }
             }
         }
@@ -775,7 +775,7 @@ export class VectorManager {
             const giftResults = this._findGiftItems(chat, mentionedChars, excludeIndices, topK);
             for (const r of giftResults) {
                 results.push(r);
-                console.log(`[Horae Vector] 結構化查詢: 禮物/贈品 #${r.messageIndex} [${r.document}]`);
+                console.log(`[Horae Vector] 結構化搜尋: 禮物/贈品 #${r.messageIndex} [${r.document}]`);
             }
         }
 
@@ -783,7 +783,7 @@ export class VectorManager {
             const impResults = this._findImportantItems(chat, excludeIndices, topK);
             for (const r of impResults) {
                 results.push(r);
-                console.log(`[Horae Vector] 結構化查詢: 重要物品 #${r.messageIndex} [${r.document}]`);
+                console.log(`[Horae Vector] 結構化搜尋: 重要物品 #${r.messageIndex} [${r.document}]`);
             }
         }
 
@@ -791,11 +791,11 @@ export class VectorManager {
             const evtResults = this._findImportantEvents(chat, excludeIndices, topK);
             for (const r of evtResults) {
                 results.push(r);
-                console.log(`[Horae Vector] 結構化查詢: 重要事件 #${r.messageIndex} [${r.document}]`);
+                console.log(`[Horae Vector] 結構化搜尋: 重要事件 #${r.messageIndex} [${r.document}]`);
             }
         }
 
-        // 純向量模式下跳過關鍵詞啟發式（主題事件搜索、事件詞組配對），完全依賴向量語義
+        // 純向量模式下跳過關鍵詞啟發式（主題事件搜尋、事件詞組配對），完全依賴向量語義
         if (!pureMode) {
             if (hasCeremonyKw || hasPromiseKw || hasLossKw || hasRevelationKw || hasPowerKw) {
                 const thematicResults = this._findThematicEvents(chat, {
@@ -804,7 +804,7 @@ export class VectorManager {
                 }, excludeIndices, topK);
                 for (const r of thematicResults) {
                     results.push(r);
-                    console.log(`[Horae Vector] 結構化查詢: 主題事件 #${r.messageIndex} [${r.document}]`);
+                    console.log(`[Horae Vector] 結構化搜尋: 主題事件 #${r.messageIndex} [${r.document}]`);
                 }
             }
 
@@ -820,7 +820,7 @@ export class VectorManager {
     }
 
     /**
-     * 上下文視窗擴展：對每個命中訊息，把前後相鄰的 AI 訊息也加進來
+     * 上下文視窗擴充套件：對每個命中訊息，把前後相鄰的 AI 訊息也加進來
      * RP 中相鄰訊息是連續事件，天然相關
      */
     _expandContextWindow(results, chat, excludeIndices) {
@@ -862,7 +862,7 @@ export class VectorManager {
         }
 
         if (contextToAdd.length > 0) {
-            console.log(`[Horae Vector] 上下文擴展: +${contextToAdd.length} 條`);
+            console.log(`[Horae Vector] 上下文擴充套件: +${contextToAdd.length} 條`);
             for (const c of contextToAdd) console.log(`  #${c.messageIndex} [${c.document}]`);
         }
 
@@ -872,14 +872,14 @@ export class VectorManager {
     }
 
     /**
-     * 事件關鍵詞搜索：從用戶文字直接掃描已知類別詞彙，擴展後搜索事件摘要
+     * 事件關鍵詞搜尋：從使用者文字直接掃描已知類別詞彙，擴充套件後搜尋事件摘要
      */
     _eventKeywordSearch(userQuery, chat, mentionedChars, skipIds, excludeIndices, limit) {
         const detected = this._detectCategoryTerms(userQuery);
         if (detected.length === 0) return [];
 
         const expanded = this._expandByCategory(detected);
-        console.log(`[Horae Vector] 事件搜索: 檢測到=[${detected.join(',')}] 擴展後=[${expanded.join(',')}]`);
+        console.log(`[Horae Vector] 事件搜尋: 檢測到=[${detected.join(',')}] 擴充套件後=[${expanded.join(',')}]`);
 
         const scored = [];
         for (let i = 0; i < chat.length; i++) {
@@ -913,7 +913,7 @@ export class VectorManager {
         scored.sort((a, b) => b._matchCount - a._matchCount || b.similarity - a.similarity);
         const top = scored.slice(0, limit);
         if (top.length > 0) {
-            console.log(`[Horae Vector] 事件搜索命中 ${top.length} 條:`);
+            console.log(`[Horae Vector] 事件搜尋命中 ${top.length} 條:`);
             for (const r of top) console.log(`  #${r.messageIndex} matches=${r._matchCount} [${r.document}]`);
         }
         return top;
@@ -944,7 +944,7 @@ export class VectorManager {
     }
 
     /**
-     * 直接從用戶文字中掃描 TERM_CATEGORIES 中的已知詞彙（無需分詞）
+     * 直接從使用者文字中掃描 TERM_CATEGORIES 中的已知詞彙（無需分詞）
      */
     _detectCategoryTerms(text) {
         const found = [];
@@ -959,7 +959,7 @@ export class VectorManager {
     }
 
     /**
-     * 將檢測到的詞擴展到同類別的所有詞
+     * 將檢測到的詞擴充套件到同類別的所有詞
      */
     _expandByCategory(keywords) {
         const expanded = new Set(keywords);
@@ -1062,7 +1062,7 @@ export class VectorManager {
 
                     if ((imp === '!' || imp === '!!') && holderMatchesChar) {
                         matched = true;
-                        matchedItems.push(`${imp === '!!' ? '关键' : '重要'}:${name}`);
+                        matchedItems.push(`${imp === '!!' ? '關鍵' : '重要'}:${name}`);
                     }
                 }
             }
@@ -1148,7 +1148,7 @@ export class VectorManager {
     }
 
     /**
-     * 主題事件搜索：儀式/承諾/失去/揭露/能力變化
+     * 主題事件搜尋：儀式/承諾/失去/揭露/能力變化
      * 結合事件文字和 TERM_CATEGORIES 做精準配對
      */
     _findThematicEvents(chat, flags, excludeIndices, limit) {
@@ -1192,7 +1192,7 @@ export class VectorManager {
     }
 
     // ========================================
-    // 向量+關鍵詞混合搜索（兜底）
+    // 向量+關鍵詞混合搜尋（兜底）
     // ========================================
 
     async _hybridSearch(userQuery, state, horaeManager, skipLast, settings, excludeIndices, topK, threshold, pureMode = false) {
@@ -1207,7 +1207,7 @@ export class VectorManager {
         if (userQuery) {
             const intentThreshold = Math.max(threshold - 0.25, 0.4);
             const intentResults = await this.search(userQuery, topK * 2, intentThreshold, excludeIndices, pureMode);
-            console.log(`[Horae Vector] 意圖搜索: ${intentResults.length} 條`);
+            console.log(`[Horae Vector] 意圖搜尋: ${intentResults.length} 條`);
             for (const r of intentResults) {
                 merged.set(r.messageIndex, { ...r, source: 'intent' });
             }
@@ -1215,7 +1215,7 @@ export class VectorManager {
 
         if (stateQuery) {
             const stateResults = await this.search(stateQuery, topK * 2, threshold, excludeIndices, pureMode);
-            console.log(`[Horae Vector] 狀態搜索: ${stateResults.length} 條`);
+            console.log(`[Horae Vector] 狀態搜尋: ${stateResults.length} 條`);
             for (const r of stateResults) {
                 const existing = merged.get(r.messageIndex);
                 if (!existing || r.similarity > existing.similarity) {
@@ -1228,7 +1228,7 @@ export class VectorManager {
         results.sort((a, b) => b.similarity - a.similarity);
         results = this._deduplicateResults(results).slice(0, topK);
 
-        console.log(`[Horae Vector] 混合搜索結果: ${results.length} 條`);
+        console.log(`[Horae Vector] 混合搜尋結果: ${results.length} 條`);
         for (const r of results) {
             console.log(`  #${r.messageIndex} sim=${r.similarity.toFixed(4)} [${r.source}] | ${r.document.substring(0, 80)}`);
         }
@@ -1408,7 +1408,7 @@ export class VectorManager {
             }
             const json = await resp.json();
             if (!json.data || !Array.isArray(json.data)) {
-                throw new Error('API 返回格式異常：缺少 data 數組');
+                throw new Error('API 返回格式異常：缺少 data 陣列');
             }
             const vectors = json.data
                 .sort((a, b) => a.index - b.index)
@@ -1456,7 +1456,7 @@ export class VectorManager {
         const json = await resp.json();
         const results = json.results || json.data;
         if (!Array.isArray(results)) {
-            throw new Error('Rerank API 返回格式異常：缺少 results 數組');
+            throw new Error('Rerank API 返回格式異常：缺少 results 陣列');
         }
 
         return results.map(r => ({
@@ -1566,7 +1566,7 @@ export class VectorManager {
     }
 
     // ========================================
-    // 工具函數
+    // 工具函式
     // ========================================
 
     _hasOriginalEvents(meta) {

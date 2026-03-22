@@ -1,4 +1,4 @@
-<!-- Horae 訊息元數據面板模範 -->
+<!-- Horae 訊息後設資料面板模範 -->
 <div class="horae-message-panel" data-message-id="{{messageId}}">
     <div class="horae-panel-toggle">
         <div class="horae-panel-icon">
@@ -60,8 +60,8 @@
                 <div class="horae-costume-editor" id="horae-costumes-{{messageId}}">
                     {{costumeEditors}}
                 </div>
-                <button class="horae-btn-add-costume" title="添加服裝記錄">
-                    <i class="fa-solid fa-plus"></i> 添加
+                <button class="horae-btn-add-costume" title="新增服裝記錄">
+                    <i class="fa-solid fa-plus"></i> 新增
                 </button>
             </div>
 
@@ -71,8 +71,8 @@
                 <div class="horae-items-editor" id="horae-items-{{messageId}}">
                     {{itemEditors}}
                 </div>
-                <button class="horae-btn-add-item" title="添加物品記錄">
-                    <i class="fa-solid fa-plus"></i> 添加
+                <button class="horae-btn-add-item" title="新增物品記錄">
+                    <i class="fa-solid fa-plus"></i> 新增
                 </button>
             </div>
 
@@ -84,7 +84,7 @@
                         <option value="">無</option>
                         <option value="一般" {{eventLevelNormal}}>一般</option>
                         <option value="重要" {{eventLevelImportant}}>重要</option>
-                        <option value="關鍵" {{eventLevelCritical}}>關鍵</option>
+                        <option value="关键" {{eventLevelCritical}}>關鍵</option>
                     </select>
                     <input type="text" class="horae-input-event-summary" placeholder="事件摘要（20字以內）" value="{{eventSummaryText}}">
                 </div>
@@ -96,15 +96,15 @@
                 <div class="horae-affection-editor" id="horae-affection-{{messageId}}">
                     {{affectionEditors}}
                 </div>
-                <button class="horae-btn-add-affection" title="添加好感度變化">
-                    <i class="fa-solid fa-plus"></i> 添加
+                <button class="horae-btn-add-affection" title="新增好感度變化">
+                    <i class="fa-solid fa-plus"></i> 新增
                 </button>
             </div>
         </div>
 
         <div class="horae-panel-footer">
             <button class="horae-btn-save horae-btn">
-                <i class="fa-solid fa-check"></i> 保存
+                <i class="fa-solid fa-check"></i> 儲存
             </button>
             <button class="horae-btn-cancel horae-btn">
                 <i class="fa-solid fa-xmark"></i> 取消
